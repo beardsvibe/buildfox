@@ -36,7 +36,6 @@
 	subninja other_ninja_file.ninja # imports other file, other file gets private namescope which shadows current namescope
 	include other_file.ninja # just includes other file as is
 
-	build ... # not sure about this one 
 
 
 ### Escaping
