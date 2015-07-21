@@ -28,6 +28,8 @@ And some features were added :
 * import - same as subninja
 * auto - magic rule
 
+And code looks like this :
+
 	# your usual ninja format
 	cflags = -Wall
 	ldflags = -Wall
