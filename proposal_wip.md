@@ -75,3 +75,38 @@ Some variables that auto rule use : **TODO**
 * auto_ldflags
 
 **TODO** Some ideas : maybe we can incorporate filters from premake somehow to simplify configuration setting per target variation ?
+
+### Another crazy idea
+Instead of providing auto rule, we will require command line always. But we provide helper database with knowledge about toolsets, in form of json dictionary.
+
+For example msvc.json :
+
+	{
+		"commands":
+		{
+			"c->obj": "cl $cflags -c $in $out"
+			"cpp->obj": "cl $cflags -c $in $out"
+			"obj->exe": "cl $lflags /link -o $out $in"
+			...
+		},
+		"flags":
+		{
+			"cflags":
+			{
+				"debug": "..."
+				"fast": "..."
+				"size": "..."
+				...
+			},
+			"lflags":
+			{
+				...
+			}
+		},
+		"ext_object": ".obj"
+		"ext_lib_static": ".lib"
+		"ext_lib_dynamic": ".dll"
+		...
+	}
+	
+And users can easily use this dictionary as toolset database.
