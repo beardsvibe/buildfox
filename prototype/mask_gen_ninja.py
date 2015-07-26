@@ -14,7 +14,7 @@ with open(args["input"], "r") as f:
 # for proper implementation we need to find common lines to create as few rules as possible
 output = ""
 for i, command in enumerate(asm):
-	output += "rule_" + str(i) + "\n"
+	output += "rule rule_" + str(i) + "\n"
 	output += "  command = " + command["cmd"] + "\n"
 	output += "build " + " ".join(command["touch"]) + ": rule_" + str(i) + " " + " ".join(command["depend_on"]) + "\n"
 

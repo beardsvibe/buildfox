@@ -2,14 +2,14 @@ cflags = /nologo /showIncludes
 ldflags = /nologo
 
 rule cc
-  command = cl $in $cflags /Fo$out
+  command = cl $cflags -c $in /Fo$out
   description = compile
 
 rule link
   command = cl $in /link $ldflags /out:$out
   description = link
 
-build result.exe:link a.obj b.obj
-build b.obj:cc b.cpp
-build a.obj:cc a.cpp
+build test_mask_result.exe:link test_mask_a.obj test_mask_b.obj
+build test_mask_b.obj:cc test_mask_b.cpp
+build test_mask_a.obj:cc test_mask_a.cpp
 

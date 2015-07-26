@@ -1,30 +1,30 @@
 [
     {
-        "cmd": "cl a.cpp /nologo /showIncludes /Foa.obj",
+        "cmd": "cl /nologo /showIncludes -c test_mask_a.cpp /Fotest_mask_a.obj",
         "depend_on": [
-            "a.cpp"
+            "test_mask_a.cpp"
         ],
         "touch": [
-            "a.obj"
+            "test_mask_a.obj"
         ]
     },
     {
-        "cmd": "cl b.cpp /nologo /showIncludes /Fob.obj",
+        "cmd": "cl /nologo /showIncludes -c test_mask_b.cpp /Fotest_mask_b.obj",
         "depend_on": [
-            "b.cpp"
+            "test_mask_b.cpp"
         ],
         "touch": [
-            "b.obj"
+            "test_mask_b.obj"
         ]
     },
     {
-        "cmd": "cl a.obj b.obj /link /nologo /out:result.exe",
+        "cmd": "cl test_mask_a.obj test_mask_b.obj /link /nologo /out:test_mask_result.exe",
         "depend_on": [
-            "a.obj",
-            "b.obj"
+            "test_mask_a.obj",
+            "test_mask_b.obj"
         ],
         "touch": [
-            "result.exe"
+            "test_mask_result.exe"
         ]
     }
 ]
