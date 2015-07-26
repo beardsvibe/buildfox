@@ -1,35 +1,11 @@
 # mask compiler
-# accepts mask IR, generates list of shell commands with dependency information
+# accepts mask IR, generates mask asm - list of shell commands with dependency information
 
+import argparse
 from pprint import pprint
 import re
 
-import mask_ir
-
-text = """
-
-cflags = /nologo /showIncludes
-ldflags = /nologo
-
-k = zz
-
-rule cc
-  command = cl $in $cflags /Fo$out t=$k
-  description = compile
-
-rule link
-  command = cl $in /link $ldflags /out:$out
-  description = link
-
-k = a.obj
-
-build $k:cc a.cpp
-  k = lool
-build b.obj:cc b.cpp
-  k = lool2
-build result.exe:link a.cpp b.cpp
-
-"""
+import mask_ir_parser
 
 class Namescope:
 	def __init__(self):
@@ -95,10 +71,19 @@ class Namescope:
 			rule_vars.extend(rule["rule"]["vars"])
 
 			cmd = self.get_var_value(rule_vars, "command")
-			self.cmds.append({"cmd": cmd, "inputs": inputs, "outputs": outputs})
+			self.cmds.append({"cmd": cmd, "depend_on": inputs, "touch": outputs})
+
+argsparser = argparse.ArgumentParser(description = "Mask IR compiler, produces mask asm")
+argsparser.add_argument("--input", required = True, help = "input mask IR file")
+argsparser.add_argument("--output", required = True, help = "output mask asm file")
+args = vars(argsparser.parse_args())
+
+with open(args["input"], "r") as f:
+	text = f.read()
+text += "\n"
 
 namescope = Namescope()
-parser = mask_ir.mask_ir_Parser()
+parser = mask_ir_parser.mask_ir_Parser()
 ast = parser.parse(text, rule_name = "manifest", whitespace = "")
 
 for expr in ast:
@@ -114,3 +99,7 @@ for expr in ast:
 namescope.compile()
 
 pprint(namescope.cmds)
+
+import json
+with open(args["output"], "w") as result:
+	json.dump(namescope.cmds, result, sort_keys = True, indent = 4)
