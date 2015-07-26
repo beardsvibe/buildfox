@@ -73,7 +73,7 @@ class Namescope:
 			cmd = self.get_var_value(rule_vars, "command")
 			self.cmds.append({"cmd": cmd, "depend_on": inputs, "touch": outputs})
 
-argsparser = argparse.ArgumentParser(description = "Mask IR compiler, produces mask asm")
+argsparser = argparse.ArgumentParser(description = "mask IR compiler, produces mask asm")
 argsparser.add_argument("--input", required = True, help = "input mask IR file")
 argsparser.add_argument("--output", required = True, help = "output mask asm file")
 args = vars(argsparser.parse_args())
@@ -97,8 +97,6 @@ for expr in ast:
 		print("unknown " + str(expr))
 
 namescope.compile()
-
-pprint(namescope.cmds)
 
 import json
 with open(args["output"], "w") as result:

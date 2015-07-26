@@ -1,20 +1,15 @@
 cflags = /nologo /showIncludes
 ldflags = /nologo
 
-k = zz
-
 rule cc
-  command = cl $in $cflags /Fo$out t=$k
+  command = cl $in $cflags /Fo$out
   description = compile
 
 rule link
   command = cl $in /link $ldflags /out:$out
   description = link
 
-k = a.obj
-
-build $k:cc a.cpp
-  k = lool
+build result.exe:link a.obj b.obj
 build b.obj:cc b.cpp
-  k = lool2
-build result.exe:link a.cpp b.cpp
+build a.obj:cc a.cpp
+

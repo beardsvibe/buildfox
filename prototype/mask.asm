@@ -1,15 +1,16 @@
 [
     {
-        "cmd": "cl a.cpp /nologo /showIncludes /Foa.obj t=lool",
+        "cmd": "cl a.obj b.obj /link /nologo /out:result.exe",
         "depend_on": [
-            "a.cpp"
+            "a.obj",
+            "b.obj"
         ],
         "touch": [
-            "a.obj"
+            "result.exe"
         ]
     },
     {
-        "cmd": "cl b.cpp /nologo /showIncludes /Fob.obj t=lool2",
+        "cmd": "cl b.cpp /nologo /showIncludes /Fob.obj",
         "depend_on": [
             "b.cpp"
         ],
@@ -18,13 +19,12 @@
         ]
     },
     {
-        "cmd": "cl a.cpp b.cpp /link /nologo /out:result.exe",
+        "cmd": "cl a.cpp /nologo /showIncludes /Foa.obj",
         "depend_on": [
-            "a.cpp",
-            "b.cpp"
+            "a.cpp"
         ],
         "touch": [
-            "result.exe"
+            "a.obj"
         ]
     }
 ]
