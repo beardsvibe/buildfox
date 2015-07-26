@@ -1,0 +1,9 @@
+rule_0
+  command = cl a.cpp /nologo /showIncludes /Foa.obj
+build a.obj: rule_0 a.cpp
+rule_1
+  command = cl b.cpp /nologo /showIncludes /Fob.obj
+build b.obj: rule_1 b.cpp
+rule_2
+  command = cl a.obj b.obj /link /nologo /out:result.exe
+build result.exe: rule_2 a.obj b.obj
