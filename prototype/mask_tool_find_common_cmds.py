@@ -18,28 +18,45 @@ for command in asm:
 	# wip
 	if tool == "cl":
 		program = cmd[0]
-		args = {}
+		args = set()
 		files = []
+		output_files = []
 		link = False
-		link_args = {}
+		link_args = set()
 		link_files = []
+		link_output_files = []
 
 		for arg in cmd[1:]:
-			if arg.startswith("/"):
+			if arg.startswith("/") or arg.startswith("-"):
+				arg = "/" + arg[1:]
 				if arg == "/link":
 					link = True
 					continue
-				if link == False:
-					if arg not in args:
-						args[arg] = True
+				elif link == False and arg.startswith("/Fo"):
+					output_files.append(arg[3:])
+				elif link == True and arg.startswith("/out:"):
+					link_output_files.append(arg[4:])
+				elif link == False:
+					args.add(arg)
 				else:
-					if arg not in link_args:
-						link_args[arg] = True
+					link_args.add(arg)
 			else:
 				if link == False:
 					files.append(arg)
 				else:
 					link_files.append(arg)
+
+		all = {
+			"program": program,
+			"args": args,
+			"files": files,
+			"output_files": output_files,
+			"link": link,
+			"link_args": link_args,
+			"link_files": link_files,
+			"link_output_files": link_output_files
+		}
+		pprint(all)
 
 	print(cmd)
 
