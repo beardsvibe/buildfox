@@ -11,13 +11,17 @@ with open(args["input"], "r") as f:
 	import json
 	asm = json.loads(f.read())
 
-for command in asm:
-	cmd = command["cmd"].split()
+pool_cl = []
+pool_generic = []
+
+import shlex
+for i, command in enumerate(asm):
+	cmd = shlex.split(command["cmd"])
 	tool = os.path.splitext(os.path.basename(cmd[0]))[0].lower()
+	program = cmd[0]
 
 	# wip
 	if tool == "cl":
-		program = cmd[0]
 		args = set()
 		files = []
 		output_files = []
@@ -47,6 +51,7 @@ for command in asm:
 					link_files.append(arg)
 
 		all = {
+			"index": i,
 			"program": program,
 			"args": args,
 			"files": files,
@@ -56,9 +61,17 @@ for command in asm:
 			"link_files": link_files,
 			"link_output_files": link_output_files
 		}
-		pprint(all)
 
-	print(cmd)
+		pool_cl.append(all)
+
+	else:
+		all = {
+			"index": i,
+			"program": program,
+			"args": cmd[1:],
+		}
+
+		pool_generic.append(all) 
 
 
 
