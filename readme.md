@@ -45,10 +45,10 @@ Format is based of ninja manifest format with some limitations which make it pos
 	* indent in rule and project variables is 2 spaces only
 	* only one space is allowed between tokens
 * no variable shadowing in build commands or rules, all variables are expanded immediately as they’re encountered, with no exceptions
-* no includes or subninja, no variable scoping
+* no "include" or "subninja", no variable scoping
 * use implicit outputs instead of phony rules
-* no default
-* added project command
+* no "default" keyword
+* added "project" command
 * build commands should be sorted by dependencies, meaning if we execute them from top to bottom everything should be valid
 
 For example :
