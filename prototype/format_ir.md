@@ -32,12 +32,13 @@ In some cases (mostly compilers\linkers) we can extract input and output filenam
 
 ### Format structure
 
-Format is subset of ninja manifest format with some limitations which make it possible to achieve (#1) (#2) (#3)
+Format is based of ninja manifest format with some limitations which make it possible to achieve (#1) (#2) (#3)
 
 * strict order of declaration :
 	* variable definitions first
 	* rules second
 	* build command third
+	* project commands last
 * strict indentation rules : **??? could simplify parsing ???**
 	* all lines, except for variables in rules, must contain no whitespace in the beginning
 	* indent in rule and project variables is 2 spaces only
@@ -47,6 +48,7 @@ Format is subset of ninja manifest format with some limitations which make it po
 * use implicit outputs instead of phony rules
 * no default
 * added project command
+* build commands should be sorted by dependencies, meaning if we execute them from top to bottom everything should be valid
 
 For example :
 
@@ -56,6 +58,7 @@ For example :
 	rule rule_name
 	  command = ...
 
+	# build calls are sorted by dependencies
 	build target: rule_name input
 
 	build target | target2: rule_name input | implicit_input || order_only_dep
