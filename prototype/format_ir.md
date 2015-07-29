@@ -40,16 +40,17 @@ Format is subset of ninja manifest format with some limitations which make it po
 	* build command third
 * strict indentation rules : **??? could simplify parsing ???**
 	* all lines, except for variables in rules, must contain no whitespace in the beginning
-	* indent in rule variables is 2 spaces only
+	* indent in rule and project variables is 2 spaces only
 	* only one space is allowed between tokens
-* no variable shadowing in build commands or rules, all variables are expanded immediately as they’re encountered in parsing with no exceptions.
-* no includes or subninja, no scoping
+* no variable shadowing in build commands or rules, all variables are expanded immediately as they’re encountered, with no exceptions
+* no includes or subninja, no variable scoping
 * use implicit outputs instead of phony rules
+* no default
+* added project command
 
 For example :
 
 	# comment
-
 	variable = ...
 
 	rule rule_name
@@ -58,3 +59,8 @@ For example :
 	build target: rule_name input
 
 	build target | target2: rule_name input | implicit_input || order_only_dep
+
+	# specify project and variations
+	project test
+	  debug = target1 target2 ...
+	  any_other_variation_name = ...
