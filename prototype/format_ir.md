@@ -11,11 +11,11 @@ From [this](https://github.com/martine/ninja/blob/master/src/build_log_perftest.
 
 Let's make some goals :
 
-* Parse raw 120 MB shell script into compact IR format in less then 1 second on modern machine with SSD.
-* Translate this compacted IR file into raw 120 MB shell script in less then 1 second on modern machine with SSD.
-* Parsing and saving of compact IR file without need to reconstruct all data in memory before reading.
-* Human readable format **???**
-* Easily generated from existing build systems
+* (#1) Parsing and saving of compact IR file without need to reconstruct all data in memory in advance.
+* (#2) Human readable format **???**
+* (#3) Easily generated from existing build systems
+* (#4) Parse raw 120 MB shell script into compact IR format in less then 1 second on modern machine with SSD.
+* (#5) Translate this compacted IR file into raw 120 MB shell script in less then 1 second on modern machine with SSD.
 
 ### Gathering stuff
 
@@ -31,3 +31,30 @@ We can take split command line, take arguments, and find common sets.
 In some cases (mostly compilers\linkers) we can extract input and output filenames.
 
 ### Format structure
+
+Format is subset of ninja manifest format with some limitations which make it possible to achieve (#1) (#2) (#3)
+
+* strict order of declaration :
+	* variable definitions first
+	* rules second
+	* build command third
+* strict indentation rules : **??? could simplify parsing ???**
+	* all lines, except for variables in rules, must contain no whitespace in the beginning
+	* indent in rule variables is 2 spaces only
+	* only one space is allowed between tokens
+* no variable shadowing in build commands or rules, all variables are expanded immediately as they’re encountered in parsing with no exceptions.
+* no includes or subninja, no scoping
+* use implicit outputs instead of phony rules
+
+For example :
+
+	# comment
+
+	variable = ...
+
+	rule rule_name
+	  command = ...
+
+	build target: rule_name input
+
+	build target | target2: rule_name input | implicit_input || order_only_dep
