@@ -9,12 +9,12 @@
 #$: a colon. (This is only necessary in build lines, where a colon would otherwise terminate the list of outputs.)
 #$$ a literal $.
 
-# TODO
 def to_esc(str):
-	return str
+	# TODO how to escape variable reference lol ?
+	return str.replace("$", "$$").replace(":", "$:").replace(" ", "$ ").replace("\n", "$\n")
 
 def from_esc(str):
-	return str
+	return str.replace("$\n", "\n").replace("$ ", " ").replace("$:", ":").replace("$$", "$")
 
 def to_esc_iter(iter):
 	return [to_esc(s) for s in iter]
@@ -89,17 +89,37 @@ class Parse:
 		self.ir = ReadonlyIR()
 		self.mode = 0 # 0 - variables, 1 - rules, 2 - builds, 3 - projects
 		self.variables = [] # array of Var
+		self.last_rule = ""
 
 	def parse_comment(self, line): # don't care
 		pass
 
-	def parse_var(self, line):
+	def parse_var(self, line, add = True, scope_rule = False, scope_project = False):
 		name, value = line.split(" = ", 1)
-		self.variables.append(Var(name, from_esc(value)))
-		print("added var " + str(self.variables[-1]))
+		var = Var(name, from_esc(value))
+
+		if scope_rule:
+			pass
+		elif scope_project:
+			pass
+		else:
+			pass
+
+		if add:
+			self.variables.append(var)
+			print("added " + str(var))
+		return var
 
 	def parse_rule(self, line):
-		pass
+		if line.startswith("  "):
+			var = self.parse_var(line[2:], add = False)
+			self.ir.rules[self.last_rule].variables.append(var)
+			print("added " + str(var))
+		else:
+			rule = Rule(line[len("rule "):])
+			self.ir.rules[rule.name] = rule
+			self.last_rule = rule.name
+			print("added " + str(rule))
 
 	def parse_build(self, line):
 		pass
