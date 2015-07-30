@@ -50,6 +50,7 @@ Format is based of ninja manifest format with some limitations which make it pos
 * no "default" keyword
 * added "project" command
 * build commands should be sorted by dependencies, meaning if we execute them from top to bottom everything should be valid
+* order\_only\_dep is needed because in most cases some build steps can be placed in multiple locations (if two build steps are not related to each other then it doesn't matter in which order we execute them), mask is free to sort build steps as needed 
 
 For example :
 
