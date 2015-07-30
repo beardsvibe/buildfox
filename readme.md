@@ -45,6 +45,7 @@ Format is based of ninja manifest format with some limitations which make it pos
 	* indent in rule and project variables is 2 spaces only
 	* only one space is allowed between tokens
 * no variable shadowing in build commands or rules, all variables are expanded immediately as they’re encountered, with no exceptions
+* only one variable reference syntax is allowed : ${name}, when syntax $name is not valid
 * no "include" or "subninja", no variable scoping
 * use implicit outputs instead of phony rules
 * no "default" keyword
