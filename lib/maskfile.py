@@ -1,7 +1,7 @@
 # read write mask ir file
 
 import re
-from maskfile_esc import to_esc, to_esc_iter
+from lib.maskfile_esc import to_esc, to_esc_iter
 
 # ------------------------------------ basic structures
 
@@ -75,11 +75,11 @@ class ReadOnlyIR:
 		self.projects = {}	# dict of key = project name string, val = Project
 
 	def __repr__(self):
-		return "%s\n%s\n%s" % (
+		return "\n".join(filter(len, [
 			"\n".join([str(v) for k, v in self.rules.items()]),
-			"\n".join([str(v) for v in self.builds]),
-			"\n".join([str(v) for k, v in self.projects.items()])
-		)
+			"\n".join([str(v) for v in self.builds]) if len(self.builds) else "",
+			"\n".join([str(v) for k, v in self.projects.items()] if len(self.projects) else "")
+		]))
 
 # ------------------------------------ write only IR
 
@@ -91,10 +91,10 @@ class WriteOnlyIR:
 		self.projects = []	# list of Project
 
 	def __repr__(self):
-		return "%s\n%s\n%s\n%s" % (
+		return "\n".join(filter(len, [
 			"\n".join([str(v) for v in self.variables]),
-			"\n".join([str(v) for v in self.rules]),
-			"\n".join([str(v) for v in self.builds]),
-			"\n".join([str(v) for v in self.projects])
-		)
+			"\n" + "\n".join([str(v) for v in self.rules]) if len(self.rules) else "",
+			"\n" + "\n".join([str(v) for v in self.builds]) if len(self.builds) else "",
+			"\n" + "\n".join([str(v) for v in self.projects] if len(self.projects) else "")
+		]))
 

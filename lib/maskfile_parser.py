@@ -5,8 +5,8 @@
 # TODO create proper parser !
 
 import re
-from maskfile_esc import from_esc, from_esc_iter
-from maskfile import Var, Rule, Build, Project, ReadOnlyIR
+from lib.maskfile_esc import from_esc, from_esc_iter
+from lib.maskfile import Var, Rule, Build, Project, ReadOnlyIR
 
 class Parse:
 	def __init__(self):
@@ -32,7 +32,9 @@ class Parse:
 
 		def repl(matchobj):
 			name = matchobj.group(1)
-			if name in scope:
+			if name in ["in", "out", "in_newline"]:
+				return "${" + name + "}"
+			elif name in scope:
 				return scope[name].value
 			else:
 				return ""
@@ -130,12 +132,21 @@ class Parse:
 				if line.startswith("rule "):
 					self.mode = 1
 					self.parse_rule(line)
+				elif line.startswith("build "):
+					self.mode = 2
+					self.parse_build(line)
+				elif line.startswith("project "):
+					self.mode = 3
+					self.parse_project(line)
 				else:
 					self.parse_var(line)
 			elif self.mode == 1:
 				if line.startswith("build "):
 					self.mode = 2
 					self.parse_build(line)
+				elif line.startswith("project "):
+					self.mode = 3
+					self.parse_project(line)
 				else:
 					self.parse_rule(line)
 			elif self.mode == 2:

@@ -1,0 +1,13 @@
+# some comment
+var_a = val_a
+var_b = val_b
+# test if this works
+var_c = __${var_a}${var_b}
+
+rule some_rule:
+  command = test ${var_c} ${in} ${out}
+
+build target1: some_rule input1
+
+project prj
+  all = target1
