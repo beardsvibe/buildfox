@@ -102,17 +102,18 @@ class ReadOnlyIR:
 
 # ------------------------------------ write only IR
 
-class WriteOnlyIR:
-	def __init__(self):
-		self.variables = []	# list of Var
-		self.rules = []		# list of Rule
-		self.builds = []	# list of Build
-		self.projects = []	# list of Project
-
-	def __repr__(self):
-		return "\n".join(filter(len, [
-			"\n".join([str(v) for v in self.variables]),
-			"\n" + "\n".join([str(v) for v in self.rules]) if len(self.rules) else "",
-			"\n" + "\n".join([str(v) for v in self.builds]) if len(self.builds) else "",
-			"\n" + "\n".join([str(v) for v in self.projects] if len(self.projects) else "")
-		]))
+#class WriteOnlyIR:
+#	def __init__(self):
+#		self.variables = []	# list of Var
+#		self.rules = []		# list of Rule
+#		self.builds = []	# list of Build
+#		self.projects = []	# list of Project
+#
+#	def __repr__(self):
+#		return "\n".join(filter(len, [
+#			"\n".join([str(v) for v in self.variables]),
+#			"\n" + "\n".join([str(v) for v in self.rules]) if len(self.rules) else "",
+#			"\n" + "\n".join([str(v) for v in self.builds]) if len(self.builds) else "",
+#			"\n" + "\n".join([str(v) for v in self.projects] if len(self.projects) else "")
+#		]))
+#

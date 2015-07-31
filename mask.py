@@ -3,15 +3,17 @@
 import os
 import argparse
 from lib import maskfile_parser, maskfile_writer
-from lib import to_shell
+from lib import to_shell, to_ninja
 
 argsparser = argparse.ArgumentParser(description = "mask build infrastructure")
 argsparser.add_argument("input", help = "input file")
 argsparser.add_argument("output", help = "output file")
 argsparser.add_argument("--verbose", action = "store_true", help = "verbose output")
+argsparser.add_argument("--variation", help = "sets project variation for some exporters, for example debug")
 args = vars(argsparser.parse_args())
 
-verbose = args["verbose"]
+verbose = args.get("verbose")
+variation = args.get("variation")
 in_file = args["input"]
 out_file = args["output"]
 in_ext = os.path.splitext(in_file)[1]
@@ -38,4 +40,8 @@ if out_ext == ".mask":
 elif out_ext == ".sh" or out_ext == ".bat":
 	if verbose:
 		print("trying to save shell script file " + out_file)
-	to_shell.to_file(out_file, ir)
+	to_shell.to_file(out_file, ir, variation)
+elif out_ext == ".ninja":
+	if verbose:
+		print("trying to save ninja manifest file " + out_file)
+	to_ninja.to_file(out_file, ir, variation)
