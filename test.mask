@@ -7,7 +7,7 @@ var_c = __${var_a}${var_b}
 rule some_rule
   command = test ${var_c} ${in} ${out}
 
-build target1: some_rule input1
+build target1: some_rule input1$ 
 build target2: some_rule target1
 build targetX: some_rule inputX
 build target3: some_rule target2

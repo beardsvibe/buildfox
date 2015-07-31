@@ -1,6 +1,7 @@
 # read write mask ir file
 
 import re
+import pipes
 from lib.maskfile_esc import to_esc, to_esc_iter
 
 # ------------------------------------ basic structures
@@ -34,18 +35,19 @@ class Rule:
 			"\n  " + "\n  ".join([v.__repr__() for k, v in self.variables.items()]) if len(self.variables) else ""
 		)
 
-	def evaluate(self, name, build):
+	def evaluate(self, var_name, build):
 		def repl(matchobj):
 			name = matchobj.group(1)
 			if name == "in":
-				return " ".join(build.inputs_explicit)
+				# TODO replace with shlex.quote on python 3.3+
+				return " ".join([pipes.quote(v) for v in build.inputs_explicit] if var_name == "command" else build.inputs_explicit)
 			if name == "out":
-				return " ".join(build.targets_explicit)
+				return " ".join([pipes.quote(v) for v in build.targets_explicit] if var_name == "command" else build.targets_explicit)
 			if name == "in_newline":
-				return "\n".join(build.inputs_explicit)
+				return "\n".join([pipes.quote(v) for v in build.inputs_explicit] if var_name == "command" else build.inputs_explicit)
 			else:
 				return ""
-		return re.sub("\${([a-zA-Z0-9_.-]+)}", repl, self.variables[name].value)
+		return re.sub("\${([a-zA-Z0-9_.-]+)}", repl, self.variables[var_name].value)
 
 class Build:
 	def __init__(self, comment = ""):
