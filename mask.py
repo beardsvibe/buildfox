@@ -2,8 +2,8 @@
 
 import os
 import argparse
-from lib import maskfile_parser, maskfile_writer
-from lib import to_shell, to_ninja
+from lib import from_mask
+from lib import to_mask, to_shell, to_ninja
 
 argsparser = argparse.ArgumentParser(description = "mask build infrastructure")
 argsparser.add_argument("input", help = "input file")
@@ -25,7 +25,7 @@ ir = None
 if in_ext == ".mask":
 	if verbose:
 		print("trying to parse mask file " + in_file)
-	ir = maskfile_parser.from_file(in_file)
+	ir = from_mask.from_file(in_file)
 
 # do some processing
 #if verbose:
@@ -36,7 +36,7 @@ if in_ext == ".mask":
 if out_ext == ".mask":
 	if verbose:
 		print("trying to save mask file " + out_file)
-	maskfile_writer.to_file(out_file, ir)
+	to_mask.to_file(out_file, ir)
 elif out_ext == ".sh" or out_ext == ".bat":
 	if verbose:
 		print("trying to save shell script file " + out_file)
