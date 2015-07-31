@@ -64,6 +64,13 @@ class Parse:
 			self.last_rule = rule.name
 			#print("added " + str(rule))
 
+	def parse_path_string(self, string):
+		paths = re.split("(?<!\$) +", string) # split by non escaped space
+		paths = filter(len, paths) # remove empty elements from list
+		paths = from_esc_iter(paths)
+		paths = [self.expand_vars(s) for s in paths]
+		return paths
+
 	def parse_build(self, line):
 		line = line[len("build "):]
 		build = Build(comment = self.last_comment)
@@ -75,10 +82,7 @@ class Parse:
 
 		for i, f in enumerate(re.finditer(regex, line)):
 			sep = f.group(0)
-			paths = re.split("(?<!\$) +", arr[i]) # split by non escaped space
-			paths = filter(len, paths) # remove empty elements from list
-			paths = from_esc_iter(paths)
-			paths = [self.expand_vars(s) for s in paths]
+			paths = self.parse_path_string(arr[i])
 
 			if colon:
 				if mode == 0:
@@ -114,10 +118,10 @@ class Parse:
 
 	def parse_project(self, line):
 		if line.startswith("  "):
-			var = self.parse_var(line[2:], add = False)
-			var.value = self.expand_vars(var.value, scope_project = True)
-			self.ir.projects[self.last_project].variables[var.name] = var
-			#print("added " + str(var))
+			name, value = line[2:].split(" = ", 1)
+			paths = self.parse_path_string(value)
+			self.ir.projects[self.last_project].variations[name] = paths
+			#print("added " + name + " = " + paths)
 		else:
 			project = Project(line[len("project "):], comment = self.last_comment)
 			self.ir.projects[project.name] = project
