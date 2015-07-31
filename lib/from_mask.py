@@ -5,8 +5,7 @@
 # TODO create proper parser !
 
 import re
-from lib.maskfile_esc import from_esc, from_esc_iter
-from lib.maskfile import Var, Rule, Build, Project, ReadOnlyIR
+from lib.maskfile import from_esc, from_esc_iter, Var, Rule, Build, Project, ReadOnlyIR
 
 class Parse:
 	def __init__(self):

@@ -1,6 +1,6 @@
 # ------------------------------------ ninja generator tool
 
-from lib.maskfile_esc import to_esc_iter
+from lib.maskfile import to_esc_iter
 
 def to_string(readonly_ir, variation = None):
 	output = "# generated"
