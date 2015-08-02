@@ -4,3 +4,4 @@ python mask_tool_find_common_cmds.py --input test_mask_sorted.asm
 python mask_gen_shell.py --input test_mask_sorted.asm --output test_mask.bat
 python mask_gen_ninja.py --input test_mask_sorted.asm --output test_mask.ninja
 rem python mask_gen_cmake.py --input test_mask_sorted.asm --output CMakeLists.txt
+rem python mask_gen_msvc.py
