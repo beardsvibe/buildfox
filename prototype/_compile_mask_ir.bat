@@ -1,1 +1,0 @@
-python -m grako -o mask_ir_parser.py -m mask_ir_ mask_ir_parser.ebnf

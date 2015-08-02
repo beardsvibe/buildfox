@@ -1,9 +1,0 @@
-rule rule_0
-  command = cl /nologo /showIncludes -c test_mask_a.cpp /Fotest_mask_a.obj
-build test_mask_a.obj: rule_0 test_mask_a.cpp
-rule rule_1
-  command = cl /nologo /showIncludes -c test_mask_b.cpp /Fotest_mask_b.obj
-build test_mask_b.obj: rule_1 test_mask_b.cpp
-rule rule_2
-  command = cl test_mask_a.obj test_mask_b.obj /link /nologo /out:test_mask_result.exe
-build test_mask_result.exe: rule_2 test_mask_a.obj test_mask_b.obj
