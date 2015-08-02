@@ -12,10 +12,12 @@
 
 
 from __future__ import print_function, division, absolute_import, unicode_literals
+
 from grako.parsing import graken, Parser
+from grako.util import re, RE_FLAGS
 
 
-__version__ = (2015, 7, 31, 20, 55, 1, 4)
+__version__ = (2015, 8, 2, 10, 14, 51, 6)
 
 __all__ = [
     'ninja_Parser',
@@ -25,120 +27,179 @@ __all__ = [
 
 
 class ninja_Parser(Parser):
-    def __init__(self, whitespace=None, nameguard=None, **kwargs):
+    def __init__(self, whitespace=re.compile(' +', RE_FLAGS | re.DOTALL), nameguard=None, **kwargs):
         super(ninja_Parser, self).__init__(
             whitespace=whitespace,
             nameguard=nameguard,
-            comments_re=None,
-            eol_comments_re=None,
+            comments_re='#.*?$',
+            eol_comments_re='#.*?$',
             ignorecase=None,
             **kwargs
         )
 
     @graken()
-    def _comment_(self):
-        self._pattern(r'#[^\n]*$')
+    def _whitespace_(self):
+        self._pattern(r' +')
 
     @graken()
     def _eol_(self):
-        self._pattern(r'$\n')
+        self._pattern(r'$|\n')
 
     @graken()
-    def _empty_line_(self):
-        self._pattern(r'[\t ]*')
-        self._eol_()
+    def _simple_varname_(self):
+        self._pattern(r'[a-zA-Z0-9_-]+')
 
     @graken()
-    def _indent_(self):
-        self._pattern(r'[\t ]+')
-
-    @graken()
-    def _indent_opt_(self):
-        self._pattern(r'[\t ]*')
-
-    @graken()
-    def _identifier_(self):
+    def _varname_(self):
         self._pattern(r'[a-zA-Z0-9_.-]+')
 
     @graken()
     def _expr_(self):
-        self._pattern(r'[^\n]*')
+        self._pattern(r'(\$\n|.)*?$')
+
+    @graken()
+    def _PATH_(self):
+        self._pattern(r'((?<!\$)\$\n|\$ |\$:|[^ :|\n])+')
+
+    @graken()
+    def _path_w_(self):
+        self._PATH_()
+
+    @graken()
+    def _paths_(self):
+        with self._optional():
+            self._PATH_()
+            self.ast.setlist('@', self.last_node)
+
+            def block1():
+                self._pattern(r' +')
+
+                self._PATH_()
+                self.ast.setlist('@', self.last_node)
+            self._closure(block1)
 
     @graken()
     def _assign_(self):
-        self._identifier_()
-        self.ast['to'] = self.last_node
-        self._indent_()
+        self._varname_()
+        self.ast['assign'] = self.last_node
         self._token('=')
-        self._indent_()
         self._expr_()
-        self.ast['val'] = self.last_node
-        self._eol_()
+        self.ast['value'] = self.last_node
+        self._pattern(r'$|\n')
 
         self.ast._define(
-            ['to', 'val'],
+            ['assign', 'value'],
             []
         )
+
+    @graken()
+    def _SCOPED_VARS_(self):
+
+        def block0():
+            self._pattern(r'  ')
+            self._assign_()
+            self.ast.setlist('@', self.last_node)
+        self._closure(block0)
 
     @graken()
     def _rule_(self):
         self._token('rule')
-        self._indent_()
-        self._identifier_()
-        self.ast['name'] = self.last_node
-        self._indent_opt_()
-        self._eol_()
+        self._varname_()
+        self.ast['rule'] = self.last_node
+        self._pattern(r'$|\n')
 
-        def block1():
-            self._indent_()
-            self._assign_()
-            self.ast['vars'] = self.last_node
-        self._closure(block1)
+        self._SCOPED_VARS_()
+        self.ast['vars'] = self.last_node
 
         self.ast._define(
-            ['name', 'vars'],
+            ['rule', 'vars'],
             []
         )
 
     @graken()
-    def _path_(self):
-        self._pattern(r'[^\n\t: ]+')
-
-    @graken()
-    def _path_list_(self):
-        self._indent_()
-        self._path_()
-        self.ast.setlist('@', self.last_node)
-
-        def block1():
-            self._indent_()
-            self._path_()
-            self.ast.setlist('@', self.last_node)
-        self._closure(block1)
-
-    @graken()
     def _build_(self):
         self._token('build')
-        self._path_list_()
-        self.ast['outputs'] = self.last_node
-        self._indent_opt_()
+        self._paths_()
+        self.ast['targets_explicit'] = self.last_node
+        with self._optional():
+            self._token('|')
+            self._paths_()
+            self.ast['targets_implicit'] = self.last_node
         self._token(':')
-        self._indent_opt_()
-        self._identifier_()
-        self.ast['rule_name'] = self.last_node
-        self._path_list_()
-        self.ast['inputs'] = self.last_node
-        self._indent_opt_()
-        self._eol_()
+        self._varname_()
+        self.ast['build'] = self.last_node
+        self._paths_()
+        self.ast['inputs_explicit'] = self.last_node
+        with self._optional():
+            self._token('|')
+            self._paths_()
+            self.ast['inputs_implicit'] = self.last_node
+        with self._optional():
+            self._token('||')
+            self._paths_()
+            self.ast['inputs_order'] = self.last_node
+        self._pattern(r'$')
+        self._pattern(r'$|\n')
 
-        def block3():
-            self._indent_()
-            self._assign_()
-            self.ast['vars'] = self.last_node
-        self._closure(block3)
+        self._SCOPED_VARS_()
+        self.ast['vars'] = self.last_node
 
         self.ast._define(
-            ['outputs', 'rule_name', 'inputs', 'vars'],
+            ['targets_explicit', 'targets_implicit', 'build', 'inputs_explicit', 'inputs_implicit', 'inputs_order', 'vars'],
+            []
+        )
+
+    @graken()
+    def _default_(self):
+        self._token('default')
+        self._paths_()
+        self.ast['defaults'] = self.last_node
+        self._pattern(r'$')
+        self._pattern(r'$|\n')
+
+        self.ast._define(
+            ['defaults'],
+            []
+        )
+
+    @graken()
+    def _pool_(self):
+        self._token('pool')
+        self._varname_()
+        self.ast['pool'] = self.last_node
+        self._pattern(r'$|\n')
+
+        self._SCOPED_VARS_()
+        self.ast['vars'] = self.last_node
+
+        self.ast._define(
+            ['pool', 'vars'],
+            []
+        )
+
+    @graken()
+    def _include_(self):
+        self._token('include')
+        self._path_w_()
+        self.ast['include'] = self.last_node
+        self._pattern(r'$')
+        self._pattern(r'$|\n')
+
+        self.ast._define(
+            ['include'],
+            []
+        )
+
+    @graken()
+    def _subninja_(self):
+        self._token('subninja')
+        self._path_w_()
+        self.ast['subninja'] = self.last_node
+        self._pattern(r'$')
+        self._pattern(r'$|\n')
+
+        self.ast._define(
+            ['subninja'],
             []
         )
 
@@ -148,17 +209,25 @@ class ninja_Parser(Parser):
         def block0():
             with self._choice():
                 with self._option():
-                    self._empty_line_()
-                with self._option():
-                    self._comment_()
-                with self._option():
-                    self._assign_()
-                    self.ast.setlist('@', self.last_node)
-                with self._option():
                     self._rule_()
                     self.ast.setlist('@', self.last_node)
                 with self._option():
                     self._build_()
+                    self.ast.setlist('@', self.last_node)
+                with self._option():
+                    self._default_()
+                    self.ast.setlist('@', self.last_node)
+                with self._option():
+                    self._pool_()
+                    self.ast.setlist('@', self.last_node)
+                with self._option():
+                    self._include_()
+                    self.ast.setlist('@', self.last_node)
+                with self._option():
+                    self._subninja_()
+                    self.ast.setlist('@', self.last_node)
+                with self._option():
+                    self._assign_()
                     self.ast.setlist('@', self.last_node)
                 self._error('no available options')
         self._closure(block0)
@@ -166,40 +235,52 @@ class ninja_Parser(Parser):
 
 
 class ninja_Semantics(object):
-    def comment(self, ast):
+    def whitespace(self, ast):
         return ast
 
     def eol(self, ast):
         return ast
 
-    def empty_line(self, ast):
+    def simple_varname(self, ast):
         return ast
 
-    def indent(self, ast):
-        return ast
-
-    def indent_opt(self, ast):
-        return ast
-
-    def identifier(self, ast):
+    def varname(self, ast):
         return ast
 
     def expr(self, ast):
         return ast
 
+    def PATH(self, ast):
+        return ast
+
+    def path_w(self, ast):
+        return ast
+
+    def paths(self, ast):
+        return ast
+
     def assign(self, ast):
+        return ast
+
+    def SCOPED_VARS(self, ast):
         return ast
 
     def rule(self, ast):
         return ast
 
-    def path(self, ast):
-        return ast
-
-    def path_list(self, ast):
-        return ast
-
     def build(self, ast):
+        return ast
+
+    def default(self, ast):
+        return ast
+
+    def pool(self, ast):
+        return ast
+
+    def include(self, ast):
+        return ast
+
+    def subninja(self, ast):
         return ast
 
     def manifest(self, ast):

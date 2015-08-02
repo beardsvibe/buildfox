@@ -1,22 +1,59 @@
-# TODO expr, path - escaping
-# TODO build - implicit deps, order only deps, implicit outputs
+@@whitespace :: / +/
+@@comments :: /#.*?$/
+@@eol_comments :: /#.*?$/
+whitespace = / +/;
+eol = /$|\n/;
 
-comment = /#[^\n]*$/;
-eol = /$\n/;
-empty_line = /[\t ]*/ eol;
-indent = /[\t ]+/;
-indent_opt = /[\t ]*/;
+simple_varname = /[a-zA-Z0-9_-]+/;
+varname = /[a-zA-Z0-9_.-]+/;
 
-identifier = /[a-zA-Z0-9_.-]+/;
+expr = /(\$\n|.)*?$/;
+PATH = /((?<!\$)\$\n|\$ |\$:|[^ :|\n])+/;
+path_w = PATH;
+paths = [@+:PATH {>whitespace @+:PATH}*];
 
-expr = /[^\n]*/;
-assign = to:identifier indent "=" indent val:expr eol;
+assign = assign:varname "=" value:expr >eol;
 
-rule = "rule" indent name:identifier indent_opt eol {indent vars:assign}*;
+SCOPED_VARS = {/  / @+:assign}*;
 
-path = /[^\n\t: ]+/;
-path_list = indent @+:path {indent @+:path}*;
+rule =
+	"rule"
+	rule:varname
+	>eol
+	vars:SCOPED_VARS;
 
-build = "build" outputs:path_list indent_opt ":" indent_opt rule_name:identifier inputs:path_list indent_opt eol {indent vars:assign}*;
+build =
+	"build"
+	targets_explicit: paths
+	["|" targets_implicit: paths]
+	":"
+	build:varname
+	inputs_explicit: paths
+	["|" inputs_implicit: paths]
+	["||" inputs_order: paths]
+	/$/
+	>eol
+	vars:SCOPED_VARS;
 
-manifest = {empty_line | comment | @+:assign | @+:rule | @+:build}* $;
+default =
+	"default"
+	defaults:paths /$/
+	>eol;
+
+pool =
+	"pool"
+	pool:varname
+	>eol
+	vars:SCOPED_VARS;
+
+include =
+	"include"
+	include:path_w /$/
+	>eol;
+
+subninja =
+	"subninja"
+	subninja:path_w /$/
+	>eol;
+
+manifest = {@+:rule | @+:build | @+:default | @+:pool | @+:include | @+:subninja | @+:assign}* $;
