@@ -25,4 +25,4 @@ i2 i$
    ll
   v2 = k2
 
-build a:r || b
+build :r || b

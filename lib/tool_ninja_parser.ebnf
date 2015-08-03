@@ -1,16 +1,16 @@
 @@whitespace :: / +/
 @@comments :: /#.*?$/
 @@eol_comments :: /#.*?$/
-whitespace = / +/;
-eol = /$|\n/;
+whitespace_opt = / */;
+eol = >whitespace_opt /(\n|$)/;
 
 simple_varname = /[a-zA-Z0-9_-]+/;
 varname = /[a-zA-Z0-9_.-]+/;
 
 expr = /(\$\n|.)*?$/;
 PATH = /((?<!\$)\$\n|\$ |\$:|[^ :|\n])+/;
-path_w = PATH;
-paths = [@+:PATH {>whitespace @+:PATH}*];
+path_once = PATH;
+paths = {@+:PATH >whitespace_opt}*;
 
 assign = assign:varname "=" value:expr >eol;
 
@@ -24,20 +24,19 @@ rule =
 
 build =
 	"build"
-	targets_explicit: paths
-	["|" targets_implicit: paths]
-	":"
+	targets_explicit:paths
+	[/(?<!\|)\|(?!\|)/ targets_implicit:paths]
+	/:/
 	build:varname
-	inputs_explicit: paths
-	["|" inputs_implicit: paths]
-	["||" inputs_order: paths]
-	/$/
+	inputs_explicit:paths
+	[/(?<!\|)\|(?!\|)/ inputs_implicit:paths]
+	[/\|\|/ inputs_order:paths]
 	>eol
 	vars:SCOPED_VARS;
 
 default =
 	"default"
-	defaults:paths /$/
+	defaults:paths
 	>eol;
 
 pool =
@@ -48,12 +47,12 @@ pool =
 
 include =
 	"include"
-	include:path_w /$/
+	include:path_once
 	>eol;
 
 subninja =
 	"subninja"
-	subninja:path_w /$/
+	subninja:path_once
 	>eol;
 
 manifest = {@+:rule | @+:build | @+:default | @+:pool | @+:include | @+:subninja | @+:assign}* $;

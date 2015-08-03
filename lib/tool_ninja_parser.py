@@ -17,7 +17,7 @@ from grako.parsing import graken, Parser
 from grako.util import re, RE_FLAGS
 
 
-__version__ = (2015, 8, 2, 10, 14, 51, 6)
+__version__ = (2015, 8, 3, 9, 5, 20, 0)
 
 __all__ = [
     'ninja_Parser',
@@ -38,12 +38,14 @@ class ninja_Parser(Parser):
         )
 
     @graken()
-    def _whitespace_(self):
-        self._pattern(r' +')
+    def _whitespace_opt_(self):
+        self._pattern(r' *')
 
     @graken()
     def _eol_(self):
-        self._pattern(r'$|\n')
+        self._pattern(r' *')
+
+        self._pattern(r'(\n|$)')
 
     @graken()
     def _simple_varname_(self):
@@ -62,21 +64,17 @@ class ninja_Parser(Parser):
         self._pattern(r'((?<!\$)\$\n|\$ |\$:|[^ :|\n])+')
 
     @graken()
-    def _path_w_(self):
+    def _path_once_(self):
         self._PATH_()
 
     @graken()
     def _paths_(self):
-        with self._optional():
+
+        def block0():
             self._PATH_()
             self.ast.setlist('@', self.last_node)
-
-            def block1():
-                self._pattern(r' +')
-
-                self._PATH_()
-                self.ast.setlist('@', self.last_node)
-            self._closure(block1)
+            self._pattern(r' *')
+        self._closure(block0)
 
     @graken()
     def _assign_(self):
@@ -85,7 +83,9 @@ class ninja_Parser(Parser):
         self._token('=')
         self._expr_()
         self.ast['value'] = self.last_node
-        self._pattern(r'$|\n')
+        self._pattern(r' *')
+
+        self._pattern(r'(\n|$)')
 
         self.ast._define(
             ['assign', 'value'],
@@ -106,7 +106,9 @@ class ninja_Parser(Parser):
         self._token('rule')
         self._varname_()
         self.ast['rule'] = self.last_node
-        self._pattern(r'$|\n')
+        self._pattern(r' *')
+
+        self._pattern(r'(\n|$)')
 
         self._SCOPED_VARS_()
         self.ast['vars'] = self.last_node
@@ -122,24 +124,25 @@ class ninja_Parser(Parser):
         self._paths_()
         self.ast['targets_explicit'] = self.last_node
         with self._optional():
-            self._token('|')
+            self._pattern(r'(?<!\|)\|(?!\|)')
             self._paths_()
             self.ast['targets_implicit'] = self.last_node
-        self._token(':')
+        self._pattern(r':')
         self._varname_()
         self.ast['build'] = self.last_node
         self._paths_()
         self.ast['inputs_explicit'] = self.last_node
         with self._optional():
-            self._token('|')
+            self._pattern(r'(?<!\|)\|(?!\|)')
             self._paths_()
             self.ast['inputs_implicit'] = self.last_node
         with self._optional():
-            self._token('||')
+            self._pattern(r'\|\|')
             self._paths_()
             self.ast['inputs_order'] = self.last_node
-        self._pattern(r'$')
-        self._pattern(r'$|\n')
+        self._pattern(r' *')
+
+        self._pattern(r'(\n|$)')
 
         self._SCOPED_VARS_()
         self.ast['vars'] = self.last_node
@@ -154,8 +157,9 @@ class ninja_Parser(Parser):
         self._token('default')
         self._paths_()
         self.ast['defaults'] = self.last_node
-        self._pattern(r'$')
-        self._pattern(r'$|\n')
+        self._pattern(r' *')
+
+        self._pattern(r'(\n|$)')
 
         self.ast._define(
             ['defaults'],
@@ -167,7 +171,9 @@ class ninja_Parser(Parser):
         self._token('pool')
         self._varname_()
         self.ast['pool'] = self.last_node
-        self._pattern(r'$|\n')
+        self._pattern(r' *')
+
+        self._pattern(r'(\n|$)')
 
         self._SCOPED_VARS_()
         self.ast['vars'] = self.last_node
@@ -180,10 +186,11 @@ class ninja_Parser(Parser):
     @graken()
     def _include_(self):
         self._token('include')
-        self._path_w_()
+        self._path_once_()
         self.ast['include'] = self.last_node
-        self._pattern(r'$')
-        self._pattern(r'$|\n')
+        self._pattern(r' *')
+
+        self._pattern(r'(\n|$)')
 
         self.ast._define(
             ['include'],
@@ -193,10 +200,11 @@ class ninja_Parser(Parser):
     @graken()
     def _subninja_(self):
         self._token('subninja')
-        self._path_w_()
+        self._path_once_()
         self.ast['subninja'] = self.last_node
-        self._pattern(r'$')
-        self._pattern(r'$|\n')
+        self._pattern(r' *')
+
+        self._pattern(r'(\n|$)')
 
         self.ast._define(
             ['subninja'],
@@ -235,7 +243,7 @@ class ninja_Parser(Parser):
 
 
 class ninja_Semantics(object):
-    def whitespace(self, ast):
+    def whitespace_opt(self, ast):
         return ast
 
     def eol(self, ast):
@@ -253,7 +261,7 @@ class ninja_Semantics(object):
     def PATH(self, ast):
         return ast
 
-    def path_w(self, ast):
+    def path_once(self, ast):
         return ast
 
     def paths(self, ast):
