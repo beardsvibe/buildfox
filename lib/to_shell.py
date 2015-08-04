@@ -1,5 +1,8 @@
 # ------------------------------------ shell generator tool
 
+import os
+from lib.maskfile import to_esc_shell
+
 def to_string(readonly_ir, variation = None):
 	# build target -> build index dictionary
 	targets = {}
@@ -33,8 +36,19 @@ def to_string(readonly_ir, variation = None):
 	for target in end_targets:
 		all_deps(target)
 
+	# figure out target folders
+	target_folders = set()
+	for i, build in enumerate(readonly_ir.builds):
+		if i in need_to_build:
+			for path in build.targets_explicit + build.targets_implicit:
+				dir = os.path.dirname(path)
+				if len(dir):
+					target_folders.add(dir)
+
 	# write commands
 	output = ""
+	for folder in target_folders:
+		output += "mkdir " + to_esc_shell(folder) + "\n"
 	for i, build in enumerate(readonly_ir.builds):
 		if i in need_to_build:
 			if build.rule == "phony":

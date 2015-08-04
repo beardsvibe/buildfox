@@ -35,7 +35,7 @@ def to_esc_iter(iter):
 def from_esc_iter(iter):
 	return [from_esc(s) for s in iter]
 
-def to_esc_path(str):
+def to_esc_shell(str):
 	# TODO replace with shlex.quote on python 3.3+
 	unsafe = ["\"", " "]
 	if any(s in str for s in unsafe):
@@ -78,11 +78,11 @@ class Rule:
 		def repl(matchobj):
 			name = matchobj.group(1)
 			if name == "in":
-				return " ".join([to_esc_path(v) for v in build.inputs_explicit] if var_name == "command" else build.inputs_explicit)
+				return " ".join([to_esc_shell(v) for v in build.inputs_explicit] if var_name == "command" else build.inputs_explicit)
 			if name == "out":
-				return " ".join([to_esc_path(v) for v in build.targets_explicit] if var_name == "command" else build.targets_explicit)
+				return " ".join([to_esc_shell(v) for v in build.targets_explicit] if var_name == "command" else build.targets_explicit)
 			if name == "in_newline":
-				return "\n".join([to_esc_path(v) for v in build.inputs_explicit] if var_name == "command" else build.inputs_explicit)
+				return "\n".join([to_esc_shell(v) for v in build.inputs_explicit] if var_name == "command" else build.inputs_explicit)
 			else:
 				return ""
 		return re.sub("\${([a-zA-Z0-9_.-]+)}", repl, self.variables[var_name].value)
