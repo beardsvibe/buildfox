@@ -2,72 +2,42 @@
 
 import os
 from lib.maskfile import to_esc_shell
+from lib.tool_build_list import variation_build_list
 
 def to_string(readonly_ir, variation = None):
-	# build target -> build index dictionary
-	targets = {}
-	for i, build in enumerate(readonly_ir.builds):
-		for target in build.targets_explicit:
-			if target in targets:
-				raise ValueError("multiple commands build " + target)
-			targets[target] = i
-		for target in build.targets_implicit:
-			if target in targets:
-				raise ValueError("multiple commands build " + target)
-			targets[target] = i
-
-	# figure out end targets
-	end_targets = set()
-	for prj_name, project in readonly_ir.projects.items():
-		for name, paths in project.variations.items():
-			if (not variation) or (name == variation):
-				end_targets = end_targets.union(set(paths))
-
-	# figure out what to build
-	need_to_build = set()
-	def all_deps(target):
-		if target in targets:
-			index = targets[target]
-			need_to_build.add(index)
-			build = readonly_ir.builds[index]
-			deps = set(build.inputs_explicit).union(build.inputs_implicit).union(build.inputs_order)
-			for dep in deps:
-				all_deps(dep)
-	for target in end_targets:
-		all_deps(target)
+	# get list of what we need to build
+	builds = variation_build_list(readonly_ir, variation)
 
 	# figure out target folders
 	target_folders = set()
-	for i, build in enumerate(readonly_ir.builds):
-		if i in need_to_build:
-			for path in build.targets_explicit + build.targets_implicit:
-				dir = os.path.dirname(path)
-				if len(dir):
-					target_folders.add(dir)
+	for build in builds:
+		for path in build.targets_explicit + build.targets_implicit:
+			dir = os.path.dirname(path)
+			if len(dir):
+				target_folders.add(dir)
 
 	# write commands
 	output = ""
 	for folder in target_folders:
 		output += "mkdir " + to_esc_shell(folder) + "\n"
-	for i, build in enumerate(readonly_ir.builds):
-		if i in need_to_build:
-			if build.rule == "phony":
-				continue
-			if build.rule not in readonly_ir.rules:
-				raise ValueError("unknown rule " + build.rule)
-			rule = readonly_ir.rules[build.rule]
-			if "command" not in rule.variables:
-				raise ValueError("rule " + build.rule + " doesn't have command variable")
-			command = rule.evaluate("command", build)
-			
-			if "depfile" in rule.variables:
-				print("TODO support depfile in to_shell")
-			if "generator" in rule.variables:
-				print("TODO support generator in to_shell") # is it even possible ?
-			if "rspfile" in rule.variables:
-				print("TODO support rspfile in to_shell")
+	for build in builds:
+		if build.rule == "phony":
+			continue
+		if build.rule not in readonly_ir.rules:
+			raise ValueError("unknown rule " + build.rule)
+		rule = readonly_ir.rules[build.rule]
+		if "command" not in rule.variables:
+			raise ValueError("rule " + build.rule + " doesn't have command variable")
+		command = rule.evaluate("command", build)
 
-			output += command + "\n"
+		if "depfile" in rule.variables:
+			print("TODO support depfile in to_shell")
+		if "generator" in rule.variables:
+			print("TODO support generator in to_shell") # is it even possible ?
+		if "rspfile" in rule.variables:
+			print("TODO support rspfile in to_shell")
+
+		output += command + "\n"
 
 	return output
 
