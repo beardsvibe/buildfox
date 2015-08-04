@@ -7,12 +7,12 @@ eol = >whitespace_opt /(\n|$)/;
 simple_varname = /[a-zA-Z0-9_-]+/;
 varname = /[a-zA-Z0-9_.-]+/;
 
-expr = /(\$\n|.)*?$/;
+EXPR = /(\$\n|.)*?$/;
 PATH = /((?<!\$)\$\n|\$ |\$:|[^ :|\n])+/;
 path_once = PATH;
 paths = {@+:PATH >whitespace_opt}*;
 
-assign = assign:varname "=" value:expr >eol;
+assign = assign:varname "=" >whitespace_opt value:EXPR >eol;
 
 SCOPED_VARS = {/  / @+:assign}*;
 

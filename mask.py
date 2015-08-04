@@ -2,7 +2,7 @@
 
 import os
 import argparse
-from lib import from_mask
+from lib import from_mask, from_ninja
 from lib import to_mask, to_shell, to_ninja
 
 argsparser = argparse.ArgumentParser(description = "mask build infrastructure")
@@ -26,6 +26,10 @@ if in_ext == ".mask":
 	if verbose:
 		print("trying to parse mask file " + in_file)
 	ir = from_mask.from_file(in_file)
+elif in_ext == ".ninja":
+	if verbose:
+		print("trying to parse ninja file " + in_file)
+	ir = from_ninja.from_file(in_file)
 
 # do some processing
 #if verbose:

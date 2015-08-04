@@ -17,7 +17,7 @@ from grako.parsing import graken, Parser
 from grako.util import re, RE_FLAGS
 
 
-__version__ = (2015, 8, 3, 9, 5, 20, 0)
+__version__ = (2015, 8, 3, 12, 7, 54, 0)
 
 __all__ = [
     'ninja_Parser',
@@ -56,7 +56,7 @@ class ninja_Parser(Parser):
         self._pattern(r'[a-zA-Z0-9_.-]+')
 
     @graken()
-    def _expr_(self):
+    def _EXPR_(self):
         self._pattern(r'(\$\n|.)*?$')
 
     @graken()
@@ -81,7 +81,9 @@ class ninja_Parser(Parser):
         self._varname_()
         self.ast['assign'] = self.last_node
         self._token('=')
-        self._expr_()
+        self._pattern(r' *')
+
+        self._EXPR_()
         self.ast['value'] = self.last_node
         self._pattern(r' *')
 
@@ -255,7 +257,7 @@ class ninja_Semantics(object):
     def varname(self, ast):
         return ast
 
-    def expr(self, ast):
+    def EXPR(self, ast):
         return ast
 
     def PATH(self, ast):
