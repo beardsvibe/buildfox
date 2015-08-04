@@ -1,2 +1,3 @@
 prototype/__pycache__/
 *.pyc
+test_out.*
