@@ -4,6 +4,10 @@ import uuid
 import shlex
 from lib.tool_build_list import build_targets_dict, needed_to_execute_indexes, needed_to_execute_builds
 
+# TODO
+def is_source(name):
+	return name.lower().endswith((".c", ".cpp", ".cxx", ".cc", ".h", ".hpp", ".hxx"))
+
 def gen_uuid():
 	return "{{{0}}}".format(str(uuid.uuid4()).upper())
 
@@ -11,8 +15,8 @@ def gen_uuid_from(s):
 	return "{{{0}}}".format(str(uuid.uuid5(uuid.NAMESPACE_URL, s)).upper())
 
 def generate_solution(projects):
-	output = "Microsoft Visual Studio Solution File, Format Version 12.00" + "\n"
-	output += "# Visual Studio 2012" + "\n"
+	output = "Microsoft Visual Studio Solution File, Format Version 13.00" + "\n"
+	output += "# Visual Studio 2013" + "\n"
 
 	for project in projects:
 		name = project["name"]
@@ -59,14 +63,14 @@ def generate_project(project, root):
 	project_file += '	<PropertyGroup Condition="\'$(Configuration)|$(Platform)\'==\'Debug|Win32\'" Label="Configuration">' + "\n"
 	project_file += '		<ConfigurationType>Application</ConfigurationType>' + "\n"
 	project_file += '		<UseDebugLibraries>true</UseDebugLibraries>' + "\n"
-	project_file += '		<PlatformToolset>v110</PlatformToolset>' + "\n"
+	project_file += '		<PlatformToolset>v120</PlatformToolset>' + "\n"
 	project_file += '		<CharacterSet>Unicode</CharacterSet>' + "\n"
 	project_file += '	</PropertyGroup>' + "\n"
 
 	project_file += '	<PropertyGroup Condition="\'$(Configuration)|$(Platform)\'==\'Release|Win32\'" Label="Configuration">' + "\n"
 	project_file += '		<ConfigurationType>Application</ConfigurationType>' + "\n"
 	project_file += '		<UseDebugLibraries>false</UseDebugLibraries>' + "\n"
-	project_file += '		<PlatformToolset>v110</PlatformToolset>' + "\n"
+	project_file += '		<PlatformToolset>v120</PlatformToolset>' + "\n"
 	project_file += '		<WholeProgramOptimization>true</WholeProgramOptimization>' + "\n"
 	project_file += '		<CharacterSet>Unicode</CharacterSet>' + "\n"
 	project_file += '	</PropertyGroup>' + "\n"
@@ -127,7 +131,10 @@ def generate_project(project, root):
 	project_file += '	<ItemGroup>' + "\n"
 	for file in files:
 		relative_path = relative_to_root(file)
-		project_file += '		<ClInclude Include="{0}" />'.format(relative_path) + "\n"
+		if is_source(file):
+			project_file += '		<ClCompile Include="{0}" />'.format(relative_path) + "\n"
+		else:
+			project_file += '		<ClInclude Include="{0}" />'.format(relative_path) + "\n"
 	project_file += '	</ItemGroup>' + "\n"
 
 	project_file += '	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />' + "\n"
@@ -141,14 +148,13 @@ def parent_dir_of(path):
 	parents = []
 
 	path = os.path.dirname(path)
-	while path not in ['.', '/', '']:
+	while path not in ['.', '/', '\\', 'C:\\', 'C:/', '']:
 		parents.append(path)
 		path = os.path.dirname(path)
 
 	return list(reversed(parents))
 
 # Is it for real, that python lacks this?
-
 def flatten(_list):
 	return sum(([x] if not isinstance(x, list) else flatten(x) for x in _list), [])
 
@@ -177,9 +183,14 @@ def generate_project_filters(project, root):
 		file_path = relative_to_root(file)
 		filter_path = os.path.dirname(file)
 
-		filters += '		<ClInclude Include="{0}">'.format(file_path) + "\n"
-		filters += '			<Filter>{0}</Filter>'.format(filter_path) + "\n"
-		filters += '		</ClInclude>' + "\n"
+		if is_source(file):
+			filters += '		<ClCompile Include="{0}">'.format(file_path) + "\n"
+			filters += '			<Filter>{0}</Filter>'.format(filter_path) + "\n"
+			filters += '		</ClCompile>' + "\n"
+		else:
+			filters += '		<ClInclude Include="{0}">'.format(file_path) + "\n"
+			filters += '			<Filter>{0}</Filter>'.format(filter_path) + "\n"
+			filters += '		</ClInclude>' + "\n"
 	filters += '	</ItemGroup>' + "\n"
 
 	filters += '</Project>' + "\n"
@@ -268,7 +279,7 @@ class BuildTarget:
 		return self.target.lower().endswith(".obj")
 
 	def is_source(self):
-		return self.target.lower().endswith((".c", ".cpp", ".cxx", ".cc", ".h", ".hpp", ".hxx"))
+		return is_source(self.target)
 
 	def __repr__(self):
 		return self.target
@@ -401,6 +412,7 @@ def to_file(filename_sln, readonly_ir, args = None):
 	# get list of what we need to build
 	targets_dict = build_targets_dict(readonly_ir)
 
+	root = os.path.dirname(filename_sln)
 	final_projects = [
 		#{ "name": "application", "guid": gen_uuid(), "files": ["app/main.cpp", "app/test_folder/nested.cpp"] },
 		#{ "name": "tests", "guid": gen_uuid(), "files": ["tests/string-tests.cpp", "tests/vector-tests.cpp"] }
@@ -424,7 +436,8 @@ def to_file(filename_sln, readonly_ir, args = None):
 				build_tree.figure_out_linker_settings(readonly_ir)
 				order_trees(build_tree)
 
-			#pprint(msvc_trees)
+			print("Result msvc project trees : ")
+			pprint(msvc_trees)
 
 			# TODO merge different build trees for different variation
 			for tree in msvc_trees:
@@ -432,12 +445,12 @@ def to_file(filename_sln, readonly_ir, args = None):
 					{
 						"name": prj_name + "_" + variation_name + "_" + tree.end_target.target,
 						"guid": gen_uuid(),
-						"files": [src.target for src in tree.source_targets]
+						"files": [os.path.relpath(src.target, root) for src in tree.source_targets]
 						# TODO add compiler flags !
 					}
 				)
 
-	root = os.path.dirname(filename_sln)
+	print("Projects for final generation :")
 	pprint(final_projects)
 
 	with open(filename_sln, "w") as f:
@@ -446,32 +459,7 @@ def to_file(filename_sln, readonly_ir, args = None):
 	for project in final_projects:
 		project_content = generate_project(project, root)
 		filters_content = generate_project_filters(project, root)
-		with open(root + "/{0}.vcxproj".format(project["name"]), "w") as f:
+		with open(os.path.join(root, "{0}.vcxproj".format(project["name"])), "w") as f:
 			f.write(project_content)
-		with open(root + "/{0}.vcxproj.filters".format(project["name"]), "w") as f:
+		with open(os.path.join(root, "{0}.vcxproj.filters".format(project["name"])), "w") as f:
 			f.write(filters_content)
-
-
-### TEST
-#root = "msvc-tests"
-#if os.path.isdir(root):
-#	shutil.rmtree(root)
-#os.mkdir(root)
-#os.chdir(root)
-#
-#projects = [
-#	{ "name": "application", "guid": gen_uuid(), "files": ["app/main.cpp", "app/test_folder/nested.cpp"] },
-#	{ "name": "tests", "guid": gen_uuid(), "files": ["tests/string-tests.cpp", "tests/vector-tests.cpp"] }
-#]
-#
-#with open("test.sln", "w") as f:
-#	f.write(generate_solution(projects))
-#
-#for project in projects:
-#	project_content = generate_project(project, root)
-#	filters_content = generate_project_filters(project, root)
-#	with open("{0}.vcxproj".format(project["name"]), "w") as f:
-#		f.write(project_content)
-#	with open("{0}.vcxproj.filters".format(project["name"]), "w") as f:
-#		f.write(filters_content)
-#
