@@ -3,7 +3,20 @@
 import os
 import argparse
 from lib import from_mask, from_ninja
-from lib import to_mask, to_shell, to_ninja
+from lib import to_mask, to_shell, to_ninja, to_msvc
+
+parsers = {
+	".mask":	from_mask.from_file,
+	".ninja":	from_ninja.from_file
+}
+
+generators = {
+	".mask":	to_mask.to_file,
+	".sh":		to_shell.to_file,
+	".bat":		to_shell.to_file,
+	".ninja":	to_ninja.to_file,
+	".sln":		to_msvc.to_file
+}
 
 argsparser = argparse.ArgumentParser(description = "mask build infrastructure")
 argsparser.add_argument("input", help = "input file")
@@ -12,40 +25,15 @@ argsparser.add_argument("--verbose", action = "store_true", help = "verbose outp
 argsparser.add_argument("--variation", help = "sets project variation for some exporters, for example debug")
 args = vars(argsparser.parse_args())
 
-verbose = args.get("verbose")
-variation = args.get("variation")
 in_file = args["input"]
 out_file = args["output"]
 in_ext = os.path.splitext(in_file)[1]
 out_ext = os.path.splitext(out_file)[1]
 
-ir = None
+if in_ext not in parsers:
+	raise ValueError("unknown input extension " + in_ext)
+if out_ext not in generators:
+	raise ValueError("unknown output extension " + out_ext)
 
-# import
-if in_ext == ".mask":
-	if verbose:
-		print("trying to parse mask file " + in_file)
-	ir = from_mask.from_file(in_file)
-elif in_ext == ".ninja":
-	if verbose:
-		print("trying to parse ninja file " + in_file)
-	ir = from_ninja.from_file(in_file)
-
-# do some processing
-#if verbose:
-	#print("parsed ir : ")
-	#print(ir)
-
-# export
-if out_ext == ".mask":
-	if verbose:
-		print("trying to save mask file " + out_file)
-	to_mask.to_file(out_file, ir)
-elif out_ext == ".sh" or out_ext == ".bat":
-	if verbose:
-		print("trying to save shell script file " + out_file)
-	to_shell.to_file(out_file, ir, variation)
-elif out_ext == ".ninja":
-	if verbose:
-		print("trying to save ninja manifest file " + out_file)
-	to_ninja.to_file(out_file, ir, variation)
+ir = parsers[in_ext](in_file)
+generators[out_ext](out_file, ir, args)

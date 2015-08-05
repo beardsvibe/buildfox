@@ -2,7 +2,8 @@
 
 from lib.maskfile import to_esc_iter
 
-def to_string(readonly_ir, variation = None):
+def to_string(readonly_ir, args = None):
+	variation = args["variation"]
 	output = "# generated"
 
 	output += "\n\n" + "\n".join([str(v) for k, v in readonly_ir.rules.items()]) if len(readonly_ir.rules) else ""
@@ -18,6 +19,6 @@ def to_string(readonly_ir, variation = None):
 
 	return output
 
-def to_file(filename, readonly_ir, variation = None):
+def to_file(filename, readonly_ir, args = None):
 	with open(filename, "w") as f:
-		f.write(to_string(readonly_ir, variation))
+		f.write(to_string(readonly_ir, args))

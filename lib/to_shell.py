@@ -4,9 +4,10 @@ import os
 from lib.maskfile import to_esc_shell
 from lib.tool_build_list import variation_build_list
 
-def to_string(readonly_ir, variation = None):
+def to_string(readonly_ir, args = None):
 	# get list of what we need to build
-	builds = variation_build_list(readonly_ir, variation)
+	variation = args["variation"]
+	builds, all_inputs = variation_build_list(readonly_ir, variation)
 
 	# figure out target folders
 	target_folders = set()
@@ -41,6 +42,6 @@ def to_string(readonly_ir, variation = None):
 
 	return output
 
-def to_file(filename, readonly_ir, variation = None):
+def to_file(filename, readonly_ir, args = None):
 	with open(filename, "w") as f:
-		f.write(to_string(readonly_ir, variation))
+		f.write(to_string(readonly_ir, args))

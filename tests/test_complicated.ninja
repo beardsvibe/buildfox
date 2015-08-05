@@ -66,10 +66,7 @@ build $builddir\msvc_helper_main-win32.obj: cxx $
     $sourcedir\src\msvc_helper_main-win32.cc
 build $builddir\minidump-win32.obj: cxx $sourcedir\src\minidump-win32.cc
 build $builddir\getopt.obj: cxx $sourcedir\src\getopt.c
-
-# Main executable is library plus main() function.
-build $builddir\ninja.obj: cxx $sourcedir\src\ninja.cc
-build ninja.exe: link $builddir\ninja.obj $builddir\build.obj $builddir\build_log.obj $
+build $builddir\ninja.lib: ar $builddir\build.obj $builddir\build_log.obj $
     $builddir\clean.obj $builddir\debug_flags.obj $
     $builddir\depfile_parser.obj $builddir\deps_log.obj $
     $builddir\disk_interface.obj $builddir\edit_distance.obj $
@@ -80,6 +77,11 @@ build ninja.exe: link $builddir\ninja.obj $builddir\build.obj $builddir\build_lo
     $builddir\includes_normalize-win32.obj $builddir\msvc_helper-win32.obj $
     $builddir\msvc_helper_main-win32.obj $builddir\minidump-win32.obj $
     $builddir\getopt.obj
+
+# Main executable is library plus main() function.
+build $builddir\ninja.obj: cxx $sourcedir\src\ninja.cc
+build ninja.exe: link $builddir\ninja.obj | $builddir\ninja.lib
+  libs = ninja.lib
 
 # Tests all build into ninja_test executable.
 build $builddir\build_log_test.obj: cxx $sourcedir\src\build_log_test.cc
