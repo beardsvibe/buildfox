@@ -7,3 +7,4 @@ rem python ..\mask.py --verbose test.ninja test_out.ninja
 rem python ..\mask.py --verbose test.ninja test_out.bat
 rem python ..\mask.py --verbose test.ninja test_out.sln
 python ..\mask.py --verbose test.ninja test_out.pro
+C:\Qt5.4\5.4\msvc2013_opengl\bin\qmake -tp vc
