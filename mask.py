@@ -3,7 +3,7 @@
 import os
 import argparse
 from lib import from_mask, from_ninja
-from lib import to_mask, to_shell, to_ninja, to_msvc
+from lib import to_mask, to_shell, to_ninja, to_msvc, to_qmake
 
 parsers = {
 	".mask":	from_mask.from_file,
@@ -15,7 +15,8 @@ generators = {
 	".sh":		to_shell.to_file,
 	".bat":		to_shell.to_file,
 	".ninja":	to_ninja.to_file,
-	".sln":		to_msvc.to_file
+	".sln":		to_msvc.to_file,
+	".pro":		to_qmake.to_file
 }
 
 argsparser = argparse.ArgumentParser(description = "mask build infrastructure")
