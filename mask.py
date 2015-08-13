@@ -2,12 +2,14 @@
 
 import os
 import argparse
-from lib import from_mask, from_ninja
+from lib import from_mask, from_ninja, from_shell
 from lib import to_mask, to_shell, to_ninja, to_msvc, to_qmake
 
 parsers = {
 	".mask":	from_mask.from_file,
-	".ninja":	from_ninja.from_file
+	".ninja":	from_ninja.from_file,
+	".sh":	from_shell.from_file,
+	".bat":	from_shell.from_file
 }
 
 generators = {

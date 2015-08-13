@@ -2,7 +2,6 @@
 # mask IR is very similar to ninja format
 # so we just reuse ninja parser :)
 
-import re
 import string
 from lib.tool_ninja_parser import ninja_Parser
 from lib.maskfile import from_esc, from_esc_iter, Var, Rule, Build, Project, IR
