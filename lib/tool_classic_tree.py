@@ -106,14 +106,14 @@ class BuildTarget:
 # but msvc build structure is tree
 # so this function convert ir graph to tree by cloning leafs
 # all nodes on same level can be compiled in any order
-def generate_generic_build_tree(target, readonly_ir, targets_dict):
+def generate_generic_build_tree(target, ir, targets_dict):
 	if target in targets_dict:
 		index = targets_dict[target]
 		children = []
-		build = readonly_ir.builds[index]
+		build = ir.builds[index]
 		deps = set(build.inputs_explicit).union(build.inputs_implicit).union(build.inputs_order)
 		for dep in deps:
-			children.append(generate_generic_build_tree(dep, readonly_ir, targets_dict))
+			children.append(generate_generic_build_tree(dep, ir, targets_dict))
 		return BuildTarget(target, index, children)
 	else:
 		return BuildTarget(target, None, [])
@@ -146,11 +146,11 @@ class MSVCBuildTree:
 		out += "common link flags : %s\n" % " ".join(self.common_flags_link)
 		return out
 
-	def figure_out_compiler_settings(self, readonly_ir):
+	def figure_out_compiler_settings(self, ir):
 		compiler_rules = {}
 		for obj_target in self.objs_targets:
-			build = readonly_ir.builds[obj_target.build_index]
-			rule = readonly_ir.rules[build.rule]
+			build = ir.builds[obj_target.build_index]
+			rule = ir.rules[build.rule]
 			if rule.name not in compiler_rules:
 				compiler_rules[rule.name] = rule
 
@@ -172,9 +172,9 @@ class MSVCBuildTree:
 		# intersection of all args sets is our common flags
 		self.common_flags_compilation = set.intersection(*[cl.args for name, cl in cl_calls.items()])
 
-	def figure_out_linker_settings(self, readonly_ir):
-		build = readonly_ir.builds[self.end_target.build_index]
-		link_rule = readonly_ir.rules.get(build.rule)
+	def figure_out_linker_settings(self, ir):
+		build = ir.builds[self.end_target.build_index]
+		link_rule = ir.rules.get(build.rule)
 
 		cmd = MSVCToolchainCmd()
 		cmd.parse(link_rule.variables.get("command").value)
@@ -227,12 +227,12 @@ class MSVCBuildTree:
 			# we need to put this is empty project with pre/post build step
 			print("TODO not possible to build (dep project) " + str(target))
 
-def to_trees(readonly_ir):
+def to_trees(ir):
 	# get list of what we need to build
-	targets_dict = build_targets_dict(readonly_ir)
+	targets_dict = build_targets_dict(ir)
 
 	msvc_trees = []
-	for prj_name, project in readonly_ir.projects.items():
+	for prj_name, project in ir.projects.items():
 		for variation_name, all_end_paths in project.variations.items():
 			from pprint import pprint
 
@@ -242,11 +242,11 @@ def to_trees(readonly_ir):
 				msvc_trees.append(tree)
 
 			for target in all_end_paths:
-				generic_tree = generate_generic_build_tree(target, readonly_ir, targets_dict)
+				generic_tree = generate_generic_build_tree(target, ir, targets_dict)
 				build_tree = MSVCBuildTree(prj_name, variation_name)
 				build_tree.restore_from_root(generic_tree)
-				build_tree.figure_out_compiler_settings(readonly_ir)
-				build_tree.figure_out_linker_settings(readonly_ir)
+				build_tree.figure_out_compiler_settings(ir)
+				build_tree.figure_out_linker_settings(ir)
 				order_trees(build_tree)
 
 	return msvc_trees

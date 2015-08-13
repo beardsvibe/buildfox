@@ -6,11 +6,11 @@ import re
 import string
 import hashlib
 from lib.tool_ninja_parser import ninja_Parser
-from lib.maskfile import from_esc, from_esc_iter, Var, Rule, Build, Project, ReadOnlyIR
+from lib.maskfile import from_esc, from_esc_iter, Var, Rule, Build, Project, IR
 
 class Namescope():
 	def __init__(self):
-		self.ir = ReadOnlyIR()
+		self.ir = IR()
 		self.vars = [] # array of tuples (name, value)
 		self.rules = {} # dict of key = name, value = (vars_scope_index, vars_array), vars_array - array of tuples (name, value)
 		self.builds = [] # array of tuples (vars_scope_index, name, targets, inputs, inputs, inputs, vars_array), vars_array - array of tuples (name, value)

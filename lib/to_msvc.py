@@ -208,7 +208,7 @@ def generate_project_filters(project, root):
 
 	return filters
 
-def to_file(filename_sln, readonly_ir, args = None):
+def to_file(filename_sln, ir, args = None):
 	root = os.path.dirname(filename_sln)
 	final_projects = [
 		#{ "name": "application", "guid": gen_uuid(), "files": ["app/main.cpp", "app/test_folder/nested.cpp"] },
@@ -216,7 +216,7 @@ def to_file(filename_sln, readonly_ir, args = None):
 	]
 
 	# TODO merge different build trees for different variation
-	for tree in to_trees(readonly_ir):
+	for tree in to_trees(ir):
 		final_projects.append({
 			"name": tree.prj_name + "_" + tree.variation_name + "_" + tree.end_target.target,
 			"guid": gen_uuid(),

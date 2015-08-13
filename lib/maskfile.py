@@ -1,4 +1,4 @@
-# read write mask ir file
+# rmask ir file
 
 import re
 import pipes
@@ -123,9 +123,9 @@ class Project:
 			"\n  " + "\n  ".join(variables) if len(self.variations) else ""
 		)
 
-# ------------------------------------ read only IR
+# ------------------------------------ IR
 
-class ReadOnlyIR:
+class IR:
 	def __init__(self):
 		self.rules = {}		# dict of key = rule name string, val = Rule
 		self.builds = []	# list of Build

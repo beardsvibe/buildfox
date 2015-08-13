@@ -4,10 +4,10 @@ import os
 from lib.maskfile import to_esc_shell
 from lib.tool_build_list import variation_build_list
 
-def to_string(readonly_ir, args = None):
+def to_string(ir, args = None):
 	# get list of what we need to build
 	variation = args["variation"]
-	builds, all_inputs = variation_build_list(readonly_ir, variation)
+	builds, all_inputs = variation_build_list(ir, variation)
 
 	# figure out target folders
 	target_folders = set()
@@ -24,9 +24,9 @@ def to_string(readonly_ir, args = None):
 	for build in builds:
 		if build.rule == "phony":
 			continue
-		if build.rule not in readonly_ir.rules:
+		if build.rule not in ir.rules:
 			raise ValueError("unknown rule " + build.rule)
-		rule = readonly_ir.rules[build.rule]
+		rule = ir.rules[build.rule]
 		if "command" not in rule.variables:
 			raise ValueError("rule " + build.rule + " doesn't have command variable")
 		command = rule.evaluate("command", build)
@@ -42,6 +42,6 @@ def to_string(readonly_ir, args = None):
 
 	return output
 
-def to_file(filename, readonly_ir, args = None):
+def to_file(filename, ir, args = None):
 	with open(filename, "w") as f:
-		f.write(to_string(readonly_ir, args))
+		f.write(to_string(ir, args))

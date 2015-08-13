@@ -5,12 +5,12 @@
 import re
 import string
 from lib.tool_ninja_parser import ninja_Parser
-from lib.maskfile import from_esc, from_esc_iter, Var, Rule, Build, Project, ReadOnlyIR
+from lib.maskfile import from_esc, from_esc_iter, Var, Rule, Build, Project, IR
 
 def from_string(text):
 	parser = ninja_Parser(parseinfo = False)
 	ast = parser.parse(text, "manifest", trace = False, whitespace = string.whitespace, nameguard = True)
-	ir = ReadOnlyIR()
+	ir = IR()
 	mode = 0
 
 	for expr in ast:
