@@ -35,19 +35,18 @@ Let's make some goals :
 
 Format is based of ninja manifest format with some limitations which make it possible to achieve (#1) (#2) (#3)
 
+* no variables except for ${in}, ${out}, ${in_newline}, etc
+* only one variable reference syntax is allowed : ${name}, syntax $name is not valid
 * strict order of declaration :
-	* variable definitions first
-	* rules second
-	* build command third
+	* rules first
+	* build command second
 	* project commands last
-* strict indentation rules : **??? TODO : could simplify parsing ???**
+* strict indentation rules :
 	* all lines, except for variables in rules, must contain no whitespace in the beginning
 	* indent in rule and project variables is 2 spaces only
 	* only one space is allowed between tokens
-* no variable shadowing in build commands or rules, all variables are expanded immediately as they are encountered, with no exceptions
-* only one variable reference syntax is allowed : ${name}, when syntax $name is not valid
 * no "include" or "subninja", no variable scoping
-* prefer implicit outputs to phony rule, but phony rule is still available
+* no "phony" rules
 * no "default" keyword
 * added "project" command
 * build commands should be sorted by dependencies, meaning if we execute them from top to bottom everything should be valid
@@ -56,8 +55,6 @@ Format is based of ninja manifest format with some limitations which make it pos
 For example :
 
 	# comment
-	variable = ...
-
 	rule rule_name
 	  command = ...
 
