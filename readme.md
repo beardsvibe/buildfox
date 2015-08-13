@@ -35,7 +35,8 @@ Let's make some goals :
 
 Format is based of ninja manifest format with some limitations which make it possible to achieve (#1) (#2) (#3)
 
-* no variables except for ${in}, ${out}, ${in_newline}, etc
+* no standalone variables
+* variables are only allowed in rules and projects (not you cannot reference another variable in this variables, except for ${in}, ${out}, etc) 
 * only one variable reference syntax is allowed : ${name}, syntax $name is not valid
 * strict order of declaration :
 	* rules first

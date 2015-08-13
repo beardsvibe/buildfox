@@ -110,9 +110,9 @@ class Build:
 		)
 
 class Project:
-	def __init__(self, name = "", comment = ""):
+	def __init__(self, name = "", variations = {}, comment = ""):
 		self.name = name
-		self.variations = {} # dict of key = variation name string, val = list of targets
+		self.variations = variations # dict of key = variation name string, val = list of targets
 		self.comment = comment
 
 	def __repr__(self):
@@ -137,21 +137,3 @@ class ReadOnlyIR:
 			"\n".join([str(v) for v in self.builds]) if len(self.builds) else "",
 			"\n".join([str(v) for k, v in self.projects.items()] if len(self.projects) else "")
 		]))
-
-# ------------------------------------ write only IR
-
-#class WriteOnlyIR:
-#	def __init__(self):
-#		self.variables = []	# list of Var
-#		self.rules = []		# list of Rule
-#		self.builds = []	# list of Build
-#		self.projects = []	# list of Project
-#
-#	def __repr__(self):
-#		return "\n".join(filter(len, [
-#			"\n".join([str(v) for v in self.variables]),
-#			"\n" + "\n".join([str(v) for v in self.rules]) if len(self.rules) else "",
-#			"\n" + "\n".join([str(v) for v in self.builds]) if len(self.builds) else "",
-#			"\n" + "\n".join([str(v) for v in self.projects] if len(self.projects) else "")
-#		]))
-#

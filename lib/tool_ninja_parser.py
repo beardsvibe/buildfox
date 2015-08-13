@@ -17,7 +17,7 @@ from grako.parsing import graken, Parser
 from grako.util import re, RE_FLAGS
 
 
-__version__ = (2015, 8, 3, 12, 7, 54, 0)
+__version__ = (2015, 8, 13, 20, 55, 28, 3)
 
 __all__ = [
     'ninja_Parser',
@@ -95,11 +95,38 @@ class ninja_Parser(Parser):
         )
 
     @graken()
+    def _assign_paths_(self):
+        self._varname_()
+        self.ast['assign'] = self.last_node
+        self._token('=')
+        self._pattern(r' *')
+
+        self._paths_()
+        self.ast['value'] = self.last_node
+        self._pattern(r' *')
+
+        self._pattern(r'(\n|$)')
+
+        self.ast._define(
+            ['assign', 'value'],
+            []
+        )
+
+    @graken()
     def _SCOPED_VARS_(self):
 
         def block0():
             self._pattern(r'  ')
             self._assign_()
+            self.ast.setlist('@', self.last_node)
+        self._closure(block0)
+
+    @graken()
+    def _SCOPED_PATHS_(self):
+
+        def block0():
+            self._pattern(r'  ')
+            self._assign_paths_()
             self.ast.setlist('@', self.last_node)
         self._closure(block0)
 
@@ -214,6 +241,23 @@ class ninja_Parser(Parser):
         )
 
     @graken()
+    def _project_(self):
+        self._token('project')
+        self._varname_()
+        self.ast['project'] = self.last_node
+        self._pattern(r' *')
+
+        self._pattern(r'(\n|$)')
+
+        self._SCOPED_PATHS_()
+        self.ast['vars'] = self.last_node
+
+        self.ast._define(
+            ['project', 'vars'],
+            []
+        )
+
+    @graken()
     def _manifest_(self):
 
         def block0():
@@ -238,6 +282,9 @@ class ninja_Parser(Parser):
                     self.ast.setlist('@', self.last_node)
                 with self._option():
                     self._assign_()
+                    self.ast.setlist('@', self.last_node)
+                with self._option():
+                    self._project_()
                     self.ast.setlist('@', self.last_node)
                 self._error('no available options')
         self._closure(block0)
@@ -272,7 +319,13 @@ class ninja_Semantics(object):
     def assign(self, ast):
         return ast
 
+    def assign_paths(self, ast):
+        return ast
+
     def SCOPED_VARS(self, ast):
+        return ast
+
+    def SCOPED_PATHS(self, ast):
         return ast
 
     def rule(self, ast):
@@ -291,6 +344,9 @@ class ninja_Semantics(object):
         return ast
 
     def subninja(self, ast):
+        return ast
+
+    def project(self, ast):
         return ast
 
     def manifest(self, ast):

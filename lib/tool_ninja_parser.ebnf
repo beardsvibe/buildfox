@@ -13,8 +13,10 @@ path_once = PATH;
 paths = {@+:PATH >whitespace_opt}*;
 
 assign = assign:varname "=" >whitespace_opt value:EXPR >eol;
+assign_paths = assign:varname "=" >whitespace_opt value:paths >eol;
 
 SCOPED_VARS = {/  / @+:assign}*;
+SCOPED_PATHS = {/  / @+:assign_paths}*;
 
 rule =
 	"rule"
@@ -55,4 +57,10 @@ subninja =
 	subninja:path_once
 	>eol;
 
-manifest = {@+:rule | @+:build | @+:default | @+:pool | @+:include | @+:subninja | @+:assign}* $;
+project =
+	"project"
+	project:varname
+	>eol
+	vars:SCOPED_PATHS;
+
+manifest = {@+:rule | @+:build | @+:default | @+:pool | @+:include | @+:subninja | @+:assign | @+:project}* $;

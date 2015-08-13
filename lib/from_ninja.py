@@ -2,11 +2,11 @@
 
 # TODO we parse $\n sequence incorrectly : we don't skip whitespace after newline
 
-from lib.tool_ninja_parser import ninja_Parser
-from lib.maskfile import from_esc, from_esc_iter, Var, Rule, Build, Project, ReadOnlyIR
 import re
 import string
 import hashlib
+from lib.tool_ninja_parser import ninja_Parser
+from lib.maskfile import from_esc, from_esc_iter, Var, Rule, Build, Project, ReadOnlyIR
 
 class Namescope():
 	def __init__(self):
@@ -193,8 +193,7 @@ class Namescope():
 			ir_build.inputs_order = build[4]
 			self.ir.builds.append(ir_build)
 
-		project = Project("default")
-		project.variations["default"] = end_targets
+		project = Project("default", {"default": end_targets})
 		self.ir.projects[project.name] = project
 
 def from_string(text):
