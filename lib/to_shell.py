@@ -1,5 +1,5 @@
 import os
-from lib.maskfile import to_esc_shell
+from lib.maskfile import to_esc_shell, evaluate
 from lib.tool_build_list import variation_build_list
 
 def to_string(ir, args = None):
@@ -27,7 +27,7 @@ def to_string(ir, args = None):
 		rule = ir.rules[build.rule]
 		if "command" not in rule.variables:
 			raise ValueError("rule " + build.rule + " doesn't have command variable")
-		command = rule.evaluate("command", build)
+		command = evaluate(rule, "command", build)
 
 		if "depfile" in rule.variables:
 			print("TODO support depfile in to_shell")

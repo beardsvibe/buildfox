@@ -61,18 +61,18 @@ class Rule:
 			"\n  " + "\n  ".join(["%s = %s" % (k, to_esc(v, escape_space = False)) for k, v in self.variables.items()]) if len(self.variables) else ""
 		)
 
-	def evaluate(self, var_name, build):
-		def repl(matchobj):
-			name = matchobj.group(1)
-			if name == "in":
-				return " ".join([to_esc_shell(v) for v in build.inputs_explicit] if var_name == "command" else build.inputs_explicit)
-			if name == "out":
-				return " ".join([to_esc_shell(v) for v in build.targets_explicit] if var_name == "command" else build.targets_explicit)
-			if name == "in_newline":
-				return "\n".join([to_esc_shell(v) for v in build.inputs_explicit] if var_name == "command" else build.inputs_explicit)
-			else:
-				return ""
-		return re.sub("\${([a-zA-Z0-9_.-]+)}", repl, self.variables[var_name])
+def evaluate(rule, var_name, build):
+	def repl(matchobj):
+		name = matchobj.group(1)
+		if name == "in":
+			return " ".join([to_esc_shell(v) for v in build.inputs_explicit] if var_name == "command" else build.inputs_explicit)
+		if name == "out":
+			return " ".join([to_esc_shell(v) for v in build.targets_explicit] if var_name == "command" else build.targets_explicit)
+		if name == "in_newline":
+			return "\n".join([to_esc_shell(v) for v in build.inputs_explicit] if var_name == "command" else build.inputs_explicit)
+		else:
+			return ""
+	return re.sub("\${([a-zA-Z0-9_.-]+)}", repl, rule.variables[var_name])
 
 class Build:
 	def __init__(self, comment = ""):
