@@ -4,7 +4,7 @@ import re
 import string
 import hashlib
 from lib.tool_ninja_parser import ninja_Parser
-from lib.maskfile import from_esc, from_esc_iter, Var, Rule, Build, Project, IR
+from lib.maskfile import from_esc, from_esc_iter, Rule, Build, Project, IR
 
 class Namescope():
 	def __init__(self):
@@ -179,7 +179,7 @@ class Namescope():
 
 		# generate IR
 		for name, rule in rules.items():
-			self.ir.rules[name] = Rule(name, {n: Var(n, v) for n, v in rule.items()})
+			self.ir.rules[name] = Rule(name, rule)
 
 		for b in ordered_builds:
 			build = builds[b]

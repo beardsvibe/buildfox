@@ -45,23 +45,10 @@ def to_esc_shell(str):
 
 # ------------------------------------ basic structures
 
-class Var:
-	def __init__(self, name = "", value = "", comment = ""):
-		self.name = name
-		self.value = value
-		self.comment = comment
-
-	def __repr__(self):
-		return "%s%s = %s" % (
-			"#" + self.comment + "\n" if len(self.comment) else "",
-			self.name,
-			to_esc(self.value, escape_space = False)
-		)
-
 class Rule:
 	def __init__(self, name = "", variables = {}, comment = ""):
 		self.name = name
-		self.variables = variables # dict of key = var name string, val = Var
+		self.variables = variables # dict of key = name string, val = value string
 		self.comment = comment
 
 		# TODO
@@ -71,7 +58,7 @@ class Rule:
 		return "%srule %s%s" % (
 			"#" + self.comment + "\n" if len(self.comment) else "",
 			self.name,
-			"\n  " + "\n  ".join([v.__repr__() for k, v in self.variables.items()]) if len(self.variables) else ""
+			"\n  " + "\n  ".join(["%s = %s" % (k, to_esc(v, escape_space = False)) for k, v in self.variables.items()]) if len(self.variables) else ""
 		)
 
 	def evaluate(self, var_name, build):
@@ -85,7 +72,7 @@ class Rule:
 				return "\n".join([to_esc_shell(v) for v in build.inputs_explicit] if var_name == "command" else build.inputs_explicit)
 			else:
 				return ""
-		return re.sub("\${([a-zA-Z0-9_.-]+)}", repl, self.variables[var_name].value)
+		return re.sub("\${([a-zA-Z0-9_.-]+)}", repl, self.variables[var_name])
 
 class Build:
 	def __init__(self, comment = ""):
@@ -112,7 +99,7 @@ class Build:
 class Project:
 	def __init__(self, name = "", variations = {}, comment = ""):
 		self.name = name
-		self.variations = variations # dict of key = variation name string, val = list of targets
+		self.variations = variations # dict of key = variation name string, val = list of targets strings
 		self.comment = comment
 
 	def __repr__(self):

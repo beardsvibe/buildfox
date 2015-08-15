@@ -160,7 +160,7 @@ class MSVCBuildTree:
 		cl_calls = {}
 		for rule_name, rule in compiler_rules.items():
 			cmd = MSVCToolchainCmd()
-			cmd.parse(rule.variables.get("command").value)
+			cmd.parse(rule.variables.get("command"))
 			if cmd.is_cl():
 				cl_calls[rule_name] = cmd.tool
 				if cmd.tool.link:
@@ -177,7 +177,7 @@ class MSVCBuildTree:
 		link_rule = ir.rules.get(build.rule)
 
 		cmd = MSVCToolchainCmd()
-		cmd.parse(link_rule.variables.get("command").value)
+		cmd.parse(link_rule.variables.get("command"))
 
 		if cmd.is_cl():
 			if not cmd.tool.link:

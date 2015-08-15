@@ -1,6 +1,6 @@
 # very very dumb version
 
-from lib.maskfile import Var, Rule, Build, Project, IR
+from lib.maskfile import Rule, Build, Project, IR
 
 def from_string(text):
 	ir = IR()
@@ -12,7 +12,7 @@ def from_string(text):
 
 		index = len(ir.builds)
 		rule_name = "rule_" + str(index)
-		rule_vars = {"command": Var("command", line)}
+		rule_vars = {"command": line}
 		build_target = "__phony_" + str(index)
 		project.variations["all"].append(build_target)
 
