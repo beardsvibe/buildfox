@@ -8,8 +8,8 @@ def to_string(ir, args = None):
 	output += "\n\n" + "\n".join([str(v) for v in ir.builds]) if len(ir.builds) else ""
 
 	output += "\n\n"
-	for prj_name, project in ir.projects.items():
-		for name, paths in project.variations.items():
+	for prj_name, prj_variations in ir.projects.items():
+		for name, paths in prj_variations.items():
 			target_name = prj_name + "_" + name
 			output += "build " + target_name + ": phony " + " ".join(to_esc_iter(paths)) + "\n"
 			if (not variation) or (name == variation):

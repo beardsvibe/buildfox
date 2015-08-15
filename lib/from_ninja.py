@@ -4,7 +4,7 @@ import re
 import string
 import hashlib
 from lib.tool_ninja_parser import ninja_Parser
-from lib.mask_ir import Build, Project, IR
+from lib.mask_ir import Build, IR
 from lib.mask_esc import from_esc, from_esc_iter
 
 class Namescope():
@@ -192,8 +192,7 @@ class Namescope():
 			ir_build.inputs_order = build[4]
 			self.ir.builds.append(ir_build)
 
-		project = Project("default", {"default": end_targets})
-		self.ir.projects[project.name] = project
+		self.ir.add_project("default", {"default": end_targets})
 
 def from_string(text):
 	namescope = Namescope()

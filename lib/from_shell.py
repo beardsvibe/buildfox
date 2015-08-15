@@ -1,11 +1,11 @@
 # very very dumb version
 
-from lib.mask_ir import Build, Project, IR
+from lib.mask_ir import Build, IR
 
 def from_string(text):
 	ir = IR()
 
-	project = Project("all", {"all": []})
+	all_targets = []
 	for line in text.split("\n"):
 		if not len(line):
 			continue
@@ -14,7 +14,7 @@ def from_string(text):
 		rule_name = "rule_" + str(index)
 		rule_vars = {"command": line}
 		build_target = "__phony_" + str(index)
-		project.variations["all"].append(build_target)
+		all_targets.append(build_target)
 
 		ir.add_rule(rule_name, rule_vars)
 		build = Build()
@@ -22,7 +22,7 @@ def from_string(text):
 		build.targets_explicit = [build_target]
 		ir.builds.append(build)
 
-	ir.projects[project.name] = project
+	ir.add_project("all", {"all": all_targets})
 	return ir
 
 def from_file(filename):

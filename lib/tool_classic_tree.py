@@ -232,8 +232,8 @@ def to_trees(ir):
 	targets_dict = build_targets_dict(ir)
 
 	msvc_trees = []
-	for prj_name, project in ir.projects.items():
-		for variation_name, all_end_paths in project.variations.items():
+	for prj_name, prj_variations in ir.projects.items():
+		for variation_name, all_end_paths in prj_variations.items():
 			from pprint import pprint
 
 			def order_trees(tree): # needed so depended on trees will come first

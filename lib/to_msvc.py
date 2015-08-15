@@ -227,9 +227,9 @@ def to_file(filename_sln, ir, args = None):
 			# TODO add compiler flags !
 		})
 
-	print("Projects for final generation :")
-	from pprint import pprint
-	pprint(final_projects)
+	#print("Projects for final generation :")
+	#from pprint import pprint
+	#pprint(final_projects)
 
 	with open(filename_sln, "w") as f:
 		f.write(generate_solution(final_projects))

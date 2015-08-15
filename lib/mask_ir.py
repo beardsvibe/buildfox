@@ -36,18 +36,6 @@ class Build:
 			" || " + " ".join(to_esc_iter(self.inputs_order)) if len(self.inputs_order) else ""
 		)
 
-class Project:
-	def __init__(self, name = "", variations = {}):
-		self.name = name
-		self.variations = variations # dict of key = variation name string, val = list of targets strings
-
-	def __repr__(self):
-		variables = [k + " = " + " ".join(to_esc_iter(v)) for k, v in self.variations.items()]
-		return "project %s%s" % (
-			self.name,
-			"\n  " + "\n  ".join(variables) if len(self.variations) else ""
-		)
-
 # ------------------------------------ IR
 
 class IR:
@@ -58,6 +46,9 @@ class IR:
 
 	def add_rule(self, name, variables):
 		self.rules[name] = variables
+
+	def add_project(self, name, variations):
+		self.projects[name] = variations
 
 	def evaluate(self, rule_name, var_name, build):
 		def repl(matchobj):
@@ -74,14 +65,22 @@ class IR:
 
 	def __repr__(self):
 		rules = ""
-		for k, variables in self.rules.items():
+		for name, variables in self.rules.items():
 			rules += "rule %s%s\n" % (
-				k,
+				name,
 				"\n  " + "\n  ".join(["%s = %s" % (k, to_esc(v, escape_space = False)) for k, v in variables.items()]) if len(variables) else ""
+			)
+
+		projects = ""
+		for name, variations in self.projects.items():
+			variables = [k + " = " + " ".join(to_esc_iter(v)) for k, v in variations.items()]
+			projects += "project %s%s\n" % (
+				name,
+				"\n  " + "\n  ".join(variables) if len(variations) else ""
 			)
 
 		return "\n".join(filter(len, [
 			rules,
 			"\n".join([str(v) for v in self.builds]) if len(self.builds) else "",
-			"\n".join([str(v) for k, v in self.projects.items()] if len(self.projects) else "")
+			projects
 		]))

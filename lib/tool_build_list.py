@@ -4,8 +4,8 @@
 def end_targets(ir, variation = None):
 	# figure out end targets
 	end_targets = set()
-	for prj_name, project in ir.projects.items():
-		for name, paths in project.variations.items():
+	for prj_name, prj_variations in ir.projects.items():
+		for name, paths in prj_variations.items():
 			if (not variation) or (name == variation):
 				end_targets = end_targets.union(set(paths))
 	return end_targets

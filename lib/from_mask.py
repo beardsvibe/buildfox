@@ -3,7 +3,7 @@
 
 import string
 from lib.tool_ninja_parser import ninja_Parser
-from lib.mask_ir import Build, Project, IR
+from lib.mask_ir import Build, IR
 from lib.mask_esc import from_esc, from_esc_iter
 
 def from_string(text):
@@ -40,7 +40,7 @@ def from_string(text):
 			mode = 2
 			name = expr["project"]
 			variations = {var["assign"]: list(var["value"]) for var in expr["vars"]}
-			ir.projects[name] = Project(name, variations)
+			ir.add_project(name, variations)
 
 	return ir
 
