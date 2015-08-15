@@ -1,4 +1,4 @@
-from lib.maskfile import to_esc_iter
+from lib.mask_esc import to_esc_iter
 
 def to_string(ir, args = None):
 	variation = args["variation"]
