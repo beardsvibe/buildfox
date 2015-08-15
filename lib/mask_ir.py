@@ -16,30 +16,6 @@ from lib.mask_esc import to_esc, to_esc_iter, to_esc_shell
 # rspfile
 # rspfile_content
 
-class Rule:
-	def __init__(self, name = "", variables = {}):
-		self.name = name
-		self.variables = variables # dict of key = name string, val = value string
-
-	def __repr__(self):
-		return "rule %s%s" % (
-			self.name,
-			"\n  " + "\n  ".join(["%s = %s" % (k, to_esc(v, escape_space = False)) for k, v in self.variables.items()]) if len(self.variables) else ""
-		)
-
-def evaluate(rule, var_name, build):
-	def repl(matchobj):
-		name = matchobj.group(1)
-		if name == "in":
-			return " ".join([to_esc_shell(v) for v in build.inputs_explicit] if var_name == "command" else build.inputs_explicit)
-		if name == "out":
-			return " ".join([to_esc_shell(v) for v in build.targets_explicit] if var_name == "command" else build.targets_explicit)
-		if name == "in_newline":
-			return "\n".join([to_esc_shell(v) for v in build.inputs_explicit] if var_name == "command" else build.inputs_explicit)
-		else:
-			return ""
-	return re.sub("\${([a-zA-Z0-9_.-]+)}", repl, rule.variables[var_name])
-
 class Build:
 	def __init__(self):
 		self.targets_explicit = [] # list of unique strings, sets are slightly slower to iterate over
@@ -80,9 +56,32 @@ class IR:
 		self.builds = []	# list of Build
 		self.projects = {}	# dict of key = project name string, val = Project
 
+	def add_rule(self, name, variables):
+		self.rules[name] = variables
+
+	def evaluate(self, rule_name, var_name, build):
+		def repl(matchobj):
+			name = matchobj.group(1)
+			if name == "in":
+				return " ".join([to_esc_shell(v) for v in build.inputs_explicit] if var_name == "command" else build.inputs_explicit)
+			if name == "out":
+				return " ".join([to_esc_shell(v) for v in build.targets_explicit] if var_name == "command" else build.targets_explicit)
+			if name == "in_newline":
+				return "\n".join([to_esc_shell(v) for v in build.inputs_explicit] if var_name == "command" else build.inputs_explicit)
+			else:
+				return ""
+		return re.sub("\${([a-zA-Z0-9_.-]+)}", repl, self.rules[rule_name][var_name])
+
 	def __repr__(self):
+		rules = ""
+		for k, variables in self.rules.items():
+			rules += "rule %s%s\n" % (
+				k,
+				"\n  " + "\n  ".join(["%s = %s" % (k, to_esc(v, escape_space = False)) for k, v in variables.items()]) if len(variables) else ""
+			)
+
 		return "\n".join(filter(len, [
-			"\n".join([str(v) for k, v in self.rules.items()]),
+			rules,
 			"\n".join([str(v) for v in self.builds]) if len(self.builds) else "",
 			"\n".join([str(v) for k, v in self.projects.items()] if len(self.projects) else "")
 		]))

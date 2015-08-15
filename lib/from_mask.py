@@ -3,7 +3,7 @@
 
 import string
 from lib.tool_ninja_parser import ninja_Parser
-from lib.mask_ir import Rule, Build, Project, IR
+from lib.mask_ir import Build, Project, IR
 from lib.mask_esc import from_esc, from_esc_iter
 
 def from_string(text):
@@ -18,7 +18,7 @@ def from_string(text):
 				raise ValueError("incorrect order in mask")
 			name = expr["rule"]
 			vars = {var["assign"]: from_esc(var["value"]) for var in expr["vars"]}
-			ir.rules[name] = Rule(name, vars)
+			ir.add_rule(name, vars)
 		elif "build" in expr:
 			if mode == 0:
 				mode = 1

@@ -1,5 +1,4 @@
 import os
-from lib.mask_ir import evaluate
 from lib.mask_esc import to_esc_shell
 from lib.tool_build_list import variation_build_list
 
@@ -25,16 +24,16 @@ def to_string(ir, args = None):
 			continue
 		if build.rule not in ir.rules:
 			raise ValueError("unknown rule " + build.rule)
-		rule = ir.rules[build.rule]
-		if "command" not in rule.variables:
+		variables = ir.rules[build.rule]
+		if "command" not in variables:
 			raise ValueError("rule " + build.rule + " doesn't have command variable")
-		command = evaluate(rule, "command", build)
+		command = ir.evaluate(build.rule, "command", build)
 
-		if "depfile" in rule.variables:
+		if "depfile" in variables:
 			print("TODO support depfile in to_shell")
-		if "generator" in rule.variables:
+		if "generator" in variables:
 			print("TODO support generator in to_shell") # is it even possible ?
-		if "rspfile" in rule.variables:
+		if "rspfile" in variables:
 			print("TODO support rspfile in to_shell")
 
 		output += command + "\n"

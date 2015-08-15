@@ -150,9 +150,9 @@ class MSVCBuildTree:
 		compiler_rules = {}
 		for obj_target in self.objs_targets:
 			build = ir.builds[obj_target.build_index]
-			rule = ir.rules[build.rule]
-			if rule.name not in compiler_rules:
-				compiler_rules[rule.name] = rule
+			rule_variables = ir.rules[build.rule]
+			if build.rule not in compiler_rules:
+				compiler_rules[build.rule] = rule_variables
 
 		if len(compiler_rules.items()) > 1:
 			print("TODO more then one compiler rule, custom arguments for compiling source files will be ignored for now")
@@ -160,7 +160,7 @@ class MSVCBuildTree:
 		cl_calls = {}
 		for rule_name, rule in compiler_rules.items():
 			cmd = MSVCToolchainCmd()
-			cmd.parse(rule.variables.get("command"))
+			cmd.parse(rule.get("command"))
 			if cmd.is_cl():
 				cl_calls[rule_name] = cmd.tool
 				if cmd.tool.link:
@@ -177,7 +177,7 @@ class MSVCBuildTree:
 		link_rule = ir.rules.get(build.rule)
 
 		cmd = MSVCToolchainCmd()
-		cmd.parse(link_rule.variables.get("command"))
+		cmd.parse(link_rule.get("command"))
 
 		if cmd.is_cl():
 			if not cmd.tool.link:
