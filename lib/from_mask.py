@@ -3,7 +3,7 @@
 
 import string
 from lib.tool_ninja_parser import ninja_Parser
-from lib.maskfile import Rule, Build, Project, IR
+from lib.mask_ir import Rule, Build, Project, IR
 from lib.mask_esc import from_esc, from_esc_iter
 
 def from_string(text):

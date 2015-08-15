@@ -1,5 +1,5 @@
 import os
-from lib.maskfile import evaluate
+from lib.mask_ir import evaluate
 from lib.mask_esc import to_esc_shell
 from lib.tool_build_list import variation_build_list
 

@@ -1,6 +1,6 @@
 # very very dumb version
 
-from lib.maskfile import Rule, Build, Project, IR
+from lib.mask_ir import Rule, Build, Project, IR
 
 def from_string(text):
 	ir = IR()
