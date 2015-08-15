@@ -1,5 +1,3 @@
-# ------------------------------------ ninja parser
-
 # TODO we parse $\n sequence incorrectly : we don't skip whitespace after newline
 
 import re

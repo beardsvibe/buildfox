@@ -1,5 +1,3 @@
-# ------------------------------------ writing helper
-
 def to_string(ir):
 	return str(ir)
 

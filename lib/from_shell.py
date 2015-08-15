@@ -1,4 +1,3 @@
-
 # very very dumb version
 
 from lib.maskfile import Var, Rule, Build, Project, IR

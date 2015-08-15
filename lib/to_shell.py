@@ -1,5 +1,3 @@
-# ------------------------------------ shell generator tool
-
 import os
 from lib.maskfile import to_esc_shell
 from lib.tool_build_list import variation_build_list

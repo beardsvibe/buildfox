@@ -1,3 +1,6 @@
+# TODO this file is mostly broken for now
+# use qmake -> vcxproj instead
+
 import os
 import shutil
 import uuid

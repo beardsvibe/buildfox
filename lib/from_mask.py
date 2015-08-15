@@ -1,4 +1,3 @@
-
 # mask IR is very similar to ninja format
 # so we just reuse ninja parser :)
 
