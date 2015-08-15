@@ -46,17 +46,15 @@ def to_esc_shell(str):
 # ------------------------------------ basic structures
 
 class Rule:
-	def __init__(self, name = "", variables = {}, comment = ""):
+	def __init__(self, name = "", variables = {}):
 		self.name = name
 		self.variables = variables # dict of key = name string, val = value string
-		self.comment = comment
 
 		# TODO
 		# possible variables : command depfile deps msvc_deps_prefix description generator restat rspfile rspfile_content
 
 	def __repr__(self):
-		return "%srule %s%s" % (
-			"#" + self.comment + "\n" if len(self.comment) else "",
+		return "rule %s%s" % (
 			self.name,
 			"\n  " + "\n  ".join(["%s = %s" % (k, to_esc(v, escape_space = False)) for k, v in self.variables.items()]) if len(self.variables) else ""
 		)
@@ -75,19 +73,17 @@ def evaluate(rule, var_name, build):
 	return re.sub("\${([a-zA-Z0-9_.-]+)}", repl, rule.variables[var_name])
 
 class Build:
-	def __init__(self, comment = ""):
+	def __init__(self):
 		self.targets_explicit = [] # list of strings, sets are slightly slower to iterate over
 		self.targets_implicit = []
 		self.inputs_explicit = []
 		self.inputs_implicit = []
 		self.inputs_order = []
 		self.rule = ""
-		self.comment = comment
 
 	def __repr__(self):
 		# TODO fix this mess
-		return "%sbuild %s%s:%s %s%s%s" % (
-			"#" + self.comment + "\n" if len(self.comment) else "",
+		return "build %s%s:%s %s%s%s" % (
 			" ".join(to_esc_iter(self.targets_explicit)),
 			" | " + " ".join(to_esc_iter(self.targets_implicit)) if len(self.targets_implicit) else "",
 			self.rule,
@@ -97,15 +93,13 @@ class Build:
 		)
 
 class Project:
-	def __init__(self, name = "", variations = {}, comment = ""):
+	def __init__(self, name = "", variations = {}):
 		self.name = name
 		self.variations = variations # dict of key = variation name string, val = list of targets strings
-		self.comment = comment
 
 	def __repr__(self):
 		variables = [k + " = " + " ".join(to_esc_iter(v)) for k, v in self.variations.items()]
-		return "%sproject %s%s" % (
-			"#" + self.comment + "\n" if len(self.comment) else "",
+		return "project %s%s" % (
 			self.name,
 			"\n  " + "\n  ".join(variables) if len(self.variations) else ""
 		)
