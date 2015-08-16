@@ -4,7 +4,7 @@ import re
 import string
 import hashlib
 from lib.tool_ninja_parser import ninja_Parser
-from lib.mask_ir import Build, IR
+from lib.mask_ir import IR
 from lib.mask_esc import from_esc, from_esc_iter
 
 class Namescope():
@@ -184,13 +184,13 @@ class Namescope():
 
 		for b in ordered_builds:
 			build = builds[b]
-			ir_build = Build()
-			ir_build.rule = build[0]
-			ir_build.targets_explicit = build[1]
-			ir_build.inputs_explicit = build[2]
-			ir_build.inputs_implicit = build[3]
-			ir_build.inputs_order = build[4]
-			self.ir.builds.append(ir_build)
+			self.ir.add_build(
+				rule_name = build[0],
+				targets_explicit = build[1],
+				inputs_explicit = build[2],
+				inputs_implicit = build[3],
+				inputs_order = build[4]
+			)
 
 		self.ir.add_project("default", {"default": end_targets})
 

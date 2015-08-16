@@ -1,6 +1,6 @@
 # very very dumb version
 
-from lib.mask_ir import Build, IR
+from lib.mask_ir import IR
 
 def from_string(text):
 	ir = IR()
@@ -17,10 +17,7 @@ def from_string(text):
 		all_targets.append(build_target)
 
 		ir.add_rule(rule_name, rule_vars)
-		build = Build()
-		build.rule = rule_name
-		build.targets_explicit = [build_target]
-		ir.builds.append(build)
+		ir.add_build(rule_name = rule_name, targets_explicit = [build_target])
 
 	ir.add_project("all", {"all": all_targets})
 	return ir

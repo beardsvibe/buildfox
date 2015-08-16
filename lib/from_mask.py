@@ -3,7 +3,7 @@
 
 import string
 from lib.tool_ninja_parser import ninja_Parser
-from lib.mask_ir import Build, IR
+from lib.mask_ir import IR
 from lib.mask_esc import from_esc, from_esc_iter
 
 def from_string(text):
@@ -24,14 +24,14 @@ def from_string(text):
 				mode = 1
 			if mode != 1:
 				raise ValueError("incorrect order in mask")
-			build = Build()
-			build.rule = expr["build"]
-			build.targets_explicit	= list(filter(len, from_esc_iter(expr["targets_explicit"])))
-			build.targets_implicit	= list(filter(len, from_esc_iter(expr["targets_implicit"] or [])))
-			build.inputs_explicit	= list(filter(len, from_esc_iter(expr["inputs_explicit"] or [])))
-			build.inputs_implicit	= list(filter(len, from_esc_iter(expr["inputs_implicit"] or [])))
-			build.inputs_order		= list(filter(len, from_esc_iter(expr["inputs_order"] or [])))
-			ir.builds.append(build)
+			ir.add_build(
+				rule_name = expr["build"],
+				targets_explicit	= list(filter(len, from_esc_iter(expr["targets_explicit"]))),
+				targets_implicit	= list(filter(len, from_esc_iter(expr["targets_implicit"] or []))),
+				inputs_explicit		= list(filter(len, from_esc_iter(expr["inputs_explicit"] or []))),
+				inputs_implicit		= list(filter(len, from_esc_iter(expr["inputs_implicit"] or []))),
+				inputs_order		= list(filter(len, from_esc_iter(expr["inputs_order"] or [])))
+			)
 		elif "project" in expr:
 			if mode == 1:
 				mode = 2
