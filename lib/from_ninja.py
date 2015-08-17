@@ -107,10 +107,14 @@ class Namescope():
 		# figure out end targets
 		if end_targets == None:
 			end_targets = []
-			for default in self.defaults:
-				default_scope = dict(parent_vars, **{v[0]: v[1] for v in vars[:default[0]]}) # TODO optimize this
-				for path in default[1]:
-					end_targets.append(self.evaluate_text(path, default_scope))
+			if len(self.defaults):
+				for default in self.defaults:
+					default_scope = dict(parent_vars, **{v[0]: v[1] for v in vars[:default[0]]}) # TODO optimize this
+					for path in default[1]:
+						end_targets.append(self.evaluate_text(path, default_scope))
+			else:
+				# TODO get all end targets
+				pass
 
 		# build target -> build index dictionary
 		targets = {}
