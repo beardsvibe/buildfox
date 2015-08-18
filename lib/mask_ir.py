@@ -17,8 +17,6 @@ from lib.mask_esc import to_esc, to_esc_iter, to_esc_shell
 
 # ------------------------------------------------------------------------------
 
-BuildList = namedtuple("BuildList", ["indexes", "inputs"])
-
 BuildBase = namedtuple("BuildBase", [
 	"rule",
 	"targets_explicit",
@@ -117,60 +115,3 @@ class IR:
 		builds = "\n".join(self.repr_builds())
 		projects = "\n".join(self.repr_projects())
 		return "\n".join(filter(len, [rules, builds, projects]))
-
-# ------------------------------------------------------------------------------
-
-class IRreader:
-	def __init__(self, ir):
-		self.ir = ir
-
-		# {target_name: build_index}
-		self.targets = {target: i for i, build in enumerate(self.ir.builds) for target in build.targets}
-
-		# {variation_name: set(target)}, list of all targets from all projects for a variation
-		self.variations = {}
-		for prj_name, prj_variations in self.ir.projects.items():
-			for var_name, var_paths in prj_variations.items():
-				if var_name in self.variations:
-					self.variations[var_name] = self.variations[var_name].union(set(var_paths))
-				else:
-					self.variations[var_name] = set(var_paths)
-
-		from pprint import pprint
-		pprint(self.targets)
-		pprint(self.variations)
-		g = self.build_list("ninja.exe")
-		pprint(g)
-		#pprint(self.builds(g[0]))
-
-	# return list of inputs for target
-	def inputs(self, target):
-		return self.ir.builds[self.targets.get(target)].inputs
-
-	# return BuildList(set(build_indexes), set(inputs))
-	# later you can union this indexes with another build indexes to get summed list
-	def build_list(self, target):
-		indexes = set()
-		inputs = set()
-		def all_deps(target):
-			if target in self.targets:
-				indexes.add(self.targets.get(target))
-				for dep in self.inputs(target):
-					all_deps(dep)
-			else:
-				inputs.add(target)
-		all_deps(target)
-		return BuildList(indexes = indexes, inputs = inputs)
-
-	# return BuildGraph(set(targets),  )
-	def build_graph(self, target):
-		pass
-
-	# return [Build] from indexes
-	def builds(self, indexes):
-		builds = []
-		for i, build in enumerate(self.ir.builds):
-			if i in indexes:
-				builds.append(build)
-		return builds
-

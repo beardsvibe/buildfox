@@ -1,7 +1,11 @@
 from pprint import pprint
 from lib.tool_classic_tree import to_trees
 
+#from lib.mask_irreader import IRreader
+
 def to_string(ir):
+	#t = IRreader(ir)
+
 	trees = to_trees(ir)
 
 	if len(trees) != 1:
