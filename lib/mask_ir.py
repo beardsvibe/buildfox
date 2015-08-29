@@ -1,6 +1,7 @@
 # mask ir file
 
 import re
+import os
 from collections import namedtuple
 from lib.mask_esc import to_esc, to_esc_iter, to_esc_shell
 
@@ -14,8 +15,6 @@ from lib.mask_esc import to_esc, to_esc_iter, to_esc_shell
 # restat
 # rspfile
 # rspfile_content
-
-# ------------------------------------------------------------------------------
 
 BuildBase = namedtuple("BuildBase", [
 	"rule",
@@ -35,7 +34,15 @@ class Build(BuildBase):
 	def inputs(self):
 		return self.inputs_explicit + self.inputs_implicit + self.inputs_order
 
-# ------------------------------------------------------------------------------
+	# return set of output folders
+	@property
+	def target_folders(self):
+		folders = set()
+		for path in self.targets_explicit + self.targets_implicit:
+			dir = os.path.dirname(path)
+			if len(dir):
+				folders.add(dir)
+		return folders
 
 class IR:
 	def __init__(self):

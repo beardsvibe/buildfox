@@ -1,3 +1,5 @@
+# mask ir to ninja exporter
+
 from lib.mask_esc import to_esc_iter
 
 def to_string(ir, args = None):

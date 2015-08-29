@@ -1,3 +1,4 @@
+# mask IR reading helpers
 
 from collections import namedtuple
 
@@ -87,11 +88,25 @@ class IRreader:
 		all_deps(target)
 		return BuildGraph(graph = graph)
 
-	# return [Build] from indexes
-	def builds(self, indexes):
+	# return [Build] from [indexes or targets]
+	def build_commands(self, indexes_or_targets):
+		all_targets = set()
+		all_indexes = set()
+
+		for temp in indexes_or_targets:
+			if isinstance(temp, str):
+				all_targets.add(temp)
+			else:
+				all_indexes.add(temp)
+
+		if len(all_targets):
+			all_indexes = all_indexes.union(self.build_list(all_targets).indexes)
+
 		builds = []
-		for i, build in enumerate(self.ir.builds):
-			if i in indexes:
-				builds.append(build)
+		for i in all_indexes:
+			builds.append(self.ir.builds[i])
 		return builds
 
+	# return set(target_folders) from [Build]
+	def target_folders(self, builds):
+		return set.union(*[build.target_folders for build in builds])

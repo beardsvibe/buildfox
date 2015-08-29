@@ -1,3 +1,5 @@
+# mask ir to qmake exporter
+
 from pprint import pprint
 from lib.tool_classic_tree import to_trees
 

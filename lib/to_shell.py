@@ -1,19 +1,15 @@
+# mask to shell exporter
+
 import os
 from lib.mask_esc import to_esc_shell
-from lib.tool_build_list import variation_build_list
+from lib.mask_irreader import IRreader
 
 def to_string(ir, args = None):
-	# get list of what we need to build
-	variation = args["variation"]
-	builds, all_inputs = variation_build_list(ir, variation)
-
-	# figure out target folders
-	target_folders = set()
-	for build in builds:
-		for path in build.targets_explicit + build.targets_implicit:
-			dir = os.path.dirname(path)
-			if len(dir):
-				target_folders.add(dir)
+	# figure out everything
+	ir_reader = IRreader(ir)
+	end_targets = ir_reader.end_targets(args.get("variation"))
+	builds = ir_reader.build_commands(end_targets)
+	target_folders = ir_reader.target_folders(builds)
 
 	# write commands
 	output = ""
@@ -32,7 +28,7 @@ def to_string(ir, args = None):
 		if "depfile" in variables:
 			print("TODO support depfile in to_shell")
 		if "generator" in variables:
-			print("TODO support generator in to_shell") # is it even possible ?
+			print("TODO support generator in to_shell")
 		if "rspfile" in variables:
 			print("TODO support rspfile in to_shell")
 

@@ -1,3 +1,4 @@
+# shell to mask ir
 # very very dumb version
 
 from lib.mask_ir import IR
