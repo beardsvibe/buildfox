@@ -25,23 +25,51 @@ class IRreader:
 					variations[var_name] = set(var_paths)
 		return variations
 
-	# return list of inputs for target
-	def inputs(self, target):
-		return self.ir.builds[self.targets.get(target)].inputs
+	# return set of end targets for required variation
+	def end_targets(self, variation = None):
+		all_variations = self.all_variations()
+		if not variation:
+			return list(all_variations.values())[0]
+		elif variation in all_variations:
+			return all_variations.get(variation)
+		else:
+			raise ValueError("can't find " + variation + " in variations")
+
+	# return list of inputs for targets
+	# targets can be string or set/list of strings
+	def inputs(self, targets):
+		if isinstance(targets, str):
+			index = self.targets.get(targets)
+			if index is None:
+				return []
+			return self.ir.builds[index].inputs
+		else:
+			inputs = []
+			for target in targets:
+				inputs += self.inputs(target)
+			return inputs
 
 	# return BuildList(set(build_indexes), set(inputs))
+	# targets can be string or set/list of strings
 	# later you can union this indexes with another build indexes to get summed list
-	def build_list(self, target):
+	def build_list(self, targets):
 		indexes = set()
 		inputs = set()
-		def all_deps(target):
-			if target in self.targets:
-				indexes.add(self.targets.get(target))
-				for dep in self.inputs(target):
-					all_deps(dep)
-			else:
-				inputs.add(target)
-		all_deps(target)
+		if isinstance(targets, str):
+			def all_deps(targets):
+				if targets in self.targets:
+					indexes.add(self.targets.get(targets))
+					for dep in self.inputs(targets):
+						all_deps(dep)
+				else:
+					inputs.add(targets)
+			all_deps(targets)
+		else:
+			for target in targets:
+				build_list = self.build_list(target)
+				indexes = indexes.union(build_list.indexes)
+				inputs = inputs.union(build_list.inputs)
+
 		return BuildList(indexes = indexes, inputs = inputs)
 
 	# return BuildGraph({target: BuildNode(set(input), build_index, rule_name)})
