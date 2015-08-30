@@ -1,13 +1,60 @@
 # mask ir to qmake exporter
 
+import os
 from pprint import pprint
+from collections import defaultdict
+
 from lib.tool_classic_tree import to_trees
 
-#from lib.mask_irreader import IRreader
+from lib.mask_irreader import IRreader
 
-def to_string(ir):
-	#t = IRreader(ir)
+class BuildTreeC:
+	def __init__(self, build_graph, root_target):
+		self.ext_types = {
+			"sources": [".c", ".cpp", ".cxx", ".cc"],
+			"headers": [".h", ".hpp", ".hxx"],
+			"objs": [".obj"],
+			"links": [".exe", ".lib", ".dll", ".a"]
+		}
+		self.ext_inv_types = {ext: type for type, list in self.ext_types.items() for ext in list}
+		self.build_graph = build_graph
+		self.root_target = root_target
 
+		for target in self.layers()["links"]:
+			if target != root_target:
+				print(target)
+		#pprint(inputs_to_targets)
+		#pprint(layers)
+
+		#pprint(build_graph)
+
+	def type(self, target):
+		return self.ext_inv_types.get(os.path.splitext(target)[1], "unknown")
+
+	def layers(self):
+		layers = defaultdict(list)
+		for target, node in self.build_graph.graph.items():
+			layers[self.type(target)].append(target)
+		return layers
+
+	def inputs_to_targets(self):
+		return {input: target for target, node in self.build_graph.graph.items() for input in node.inputs}
+
+
+def to_string(ir, args = None):
+	ir_reader = IRreader(ir)
+
+	end_targets = ir_reader.end_targets(args.get("variation"))
+
+	for target in end_targets:
+		t = ir_reader.build_graph(target)
+		
+		t2 = BuildTreeC(t, target)
+		
+		#pprint(t)
+		#pprint(t.graph[target])
+
+	return ""
 	trees = to_trees(ir)
 
 	if len(trees) != 1:
@@ -52,4 +99,4 @@ CONFIG =
 
 def to_file(filename, ir, args = None):
 	with open(filename, "w") as f:
-		f.write(to_string(ir))
+		f.write(to_string(ir, args))
