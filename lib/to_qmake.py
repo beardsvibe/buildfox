@@ -6,53 +6,87 @@ from collections import defaultdict
 
 from lib.tool_classic_tree import to_trees
 
-from lib.mask_irreader import IRreader
+from lib.mask_irreader import IRreader, BuildGraph
+
+# ------------------------------------------------------------------------------
+# conversion from file extension to semantic type
+
+c_ext_types = {
+	"sources": [".c", ".cpp", ".cxx", ".cc"],
+	"headers": [".h", ".hpp", ".hxx"],
+	"objs": [".obj"],
+	"links": [".exe", ".lib", ".dll", ".a"]
+}
+
+c_ext_inv_types = {ext: type for type, list in c_ext_types.items() for ext in list}
+
+def c_type(target):
+	return c_ext_inv_types.get(os.path.splitext(target)[1], "unknown")
+
+# ------------------------------------------------------------------------------
+# build graph with C tree properties
+
+class BuildGraphC(BuildGraph):
+	@property
+	def layers(self):
+		layers = defaultdict(set)
+		for target, node in self.graph.items():
+			layers[c_type(target)].add(target)
+		return layers
+	@property
+	def inputs_to_targets(self):
+		i2t = defaultdict(set)
+		for target, node in self.graph.items():
+			for input in node.inputs:
+				i2t[input].add(target)
+		return i2t
+
+# ------------------------------------------------------------------------------
+# classic C/C++ build tree is defined as
+# workspace containing projects, project can depend on other projects
+# each project have C/C++ -> obj -> exe/lib flow
+# with global compiling and linking options
+# optionally each file can have specific compiling options
+# each project also have pre and post build steps
 
 class BuildTreeC:
-	def __init__(self, build_graph, root_target):
-		self.ext_types = {
-			"sources": [".c", ".cpp", ".cxx", ".cc"],
-			"headers": [".h", ".hpp", ".hxx"],
-			"objs": [".obj"],
-			"links": [".exe", ".lib", ".dll", ".a"]
-		}
-		self.ext_inv_types = {ext: type for type, list in self.ext_types.items() for ext in list}
-		self.build_graph = build_graph
+	def __init__(self, build_graph, root_target, ir_reader):
+		self.workspace_graph = BuildGraphC(build_graph.graph)
 		self.root_target = root_target
+		self.ir_reader = ir_reader
 
-		for target in self.layers()["links"]:
-			if target != root_target:
-				print(target)
+		# extract all normal projects
+		self.workspace_links = self.workspace_graph.layers["links"]
+		self.workspace_inputs_map = self.workspace_graph.inputs_to_targets
+
+		self.projects_graphs = {target: self.ir_reader.build_graph(target, self.workspace_links) for target in self.workspace_links}
+		self.workspace_postbuild = self.workspace_links.intersection(self.workspace_inputs_map.keys())
+
+		pprint(self.workspace_graph.inputs_to_targets)
+
+		#pprint(self.workspace_links)
+		#pprint(self.projects_graphs)
+		pprint(self.workspace_postbuild)
 		#pprint(inputs_to_targets)
 		#pprint(layers)
 
 		#pprint(build_graph)
 
-	def type(self, target):
-		return self.ext_inv_types.get(os.path.splitext(target)[1], "unknown")
+	#def graph(self, target):
+	#	return self.ir_reader.build_graph(target)
 
-	def layers(self):
-		layers = defaultdict(list)
-		for target, node in self.build_graph.graph.items():
-			layers[self.type(target)].append(target)
-		return layers
 
-	def inputs_to_targets(self):
-		return {input: target for target, node in self.build_graph.graph.items() for input in node.inputs}
 
 
 def to_string(ir, args = None):
 	ir_reader = IRreader(ir)
 
 	end_targets = ir_reader.end_targets(args.get("variation"))
+	graph = ir_reader.build_graph(end_targets)
 
-	for target in end_targets:
-		t = ir_reader.build_graph(target)
-		
-		t2 = BuildTreeC(t, target)
-		
-		#pprint(t)
-		#pprint(t.graph[target])
+	t2 = BuildTreeC(graph, end_targets, ir_reader)
+	#pprint(t)
+	#pprint(t.graph[target])
 
 	return ""
 	trees = to_trees(ir)

@@ -2,9 +2,12 @@
 
 from collections import namedtuple
 
-BuildList = namedtuple("BuildList", ["indexes", "inputs"])
-BuildNode = namedtuple("BuildNode", ["inputs", "index", "rule"])
-BuildGraph = namedtuple("BuildGraph", ["graph"])
+class BuildList(namedtuple("BuildList", ["indexes", "inputs"])):
+	pass
+class BuildNode(namedtuple("BuildNode", ["inputs", "index", "rule"])):
+	pass
+class BuildGraph(namedtuple("BuildGraph", ["graph"])):
+	pass
 
 # TODO BuildGraph should have methods like extracting sub graph, etc
 
@@ -74,18 +77,26 @@ class IRreader:
 		return BuildList(indexes = indexes, inputs = inputs)
 
 	# return BuildGraph({target: BuildNode(set(input), build_index, rule_name)})
-	def build_graph(self, target):
+	# excluding can be list of targets to exclude from tree or None
+	def build_graph(self, targets, excluding = None):
 		graph = {}
 		def all_deps(target):
 			if target in self.targets:
 				index = self.targets.get(target)
 				build = self.ir.builds[index]
+				if (target in graph) and (graph.get(target).index != index):
+					raise ValueError("two commands build " + target)
 				graph[target] = BuildNode(inputs = set(build.inputs), index = index, rule = build.rule)
 				for dep in self.inputs(target):
-					all_deps(dep)
+					if not excluding or dep not in excluding:
+						all_deps(dep)
 			else:
 				graph[target] = BuildNode(inputs = set(), index = None, rule = None)
-		all_deps(target)
+		if isinstance(targets, str):
+			all_deps(targets)
+		else:
+			for target in targets:
+				all_deps(target)
 		return BuildGraph(graph = graph)
 
 	# return [Build] from [indexes or targets]
