@@ -60,9 +60,21 @@ class BuildGraphC(BuildGraph):
 	def deps(self):
 		return set(self.inputs_to_targets.keys()).intersection(self.sln_links)
 
+	# ...
+	def find_pre_post_builds(self):
+		layers = self.layers
+		# this check simplifies everything a lot
+		# if there is no unknown layers then all files involved are source code
+		# we don't know about compiler settings yet - this will be processed on later stages
+		if "unknown" not in layers:
+			return
+		print(self.layers)
+		pass
+
+
 # ------------------------------------------------------------------------------
 # classic C/C++ build tree is defined as
-# sln containing projects, project can depend on other projects
+# solution containing projects, project can depend on other projects
 # each project have C/C++ -> obj -> exe/lib flow
 # with global compiling and linking options
 # optionally each file can have specific compiling options
@@ -89,11 +101,13 @@ class BuildTreeC:
 			self.sln_postbuild_graph = None
 
 		# dependencies
-		pprint({t: g.deps for t, g in self.prjs_graphs.items()})
+		#pprint({t: g.deps for t, g in self.prjs_graphs.items()})
 
-
-	#def graph(self, target):
-	#	return self.ir_reader.build_graph(target)
+		# figure out pre and post build steps
+		for prj in self.prjs_graphs.values():
+			prj.find_pre_post_builds()
+		self.sln_postbuild_graph.find_pre_post_builds()
+		#pprint(self.prjs_graphs)
 
 
 
