@@ -50,23 +50,28 @@ class BuildGraphC(BuildGraph):
 # each project also have pre and post build steps
 
 class BuildTreeC:
-	def __init__(self, build_graph, root_target, ir_reader):
+	def __init__(self, build_graph, end_targets, ir_reader):
 		self.workspace_graph = BuildGraphC(build_graph.graph)
-		self.root_target = root_target
+		self.end_targets = end_targets
 		self.ir_reader = ir_reader
 
 		# extract all normal projects
 		self.workspace_links = self.workspace_graph.layers["links"]
-		self.workspace_inputs_map = self.workspace_graph.inputs_to_targets
-
+		#self.workspace_inputs_map = self.workspace_graph.inputs_to_targets
 		self.projects_graphs = {target: self.ir_reader.build_graph(target, self.workspace_links) for target in self.workspace_links}
-		self.workspace_postbuild = self.workspace_links.intersection(self.workspace_inputs_map.keys())
 
-		pprint(self.workspace_graph.inputs_to_targets)
+		# some targets can be based on projects links, we move all of them to separate project
+		self.workspace_postbuild_targets = set(self.end_targets).difference(self.workspace_links)
+		if len(self.workspace_postbuild_targets):
+			self.workspace_postbuild_graph = self.ir_reader.build_graph(self.workspace_postbuild_targets, self.workspace_links)
+		else:
+			self.workspace_postbuild_graph = None
+
+		pprint(self.workspace_postbuild_graph)
 
 		#pprint(self.workspace_links)
 		#pprint(self.projects_graphs)
-		pprint(self.workspace_postbuild)
+		#pprint(self.workspace_postbuild)
 		#pprint(inputs_to_targets)
 		#pprint(layers)
 
