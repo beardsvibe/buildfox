@@ -27,12 +27,26 @@ def c_type(target):
 # build graph with C tree properties
 
 class BuildGraphC(BuildGraph):
+	__slots__ = ()
+	def __new__(self, build_graph, targets, sln_links):
+		self.sln_links = sln_links
+		self.targets = targets
+		return super(self, BuildGraphC).__new__(self, build_graph.graph)
+
+	# constructs graph from targets, links and ir reader
+	@classmethod
+	def construct(self, targets, sln_links, ir_reader):
+		return self(ir_reader.build_graph(targets, sln_links), targets, sln_links)
+
+	# return build layers defined in c_ext_types
 	@property
 	def layers(self):
 		layers = defaultdict(set)
 		for target, node in self.graph.items():
 			layers[c_type(target)].add(target)
 		return layers
+
+	# return inputs dictionary mapped to target(s)
 	@property
 	def inputs_to_targets(self):
 		i2t = defaultdict(set)
@@ -41,9 +55,14 @@ class BuildGraphC(BuildGraph):
 				i2t[input].add(target)
 		return i2t
 
+	# return dependencies of this graph
+	@property
+	def deps(self):
+		return set(self.inputs_to_targets.keys()).intersection(self.sln_links)
+
 # ------------------------------------------------------------------------------
 # classic C/C++ build tree is defined as
-# workspace containing projects, project can depend on other projects
+# sln containing projects, project can depend on other projects
 # each project have C/C++ -> obj -> exe/lib flow
 # with global compiling and linking options
 # optionally each file can have specific compiling options
@@ -51,31 +70,27 @@ class BuildGraphC(BuildGraph):
 
 class BuildTreeC:
 	def __init__(self, build_graph, end_targets, ir_reader):
-		self.workspace_graph = BuildGraphC(build_graph.graph)
+		self.sln_graph = BuildGraphC(build_graph, end_targets, set())
 		self.end_targets = end_targets
 		self.ir_reader = ir_reader
 
 		# extract all normal projects
-		self.workspace_links = self.workspace_graph.layers["links"]
-		#self.workspace_inputs_map = self.workspace_graph.inputs_to_targets
-		self.projects_graphs = {target: self.ir_reader.build_graph(target, self.workspace_links) for target in self.workspace_links}
+		self.sln_links = self.sln_graph.layers["links"]
+		self.prjs_graphs = {
+			target: BuildGraphC.construct(target, self.sln_links, self.ir_reader)
+			for target in self.sln_links
+		}
 
 		# some targets can be based on projects links, we move all of them to separate project
-		self.workspace_postbuild_targets = set(self.end_targets).difference(self.workspace_links)
-		if len(self.workspace_postbuild_targets):
-			self.workspace_postbuild_graph = self.ir_reader.build_graph(self.workspace_postbuild_targets, self.workspace_links)
+		self.sln_postbuild_targets = set(self.end_targets).difference(self.sln_links)
+		if len(self.sln_postbuild_targets):
+			self.sln_postbuild_graph = BuildGraphC.construct(self.sln_postbuild_targets, self.sln_links, self.ir_reader)
 		else:
-			self.workspace_postbuild_graph = None
+			self.sln_postbuild_graph = None
 
-		pprint(self.workspace_postbuild_graph)
+		# dependencies
+		pprint({t: g.deps for t, g in self.prjs_graphs.items()})
 
-		#pprint(self.workspace_links)
-		#pprint(self.projects_graphs)
-		#pprint(self.workspace_postbuild)
-		#pprint(inputs_to_targets)
-		#pprint(layers)
-
-		#pprint(build_graph)
 
 	#def graph(self, target):
 	#	return self.ir_reader.build_graph(target)
