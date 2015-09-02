@@ -28,15 +28,20 @@ def c_type(target):
 
 class BuildGraphC(BuildGraph):
 	__slots__ = ()
-	def __new__(self, build_graph, targets, sln_links):
-		self.sln_links = sln_links
-		self.targets = targets
-		return super(self, BuildGraphC).__new__(self, build_graph.graph)
+	def __new__(self, build_graph, targets, sln_links, ir_reader):
+		obj = super(self, BuildGraphC).__new__(self, build_graph.graph)
+		obj.sln_links = sln_links
+		if type(targets) is str:
+			obj.targets = set([targets])
+		else:
+			obj.targets = targets
+		obj.ir_reader = ir_reader
+		return obj
 
 	# constructs graph from targets, links and ir reader
 	@classmethod
 	def construct(self, targets, sln_links, ir_reader):
-		return self(ir_reader.build_graph(targets, sln_links), targets, sln_links)
+		return BuildGraphC(ir_reader.build_graph(targets, sln_links), targets, sln_links, ir_reader)
 
 	# return build layers defined in c_ext_types
 	@property
@@ -60,15 +65,44 @@ class BuildGraphC(BuildGraph):
 	def deps(self):
 		return set(self.inputs_to_targets.keys()).intersection(self.sln_links)
 
-	# ...
-	def find_pre_post_builds(self):
+	# this tree supposed to be normal C build tree
+	# in this case all targets are from link stage (see BuildTreeC)
+	# so there is no post build step ...
+	def analyse(self):
+		# basic values
 		layers = self.layers
-		# this check simplifies everything a lot
-		# if there is no unknown layers then all files involved are source code
-		# we don't know about compiler settings yet - this will be processed on later stages
-		if "unknown" not in layers:
-			return
-		print(self.layers)
+		sources = layers["sources"]
+		objs = layers["objs"]
+		headers = layers["headers"]
+		unknowns = layers["unknowns"]
+		sources_and_headers = sources.union(headers)
+
+		# check that all targets are built by one build command
+		# TODO how this will work when .lib file is defined as phony to target to .dll ?
+		all_link_indexes = set([self.graph[target].index for target in self.targets])
+		build_link = self.ir_reader.build_commands(all_link_indexes)
+		if len(all_link_indexes) > 1:
+			print("Warning ! Multiple build commands create required project targets :")
+			print(build_link)
+
+		# let's see if target depends on obj or source files
+		prebuilds = set()
+		for target in self.targets:
+			for input in self.graph[target].inputs:
+				if input in objs:
+					# seem ok so far
+					pass
+				elif input in sources_and_headers:
+					# this is rare case when compiler is called with source files and produce linked binary without obj files
+					pass
+				elif input in unknowns:
+					prebuilds.add(input)
+					pass
+
+		pass
+
+	# this tree only have postbuild step
+	def analyse_postbuild(self):
 		pass
 
 
@@ -82,7 +116,7 @@ class BuildGraphC(BuildGraph):
 
 class BuildTreeC:
 	def __init__(self, build_graph, end_targets, ir_reader):
-		self.sln_graph = BuildGraphC(build_graph, end_targets, set())
+		self.sln_graph = BuildGraphC(build_graph, end_targets, set(), ir_reader)
 		self.end_targets = end_targets
 		self.ir_reader = ir_reader
 
@@ -105,8 +139,8 @@ class BuildTreeC:
 
 		# figure out pre and post build steps
 		for prj in self.prjs_graphs.values():
-			prj.find_pre_post_builds()
-		self.sln_postbuild_graph.find_pre_post_builds()
+			prj.analyse()
+		self.sln_postbuild_graph.analyse_postbuild()
 		#pprint(self.prjs_graphs)
 
 
