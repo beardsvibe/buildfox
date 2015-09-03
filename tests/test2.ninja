@@ -6,8 +6,10 @@ rule link
 rule copy
   command = copy $in $out
 
+build test_0.wtf.in: copy test_0.c
+build test_0.wtf: copy test_0.wtf.in
 build test_1.obj: cxx test_1.cpp
-build test_1.lib: link test_1.obj
+build test_1.lib: link test_1.obj test_0.wtf
 
 build test_2.obj: cxx test_2.cpp
 build test_2.exe: link test_2.obj test_1.obj

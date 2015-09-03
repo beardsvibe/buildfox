@@ -20,6 +20,7 @@ c_ext_types = {
 
 c_ext_inv_types = {ext: type for type, list in c_ext_types.items() for ext in list}
 
+# TODO how it works with unix executables ? they don't have extension
 def c_type(target):
 	return c_ext_inv_types.get(os.path.splitext(target)[1], "unknown")
 
@@ -71,35 +72,75 @@ class BuildGraphC(BuildGraph):
 	def analyse(self):
 		# basic values
 		layers = self.layers
+		links = layers["links"]
 		sources = layers["sources"]
 		objs = layers["objs"]
 		headers = layers["headers"]
-		unknowns = layers["unknowns"]
+		unknowns = layers["unknown"]
 		sources_and_headers = sources.union(headers)
+		def remove_from_lists(target): # TODO clean up this crap
+			if target in links:
+				links.remove(target)
+			if target in sources:
+				sources.remove(target)
+			if target in objs:
+				objs.remove(target)
+			if target in headers:
+				headers.remove(target)
+			if target in unknowns:
+				unknowns.remove(target)
+			if target in sources_and_headers:
+				sources_and_headers.remove(target)
+
+		# sanity check
+		if len(links.difference(self.targets)) > 0:
+			print("Warning ! list of targets from layers is different from external list of targets : %s vs %s" % (str(links), str(self.targets)))
+
+		# prebuilds set
+		prebuilds = set()
+		def add_to_prebuild(target):
+			prebuilds.add(target)
+			remove_from_lists(target)
+			for input in self.graph[target].inputs:
+				add_to_prebuild(input)
 
 		# check that all targets are built by one build command
 		# TODO how this will work when .lib file is defined as phony to target to .dll ?
-		all_link_indexes = set([self.graph[target].index for target in self.targets])
+		all_link_indexes = set([self.graph[target].index for target in links])
 		build_link = self.ir_reader.build_commands(all_link_indexes)
 		if len(all_link_indexes) > 1:
 			print("Warning ! Multiple build commands create required project targets :")
 			print(build_link)
 
-		# let's see if target depends on obj or source files
-		prebuilds = set()
-		for target in self.targets:
-			for input in self.graph[target].inputs:
-				if input in objs:
-					# seem ok so far
-					pass
-				elif input in sources_and_headers:
-					# this is rare case when compiler is called with source files and produce linked binary without obj files
-					pass
-				elif input in unknowns:
-					prebuilds.add(input)
-					pass
+		# let's move all unknowns and all their inputs to prebuilds
+		# this will move to prebuild all source files\obj\links that are inputs of unknowns
+		for target in unknowns.copy():
+			add_to_prebuild(target)
 
-		pass
+		# sanity check
+		if len(links) == 0:
+			print("Warning ! unknowns' dependencies moved all linked files to prebuild step, so we have nothing to build")
+
+		# sanity checks on dependency order
+		# TODO potentially we can move incorrect targets to prebuilds
+		for target in sources_and_headers:
+			if target in objs:
+				print("Warning ! source target depends on obj input ! (%s)" % target)
+			if target in links:
+				print("Warning ! source target depends on link input ! (%s)" % target)
+		for target in objs:
+			if target in links:
+				print("Warning ! obj target depends on link input ! (%s)" % target)
+
+		# on this stage we have :
+		# - all left links depend on objs/sources/headers/prebuold
+		# - all left objs depend on sources/headers/prebuild
+		# - all left sources/headers depend on prebuild
+
+		# now it's time for actual builds analysis
+		
+
+
 
 	# this tree only have postbuild step
 	def analyse_postbuild(self):
