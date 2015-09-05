@@ -30,11 +30,12 @@ def c_type(target):
 # ------------------------------------------------------------------------------
 # command line tools
 
-class CommandArgsCL(namedtuple("CommandArgsCL", ["command", "inputs", "outputs",
-	"args", "link", "link_args", "link_inputs", "link_outputs"])):
+class CommandArgsCL(namedtuple("CommandArgsCL", ["command", "tool", "inputs",
+	"outputs", "args", "link", "link_args", "link_inputs", "link_outputs"])):
 	__slots__ = ()
 	def __new__(self, argv):
-		obj = super(self, CommandArgsCL).__new__(self, argv, [], [], set(), False, set(), [], [])
+		obj = super(self, CommandArgsCL).__new__(self, argv, argv[0], [], [],
+			set(), False, set(), [], [])
 
 		# parse arguments for CL
 		for arg in argv[1:]:
@@ -93,6 +94,16 @@ class BuildGraphC(BuildGraph):
 		else:
 			obj.targets = targets
 		obj.ir_reader = ir_reader
+
+		obj.prebuilds = set()			# prebuild targets
+		obj.postbuilds = set()			# postbuild targets
+		obj.toolset = ""				# toolset name
+		obj.common_args = set()
+		obj.common_link_args = set()
+		obj.to_be_compiled = {}			# files for compiler, key - name, val - additional compiler args
+		obj.to_be_linked = {}			# files for linker (libs/objs), key - name, val - additional linker args
+		obj.all_sourceish_files = set()	# files that should be visible in IDE
+
 		return obj
 
 	# constructs graph from targets, links and ir reader
@@ -193,24 +204,115 @@ class BuildGraphC(BuildGraph):
 		# - all left objs depend on sources/headers/prebuild
 		# - all left sources/headers depend on prebuild
 
+		# let's move all sources and headers to prebuild
+		# because build tree only can build objs and links
+		for target in sources_and_headers.copy():
+			add_to_prebuild(target)
+
 		# now it's time for actual builds analysis
+
+		# let's start with parsing build commands list
+		def parse_builds(builds):
+			out = []
+			for build in builds:
+				cmd = self.ir_reader.ir.evaluate(build, "command")
+				parsed_cmd = parse_command(cmd)
+				out.append(parsed_cmd)
+			return out
 		build_exclusions = prebuilds.union(self.deps)
-		build_targets = links.union(objs)
+		links_and_objs = links.union(objs)
+		cmds = parse_builds(self.ir_reader.build_commands(links_and_objs, build_exclusions))
+
 		print("------------ process " + str(self.targets))
-		all_builds = self.ir_reader.build_commands(build_targets, build_exclusions)
 
-		for build in all_builds:
-			cmd = self.ir_reader.ir.evaluate(build, "command")
-			parsed_cmd = parse_command(cmd)
-			
-			print(parsed_cmd)
+		# TODO fill this up
+		toolsets = {
+			"msvc": set(["cl", "link"]),
+			"gcc": set(["gcc", "g++"])
+		}
+		tool_to_toolset = {tool: toolset for toolset, list in toolsets.items() for tool in list}
 
+		# figure out toolset and common compiler and linker args
+		toolset = None
+		common_args = None
+		common_link_args = None
+		for cmd in cmds:
+			if cmd.tool not in tool_to_toolset:
+				print("Warning ! unknown tool " + cmd.tool)
+			cmd_toolset = tool_to_toolset.get(cmd.tool)
 
+			if not toolset:
+				toolset = cmd_toolset
+			elif toolset != cmd_toolset:
+				print("Warning ! toolset differs between cmd's : %s vs %s" % (toolset, cmd_toolset))
+
+			if cmd.is_compiling:
+				if len(cmd.link_args):
+					print("Warning ! linking args are present in compiling command " + str(cmd))
+				if len(cmd.link_outputs):
+					print("Warning ! compiling command produce linked outputs " + str(cmd))
+				if not common_args:
+					common_args = cmd.args
+				else:
+					common_args = common_args.intersection(cmd.args)
+			elif cmd.is_linking:
+				if len(cmd.args):
+					print("Warning ! compiling args are present in linking command " + str(cmd))
+				if len(cmd.outputs):
+					print("Warning ! linking command produce compiled outputs " + str(cmd))
+				if not common_link_args:
+					common_link_args = cmd.link_args
+				else:
+					common_link_args = common_link_args.intersection(cmd.link_args)
+			else:
+				print("Warning ! unknown cmd action " + str(cmd))
+
+		# key is file name, value is custom arguments
+		to_be_compiled = {}
+		to_be_linked = {}
+
+		# sets of produced targets, just for sanity check that we cover everything
+		compiled_targets = set()
+		linked_targets = set()
+
+		for cmd in cmds:
+			if cmd.is_compiling:
+				for input in cmd.inputs:
+					if input in to_be_compiled:
+						print("Warning ! two or more commands compile %s" % input)
+					args = common_args.difference(cmd.args)
+					to_be_compiled[input] = args
+				compiled_targets = compiled_targets.union(set(cmd.outputs))
+			elif cmd.is_linking:
+				for input in cmd.link_inputs + cmd.inputs:
+					if input in to_be_linked:
+						print("Warning ! two or more commands link %s" % input)
+					args = common_link_args.difference(cmd.link_args)
+					to_be_linked[input] = args
+				linked_targets = linked_targets.union(set(cmd.link_outputs))
+
+		# let's sanitize prebuilds list to exclude already built targets
+		for target in prebuilds.copy():
+			if not self.graph[target].index:
+				prebuilds.remove(target)
+
+		# looks like we are done
+		self.prebuilds = prebuilds
+		self.postbuilds = set()
+		self.toolset = toolset
+		self.common_args = common_args
+		self.common_link_args = common_link_args
+		self.to_be_compiled = to_be_compiled
+		self.to_be_linked = to_be_linked
+		self.all_sourceish_files = layers["sources"].union(layers["headers"]).union(layers["unknown"])
 
 	# this tree only have postbuild step
 	def analyse_postbuild(self):
-		pass
-
+		postbuilds = set()
+		for target in self.graph.keys():
+			if self.graph[target].index:
+				postbuilds.add(target)
+		self.postbuilds = postbuilds
 
 # ------------------------------------------------------------------------------
 # classic C/C++ build tree is defined as
@@ -240,13 +342,14 @@ class BuildTreeC:
 		else:
 			self.sln_postbuild_graph = None
 
-		# dependencies
-		#pprint({t: g.deps for t, g in self.prjs_graphs.items()})
-
 		# figure out pre and post build steps
 		for prj in self.prjs_graphs.values():
 			prj.analyse()
-		self.sln_postbuild_graph.analyse_postbuild()
+		if self.sln_postbuild_graph:
+			self.sln_postbuild_graph.analyse_postbuild()
+
+		# dependencies
+		#pprint({t: g.deps for t, g in self.prjs_graphs.items()})
 		#pprint(self.prjs_graphs)
 
 
