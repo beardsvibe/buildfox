@@ -56,12 +56,12 @@ class IRreader:
 	# return BuildList(set(build_indexes), set(inputs))
 	# targets can be string or set/list of strings
 	# later you can union this indexes with another build indexes to get summed list
-	def build_list(self, targets):
+	def build_list(self, targets, excluding = None):
 		indexes = set()
 		inputs = set()
 		if isinstance(targets, str):
 			def all_deps(targets):
-				if targets in self.targets:
+				if (targets in self.targets) and (not excluding or targets not in excluding):
 					indexes.add(self.targets.get(targets))
 					for dep in self.inputs(targets):
 						all_deps(dep)
@@ -70,7 +70,7 @@ class IRreader:
 			all_deps(targets)
 		else:
 			for target in targets:
-				build_list = self.build_list(target)
+				build_list = self.build_list(target, excluding)
 				indexes = indexes.union(build_list.indexes)
 				inputs = inputs.union(build_list.inputs)
 
@@ -100,7 +100,8 @@ class IRreader:
 		return BuildGraph(graph = graph)
 
 	# return [Build] from [indexes or targets]
-	def build_commands(self, indexes_or_targets):
+	# optional - list of excluded targets
+	def build_commands(self, indexes_or_targets, excluding = None):
 		all_targets = set()
 		all_indexes = set()
 
@@ -111,7 +112,11 @@ class IRreader:
 				all_indexes.add(temp)
 
 		if len(all_targets):
-			all_indexes = all_indexes.union(self.build_list(all_targets).indexes)
+			all_indexes = all_indexes.union(self.build_list(all_targets, excluding).indexes)
+
+		# we must do this because builds in ir are topologically sorted already
+		all_indexes = list(all_indexes)
+		all_indexes.sort()
 
 		builds = []
 		for i in all_indexes:

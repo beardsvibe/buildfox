@@ -8,6 +8,9 @@ from lib.tool_classic_tree import to_trees
 
 from lib.mask_irreader import IRreader, BuildGraph
 
+from collections import namedtuple
+import shlex
+
 # ------------------------------------------------------------------------------
 # conversion from file extension to semantic type
 
@@ -25,8 +28,61 @@ def c_type(target):
 	return c_ext_inv_types.get(os.path.splitext(target)[1], "unknown")
 
 # ------------------------------------------------------------------------------
-# build graph with C tree properties
+# command line tools
 
+class CommandArgsCL(namedtuple("CommandArgsCL", ["command", "inputs", "outputs",
+	"args", "link", "link_args", "link_inputs", "link_outputs"])):
+	__slots__ = ()
+	def __new__(self, argv):
+		obj = super(self, CommandArgsCL).__new__(self, argv, [], [], set(), False, set(), [], [])
+
+		# parse arguments for CL
+		for arg in argv[1:]:
+			if arg.startswith("/") or arg.startswith("-"):
+				arg = "/" + arg[1:]
+				if arg == "/link":
+					obj = obj._replace(link = True) # WTF python
+					continue
+				elif obj.link == False and arg.startswith("/Fo"):
+					obj.outputs.append(arg[3:])
+				elif obj.link == True and arg.startswith("/out:"):
+					obj.link_outputs.append(arg[5:])
+				elif obj.link == False:
+					obj.args.add(arg)
+				else:
+					obj.link_args.add(arg)
+			else:
+				if arg.startswith("@"):
+					print("TODO rspfiles are not supported yet")
+				if obj.link == False:
+					obj.inputs.append(arg)
+				else:
+					obj.link_inputs.append(arg)
+		return obj
+
+	@property
+	def is_compiling(self):
+		return not self.link # not really sure
+
+	@property
+	def is_linking(self):
+		return self.link
+
+know_commands = {
+	"cl": CommandArgsCL
+}
+
+def parse_command(command):
+	argv = shlex.split(command)
+	program = argv[0]
+	if program not in know_commands:
+		print("unknown program %s" % program)
+		return None
+	return know_commands.get(argv[0])(argv)
+
+
+# ------------------------------------------------------------------------------
+# build graph with C tree properties
 class BuildGraphC(BuildGraph):
 	__slots__ = ()
 	def __new__(self, build_graph, targets, sln_links, ir_reader):
@@ -138,7 +194,16 @@ class BuildGraphC(BuildGraph):
 		# - all left sources/headers depend on prebuild
 
 		# now it's time for actual builds analysis
-		
+		build_exclusions = prebuilds.union(self.deps)
+		build_targets = links.union(objs)
+		print("------------ process " + str(self.targets))
+		all_builds = self.ir_reader.build_commands(build_targets, build_exclusions)
+
+		for build in all_builds:
+			cmd = self.ir_reader.ir.evaluate(build, "command")
+			parsed_cmd = parse_command(cmd)
+			
+			print(parsed_cmd)
 
 
 

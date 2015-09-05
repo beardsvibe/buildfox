@@ -75,7 +75,7 @@ class IR:
 		self.builds.append(build)
 
 	# return rule variable name in context of particular build command
-	def evaluate(self, rule_name, var_name, build):
+	def evaluate(self, build, var_name):
 		def repl(matchobj):
 			name = matchobj.group(1)
 			if name == "in":
@@ -86,7 +86,7 @@ class IR:
 				return "\n".join([to_esc_shell(v) for v in build.inputs_explicit] if var_name == "command" else build.inputs_explicit)
 			else:
 				return ""
-		return re.sub("\${([a-zA-Z0-9_.-]+)}", repl, self.rules[rule_name][var_name])
+		return re.sub("\${([a-zA-Z0-9_.-]+)}", repl, self.rules[build.rule][var_name])
 
 	# return list of rules string representation
 	def repr_rules(self):
