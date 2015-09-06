@@ -7,10 +7,10 @@ from lib.buildtree_c import to_tree
 
 def prj_to_string(prj_graph):
 	target_to_template = {
-		".exe": "app",
-		".lib": "lib",
-		".a": "lib",
-		".dll": "lib"
+		".exe": ("app", ""),
+		".lib": ("lib", "staticlib"),
+		".a": ("lib", "staticlib"),
+		".dll": ("lib", "sharedlib")
 	}
 
 	template = set([target_to_template.get(os.path.splitext(target)[1]) for target in prj_graph.targets])
@@ -25,7 +25,9 @@ def prj_to_string(prj_graph):
 		if len(v) > 0:
 			print("Warning ! qmake doesn't support custom linkage flags for obj files")
 
-	output = "TEMPLATE = " + list(template)[0] + "\n"
+	output = "TEMPLATE = " + list(template)[0][0] + "\n"
+	output += "CONFIG = " + list(template)[0][1] + "\n"
+	output += "TARGET = " + os.path.splitext(list(prj_graph.targets)[0])[0].replace("\\", "/") + "\n"
 	output += "SOURCES += " + " ".join([v.replace("\\", "/") for v in prj_graph.to_be_compiled.keys()]) + "\n"
 	output += "QMAKE_CXXFLAGS = " + " ".join([v for v in prj_graph.common_args]) + "\n"
 	output += "QMAKE_CFLAGS = $$QMAKE_CXXFLAGS\n"
@@ -33,7 +35,7 @@ def prj_to_string(prj_graph):
 
 	deps = prj_graph.deps
 	if len(deps):
-		output += "LIBS += " + " ".join([v for v in deps]) + "\n" # TODO not sure if this is correct
+		output += "LIBS += " + " ".join([v.replace("\\", "/") for v in deps]) + "\n" # TODO not sure if this is correct
 
 	# TODO
 	#obj.prebuilds = set()			# prebuild targets
@@ -64,7 +66,6 @@ QMAKE_CFLAGS_THREAD =
 QMAKE_CFLAGS_WARN_OFF =
 QMAKE_CFLAGS_WARN_ON =
 DEFINES =
-CONFIG =
 """
 	return output
 
@@ -85,7 +86,7 @@ def to_file(filename, ir, args = None):
 	tree = to_tree(ir, args)
 
 	def prj_name(target):
-		return "prj_" + target.replace(".", "_")
+		return "prj_" + target.replace(".", "_").replace("\\", "/").replace("/", "_")
 
 	prjs = {}
 	for targets, prj_graph in tree.prjs_graphs.items():

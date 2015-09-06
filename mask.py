@@ -33,10 +33,16 @@ out_file = args["output"]
 in_ext = os.path.splitext(in_file)[1]
 out_ext = os.path.splitext(out_file)[1]
 
+out_path = os.path.dirname(out_file)
+
 if in_ext not in parsers:
 	raise ValueError("unknown input extension " + in_ext)
 if out_ext not in generators:
 	raise ValueError("unknown output extension " + out_ext)
 
 ir = parsers[in_ext](in_file)
+
+if not os.path.isdir(out_path):
+	os.mkdir(out_path)
+
 generators[out_ext](out_file, ir, args)

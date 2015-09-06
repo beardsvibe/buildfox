@@ -77,9 +77,40 @@ class CommandArgsCL(namedtuple("CommandArgsCL", ["command", "tool", "inputs",
 	def is_linking(self):
 		return self.link
 
+class CommandArgsCLLIB(namedtuple("CommandArgsCLLIB", ["command", "tool", "inputs",
+	"outputs", "args", "link", "link_args", "link_inputs", "link_outputs"])):
+	__slots__ = ()
+	def __new__(self, argv):
+		obj = super(self, CommandArgsCLLIB).__new__(self, argv, argv[0], [], [],
+			set(), True, set(), [], [])
+
+		# parse arguments for CL
+		for arg in argv[1:]:
+			if arg.startswith("/") or arg.startswith("-"):
+				arg = "/" + arg[1:]
+				if arg.startswith("/out:"):
+					obj.link_outputs.append(arg[5:])
+				else:
+					obj.link_args.add(arg)
+			else:
+				if arg.startswith("@"):
+					print("TODO rspfiles are not supported yet")
+				obj.link_inputs.append(arg)
+		return obj
+
+	@property
+	def is_compiling(self):
+		return False
+
+	@property
+	def is_linking(self):
+		return True
+
+
 # TODO fill this up
 know_commands = {
-	"cl": CommandArgsCL
+	"cl": CommandArgsCL,
+	"lib": CommandArgsCLLIB
 }
 
 # TODO fill this up
