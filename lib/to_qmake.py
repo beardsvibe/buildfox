@@ -5,7 +5,7 @@ from pprint import pprint
 
 from lib.buildtree_c import to_tree
 
-def prj_to_string(prj_graph):
+def prj_to_string(prj_graph, name):
 	target_to_template = {
 		".exe": ("app", ""),
 		".lib": ("lib", "staticlib"),
@@ -26,6 +26,7 @@ def prj_to_string(prj_graph):
 			print("Warning ! qmake doesn't support custom linkage flags for obj files")
 
 	output = "TEMPLATE = " + list(template)[0][0] + "\n"
+	output += "QMAKE_PROJECT_NAME = " + name + "\n"
 	output += "CONFIG = " + list(template)[0][1] + "\n"
 	output += "TARGET = " + os.path.splitext(list(prj_graph.targets)[0])[0].replace("\\", "/") + "\n"
 	output += "SOURCES += " + " ".join([v.replace("\\", "/") for v in prj_graph.to_be_compiled.keys()]) + "\n"
@@ -35,6 +36,7 @@ def prj_to_string(prj_graph):
 
 	deps = prj_graph.deps
 	if len(deps):
+		output += "PRE_TARGETDEPS += " + " ".join([v.replace("\\", "/") for v in deps]) + "\n" # TODO not sure if this is correct
 		output += "LIBS += " + " ".join([v.replace("\\", "/") for v in deps]) + "\n" # TODO not sure if this is correct
 
 	# TODO
@@ -93,7 +95,7 @@ def to_file(filename, ir, args = None):
 		name = prj_name(targets)
 		prjs[name] = [prj_name(dep) for dep in prj_graph.deps]
 		with open(os.path.join(base_path, name + ".pro"), "w") as f:
-			f.write(prj_to_string(prj_graph))
+			f.write(prj_to_string(prj_graph, name))
 
 	with open(filename, "w") as f:
 		f.write(sln_to_string(tree, prjs))
