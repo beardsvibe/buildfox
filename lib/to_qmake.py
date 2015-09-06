@@ -39,12 +39,15 @@ def prj_to_string(prj_graph, name):
 		output += "PRE_TARGETDEPS += " + " ".join([v.replace("\\", "/") for v in deps]) + "\n" # TODO not sure if this is correct
 		output += "LIBS += " + " ".join([v.replace("\\", "/") for v in deps]) + "\n" # TODO not sure if this is correct
 
+	if len(prj_graph.prebuilds):
+		print("TODO qmake prebuilds")
+	if len(prj_graph.postbuilds):
+		print("TODO qmake postbuilds")
 	# TODO
 	#obj.prebuilds = set()			# prebuild targets
 	#obj.postbuilds = set()			# postbuild targets
 	#obj.toolset = ""				# toolset name
 
-	
 	output += """
 # remove all built-in qmake compiler flags, because we tell qmake EXACTLY what to do
 QMAKE_CXXFLAGS_RELEASE =
