@@ -2,6 +2,7 @@
 cd premake\test
 premake5 --scripts=..\premake-ninja ninja
 cd build
-python ..\..\..\..\mask.py --verbose build.ninja qmake/build.pro
+rem python ..\..\..\..\mask.py --verbose build.ninja qmake/build.pro
+python ..\..\..\..\mask.py --verbose build.ninja sh/build.sh
 cd ..\..\..
 

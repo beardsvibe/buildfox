@@ -91,8 +91,11 @@ class Namescope():
 
 		# expand all build vars
 		builds = []
+		need_phony = False
 		for build in self.builds:
 			name = build[1]
+			if name == "phony":
+				need_phony = True
 			build_scope = dict(parent_vars, **{v[0]: v[1] for v in vars[:build[0]]}) # TODO optimize this
 			targets = [self.evaluate_text(t, build_scope) for t in build[2]]
 			inputs0 = [self.evaluate_text(t, build_scope) for t in build[3]]
@@ -105,6 +108,10 @@ class Namescope():
 				build_scope[var_name] = value
 				build_vars[var_name] = value
 			builds.append((name, targets, inputs0, inputs1, inputs2, build_vars))
+
+		# add phony rule if needed
+		if need_phony and "phony" not in self.rules:
+			self.rules["phony"] = (0, [("command", "")]) # TODO I'm not very sure about this
 
 		# figure out end targets
 		if end_targets == None:
