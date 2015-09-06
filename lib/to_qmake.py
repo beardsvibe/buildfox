@@ -30,7 +30,10 @@ def prj_to_string(prj_graph):
 	output += "QMAKE_CXXFLAGS = " + " ".join([v for v in prj_graph.common_args]) + "\n"
 	output += "QMAKE_CFLAGS = $$QMAKE_CXXFLAGS\n"
 	output += "QMAKE_LFLAGS = " + " ".join([v for v in prj_graph.common_link_args]) + "\n"
-	output += "LIBS += " + " ".join([v for v in prj_graph.deps]) + "\n" # TODO not sure if this is correct
+
+	deps = prj_graph.deps
+	if len(deps):
+		output += "LIBS += " + " ".join([v for v in deps]) + "\n" # TODO not sure if this is correct
 
 	# TODO
 	#obj.prebuilds = set()			# prebuild targets

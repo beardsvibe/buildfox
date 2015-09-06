@@ -89,15 +89,13 @@ toolsets = {
 }
 tool_to_toolset = {tool: toolset for toolset, list in toolsets.items() for tool in list}
 
-
 def parse_command(command):
-	argv = shlex.split(command)
+	argv = shlex.split(command.replace("\\", "\\\\"))
 	program = argv[0]
 	if program not in know_commands:
 		print("unknown program %s" % program)
 		return None
 	return know_commands.get(argv[0])(argv)
-
 
 # ------------------------------------------------------------------------------
 # build graph with C tree properties
