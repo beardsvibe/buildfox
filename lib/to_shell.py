@@ -23,7 +23,7 @@ def to_string(ir, args = None):
 		variables = ir.rules[build.rule]
 		if "command" not in variables:
 			raise ValueError("rule " + build.rule + " doesn't have command variable")
-		command = ir.evaluate(build.rule, "command", build)
+		command = ir.evaluate(build, "command")
 
 		if "depfile" in variables:
 			print("TODO support depfile in to_shell")
