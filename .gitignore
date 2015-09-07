@@ -1,3 +1,4 @@
 prototype/__pycache__/
 *.pyc
 test_out.*
+tests/premake/test/build/
