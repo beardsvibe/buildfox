@@ -2,6 +2,9 @@
 
 # TODO we parse $\n sequence incorrectly : we don't skip whitespace after newline
 
+# TODO maybe this parser can be simplified: 
+# rules, builds, defaults, subninja - they all just introduce nested scopes
+
 import re
 import string
 import hashlib
@@ -16,6 +19,7 @@ class Namescope():
 		self.rules = {} # dict of key = name, value = (vars_scope_index, vars_array), vars_array - array of tuples (name, value)
 		self.builds = [] # array of tuples (vars_scope_index, name, targets, inputs, inputs, inputs, vars_array), vars_array - array of tuples (name, value)
 		self.defaults = [] # array of tuples (vars_scope_index, targets)
+		self.nested_scopes = 0
 
 	def get_scoped_vars(self, expr):
 		return [(var_expr["assign"], from_esc(var_expr["value"])) for var_expr in expr["vars"]]
@@ -28,7 +32,6 @@ class Namescope():
 			if "assign" in expr:
 				var = (expr["assign"], from_esc(expr["value"]))
 				self.vars.append(var)
-				#print(name + " = " + value)
 			elif "rule" in expr:
 				name = expr["rule"]
 				rule = (
@@ -38,7 +41,6 @@ class Namescope():
 				if name in self.rules:
 					raise ValueError("redefinition of rule '" + name + "'")
 				self.rules[name] = rule
-				#print(rule)
 			elif "build" in expr:
 				build = (
 					len(self.vars),
@@ -50,22 +52,65 @@ class Namescope():
 					self.get_scoped_vars(expr)
 				)
 				self.builds.append(build)
-				#print(build)
 			elif "defaults" in expr:
 				default = (
 					len(self.vars),
 					list(filter(len, from_esc_iter(expr["defaults"]))),
 				)
 				self.defaults.append(default)
-				#print(default)
 			elif "pool" in expr:
-				print("TODO pool")
+				print("TODO support ninja pool")
 			elif "include" in expr:
-				print("TODO include")
+				with open(expr["include"], "r") as f:
+					process(f.read()) # TODO check if this is valid
 			elif "subninja" in expr:
-				print("TODO subninja")
+				with open(expr["subninja"], "r") as f:
+					namescope = Namescope()
+					namescope.process(f.read())
+
+					prefix = "__nestedscope%i_" % (self.nested_scopes)
+					vars_scope = len(self.vars)
+					self.nested_scopes += 1
+
+					namescope_vars = set()
+					for var in namescope.vars:
+						var_name = prefix + var[0]
+						value = self.rename_vars_in_text(var[1], namescope_vars, prefix)
+						self.vars.append((var_name, value))
+						namescope_vars.add(var_name)
+
+					for name, rule in namescope.rules.items():
+						vars = []
+						for var in rule[1]:
+							value = self.rename_vars_in_text(var[1], namescope_vars, prefix)
+							vars.append((var[0], value))
+						self.rules[prefix + name] = (vars_scope + rule[0], vars)
+
+					for build in namescope.builds:
+						name = build[1]
+						if build[1] in namescope.rules.keys():
+							name = prefix + name
+						vars = []
+						for var in build[6]:
+							value = self.rename_vars_in_text(var[1], namescope_vars, prefix)
+							vars.append((var[0], value))
+						self.builds.append((vars_scope + build[0], name, build[2], build[3], build[4], build[5], vars))
+
+					for default in namescope.defaults:
+						self.defaults.append((vars_scope + default[0], default[1]))
 			else:
 				raise ValueError("unknown ast expr " + str(expr))
+
+	def rename_vars_in_text(self, text, scope, prefix):
+		def repl(matchobj):
+			name = matchobj.group(1) or matchobj.group(2)
+			if name in ["in", "out", "in_newline"]:
+				return "${" + name + "}"
+			elif name in scope:
+				return "${" + prefix + name + "}"
+			else:
+				return "${" + name + "}"
+		return re.sub("\${([a-zA-Z0-9_.-]+)}|\$([a-zA-Z0-9_-]+)", repl, text)
 
 	def evaluate_text(self, text, scope):
 		def repl(matchobj):

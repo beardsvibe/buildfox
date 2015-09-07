@@ -42,7 +42,8 @@ if out_ext not in generators:
 
 ir = parsers[in_ext](in_file)
 
-if not os.path.isdir(out_path):
-	os.mkdir(out_path)
+# TODO not supported for now
+#if len(out_path) and not os.path.isdir(out_path):
+#	os.mkdir(out_path)
 
 generators[out_ext](out_file, ir, args)
