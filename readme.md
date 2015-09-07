@@ -4,16 +4,29 @@ Intermediate representation for build systems.
 
 ## Philosophy
 
-There are "build systems" - they build dependency trees between sources and targets,
+There are "build systems" - they build dependency trees or DAG's between sources and targets,
 [some of them](https://martine.github.io/ninja/) are doing it really good.
 There are also "project generators", they make decisions how and what to build,
 they usually provide abstractions for packages, toolsets, etc.
 
 Mask IR aims to be intermediate media between. Similar to ninja, all possible decisions should be made up front by mask generator.
 
+Mask IR can replace project generators for most build systems and potentially simplify them a lot.
+
 ## Infrastructure
 
 ![](mask_ir.png)
+
+## Status
+
+* Overall status is proof-of-concept
+* Current implementation is in Python, planned to be rewritten in C later
+* Ninja parser is done, but it's very slow
+* Shell parser is in proof-of-concept stage, we still need to retrieve DAG from shell
+* Ninja generator is done
+* Shell generator is done
+* QMake generator is somewhat working
+* VCXproj generator is broken and disabled
 
 ## Goals
 
@@ -29,7 +42,6 @@ Let's make some goals :
 * (#3) Easily generated from existing build systems
 * (#4) Translate raw 120 MB shell script into compact IR format in less then 1 second on modern machine with SSD.
 * (#5) Translate this compacted IR file into raw 120 MB shell script in less then 1 second on modern machine with SSD.
-
 
 ## Format
 
@@ -50,7 +62,7 @@ Format is based of ninja manifest format with some limitations which make it pos
 * no "phony" rules
 * no "default" keyword
 * added "project" command
-* build commands should be sorted by dependencies, meaning if we execute them from top to bottom everything should be valid
+* build commands should be topologically sorted by dependencies, meaning if we execute them from top to bottom everything should be valid
 * order\_only\_dep is needed because in most cases some build steps can be placed in multiple locations (if two build steps are not related to each other then it doesn't matter in which order we execute them), mask is free to sort build steps as needed 
 
 For example :
