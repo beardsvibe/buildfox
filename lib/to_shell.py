@@ -14,7 +14,7 @@ def to_string(ir, args = None):
 	# write commands
 	output = ""
 	for folder in target_folders:
-		output += "mkdir " + to_esc_shell(folder) + "\n"
+		output += "mkdir " + os.path.normpath(to_esc_shell(folder)) + "\n"
 	for build in builds:
 		if build.rule == "phony":
 			continue

@@ -147,7 +147,8 @@ class BuildGraphC(BuildGraph):
 		obj.common_args = set()
 		obj.common_link_args = set()
 		obj.to_be_compiled = {}			# files for compiler, key - name, val - additional compiler args
-		obj.to_be_linked = {}			# files for linker (libs/objs), key - name, val - additional linker args
+		obj.to_be_linked_objs = {}		# files for linker (objs), key - name, val - additional linker args
+		obj.to_be_linked_libs = {}		# files for linker (libs), key - name, val - additional linker args
 		obj.all_sourceish_files = set()	# files that should be visible in IDE
 
 		return obj
@@ -306,7 +307,8 @@ class BuildGraphC(BuildGraph):
 
 		# key is file name, value is custom arguments
 		to_be_compiled = {}
-		to_be_linked = {}
+		to_be_linked_objs = {}
+		to_be_linked_libs = {}
 
 		# sets of produced targets, just for sanity check that we cover everything
 		compiled_targets = set()
@@ -322,10 +324,15 @@ class BuildGraphC(BuildGraph):
 				compiled_targets = compiled_targets.union(set(cmd.outputs))
 			elif cmd.is_linking:
 				for input in cmd.link_inputs + cmd.inputs:
-					if input in to_be_linked:
-						print("Warning ! two or more commands link %s" % input)
+					if input in to_be_linked_objs:
+						print("Warning ! two or more commands link obj %s" % input)
+					if input in to_be_linked_libs:
+						print("Warning ! two or more commands link lib %s" % input)
 					args = common_link_args.difference(cmd.link_args)
-					to_be_linked[input] = args
+					if c_ext_inv_types.get(os.path.splitext(input)[1]) == "links":
+						to_be_linked_libs[input] = args
+					else:
+						to_be_linked_objs[input] = args
 				linked_targets = linked_targets.union(set(cmd.link_outputs))
 
 		# let's sanitize prebuilds list to exclude already built targets
@@ -340,7 +347,8 @@ class BuildGraphC(BuildGraph):
 		self.common_args = common_args
 		self.common_link_args = common_link_args
 		self.to_be_compiled = to_be_compiled
-		self.to_be_linked = to_be_linked
+		self.to_be_linked_objs = to_be_linked_objs
+		self.to_be_linked_libs = to_be_linked_libs
 		self.all_sourceish_files = layers["sources"].union(layers["headers"]).union(layers["unknown"])
 
 	# this tree only have postbuild step

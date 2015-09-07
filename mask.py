@@ -26,23 +26,40 @@ argsparser.add_argument("input", help = "input file")
 argsparser.add_argument("output", help = "output file")
 argsparser.add_argument("--verbose", action = "store_true", help = "verbose output")
 argsparser.add_argument("--variation", help = "sets project variation for some exporters, for example debug")
+argsparser.add_argument("--profile", action = "store_true", help = "profile execution")
 args = vars(argsparser.parse_args())
 
-in_file = args["input"]
-out_file = args["output"]
-in_ext = os.path.splitext(in_file)[1]
-out_ext = os.path.splitext(out_file)[1]
+def main():
+	in_file = args["input"]
+	out_file = args["output"]
+	in_ext = os.path.splitext(in_file)[1]
+	out_ext = os.path.splitext(out_file)[1]
 
-out_path = os.path.dirname(out_file)
+	out_path = os.path.dirname(out_file)
 
-if in_ext not in parsers:
-	raise ValueError("unknown input extension " + in_ext)
-if out_ext not in generators:
-	raise ValueError("unknown output extension " + out_ext)
+	if in_ext not in parsers:
+		raise ValueError("unknown input extension " + in_ext)
+	if out_ext not in generators:
+		raise ValueError("unknown output extension " + out_ext)
 
-ir = parsers[in_ext](in_file)
+	ir = parsers[in_ext](in_file)
 
-if not os.path.isdir(out_path):
-	os.mkdir(out_path)
+	# TODO not supported for now
+	#if len(out_path) and not os.path.isdir(out_path):
+	#	os.mkdir(out_path)
 
-generators[out_ext](out_file, ir, args)
+	generators[out_ext](out_file, ir, args)
+
+if args.get("profile"):
+	import cProfile, pstats, io
+	pr = cProfile.Profile()
+	pr.enable()
+	main()
+	pr.disable()
+	s = io.StringIO()
+	sortby = "cumulative"
+	ps = pstats.Stats(pr, stream = s).sort_stats(sortby)
+	ps.print_stats()
+	print(s.getvalue())
+else:
+	main()

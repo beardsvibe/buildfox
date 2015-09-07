@@ -21,23 +21,39 @@ def prj_to_string(prj_graph, name):
 	for v in prj_graph.to_be_compiled.values():
 		if len(v) > 0:
 			print("Warning ! qmake doesn't support custom compilation flags for source files")
-	for v in prj_graph.to_be_linked.values():
+	for v in prj_graph.to_be_linked_objs.values():
 		if len(v) > 0:
 			print("Warning ! qmake doesn't support custom linkage flags for obj files")
+	for v in prj_graph.to_be_linked_libs.values():
+		if len(v) > 0:
+			print("Warning ! qmake doesn't support custom linkage flags for lib files")
+
+	# strip not required arguments
+	args_lower = {arg.lower(): arg for arg in prj_graph.common_args}
+	if "/showincludes" in args_lower:
+		prj_graph.common_args.remove(args_lower.get("/showincludes"))
 
 	output = "TEMPLATE = " + list(template)[0][0] + "\n"
 	output += "QMAKE_PROJECT_NAME = " + name + "\n"
+	output += "OBJECTS_DIR = objs_" + name + "\n"
+	output += "MOC_DIR = $$OBJECTS_DIR\n"
 	output += "CONFIG = " + list(template)[0][1] + "\n"
 	output += "TARGET = " + os.path.splitext(list(prj_graph.targets)[0])[0].replace("\\", "/") + "\n"
-	output += "SOURCES += " + " ".join([v.replace("\\", "/") for v in prj_graph.to_be_compiled.keys()]) + "\n"
-	output += "QMAKE_CXXFLAGS = " + " ".join([v for v in prj_graph.common_args]) + "\n"
+	output += "SOURCES += " + " \\\n\t".join([v.replace("\\", "/") for v in sorted(prj_graph.to_be_compiled.keys())]) + "\n"
+	output += "QMAKE_CXXFLAGS = " + " \\\n\t".join([v for v in sorted(prj_graph.common_args)]) + "\n"
 	output += "QMAKE_CFLAGS = $$QMAKE_CXXFLAGS\n"
-	output += "QMAKE_LFLAGS = " + " ".join([v for v in prj_graph.common_link_args]) + "\n"
+	output += "QMAKE_LFLAGS = " + " \\\n\t".join([v for v in sorted(prj_graph.common_link_args)]) + "\n"
 
 	deps = prj_graph.deps
 	if len(deps):
-		output += "PRE_TARGETDEPS += " + " ".join([v.replace("\\", "/") for v in deps]) + "\n" # TODO not sure if this is correct
-		output += "LIBS += " + " ".join([v.replace("\\", "/") for v in deps]) + "\n" # TODO not sure if this is correct
+		output += "PRE_TARGETDEPS += " + " \\\n\t".join([v.replace("\\", "/") for v in sorted(deps)]) + "\n" # TODO not sure if this is correct
+	all_libs = set(prj_graph.to_be_linked_libs.keys())
+	if len(all_libs):
+		for v in deps: # this one is really obscure, we need to link some libs before others, like ws2_32.lib
+			all_libs.remove(v)
+		output += "LIBS += " + " \\\n\t".join([v.replace("\\", "/") for v in sorted(all_libs)]) + "\n" # TODO not sure if this is correct
+	if len(deps):
+		output += "LIBS += " + " \\\n\t".join([v.replace("\\", "/") for v in sorted(deps)]) + "\n" # TODO not sure if this is correct
 
 	if len(prj_graph.prebuilds):
 		print("TODO qmake prebuilds")
@@ -80,7 +96,7 @@ def sln_to_string(tree, prjs):
 	for name, deps in prjs.items():
 		output += name + ".file = " + name + ".pro\n"
 		if len(deps):
-			output += name + ".depends = " + " ".join(deps) + "\n"
+			output += name + ".depends = " + " \\\n\t".join(deps) + "\n"
 
 	# TODO add sln_postbuild_graph
 
