@@ -1,10 +1,13 @@
 # BuildFox proof of concept (POC)
 
-from pprint import pprint
+import re
 import os
-import argparse
-from fox_parser import fox_Parser
 import string
+import fnmatch
+import argparse
+from glob import glob
+from pprint import pprint
+from fox_parser import fox_Parser
 
 # ----------------------------------------------------------- args
 argsparser = argparse.ArgumentParser(description = "buildfox ninja generator")
@@ -22,17 +25,97 @@ verbose = args.get("verbose", False)
 if args.get("workdir"):
 	os.chdir(args.get("workdir"))
 
-# ----------------------------------------------------------- parsing
-def get_paths(income, outcome = None):
-	if outcome:
-		pprint(income)
-		pprint(outcome)
-		return income, outcome
-	return income
+# ----------------------------------------------------------- regex/wildcard lookup
+generated_files = set()
 
+def translate(pat):
+	# based on fnmatch.translate
+	# and each wildcard is a capture group now
+	i, n = 0, len(pat)
+	res = ''
+	while i < n:
+		c = pat[i]
+		i = i+1
+		if c == '*':
+			res = res + '(.*)'
+		elif c == '?':
+			res = res + '(.)'
+		elif c == '[':
+			j = i
+			if j < n and pat[j] == '!':
+				j = j+1
+			if j < n and pat[j] == ']':
+				j = j+1
+			while j < n and pat[j] != ']':
+				j = j+1
+			if j >= n:
+				res = res + '\\['
+			else:
+				stuff = pat[i:j].replace('\\','\\\\')
+				i = j+1
+				if stuff[0] == '!':
+					stuff = '^' + stuff[1:]
+				elif stuff[0] == '^':
+					stuff = '\\' + stuff
+				res = '%s([%s])' % (res, stuff)
+		else:
+			res = res + re.escape(c)
+	return res + '\Z(?ms)'
+
+def get_paths(income, outcome = None):
+	if not income:
+		return income
+
+	processed_income = []
+	parsed_map = {}
+	for filename in income:
+		if filename.startswith("r\""):
+			print("TODO regex")
+		elif "*" in filename or "?" in filename or "[" in filename:
+			regex_text = translate(filename)
+			regex = re.compile(regex_text)
+			files = glob(filename) + fnmatch.filter(generated_files, filename)
+			processed_income.extend(files)
+			for file in files:
+				obj = regex.match(file)
+				parsed_map[file] = obj.groups()
+		else:
+			processed_income.append(filename)
+
+	if outcome:
+		wildcard_files = [val for k, val in parsed_map.items()]
+
+		processed_outcome = []
+		for filename in outcome:
+			if filename.startswith("r\""):
+				print("TODO regex")
+			elif "*" in filename or "?" in filename: # TODO [ ?
+				for f in wildcard_files:
+					out = ""
+					group = 0
+					for c in filename:
+						if c in ["*", "?"]:
+							if group < len(f):
+								out += f[group]
+						else:
+							out += c
+					processed_outcome.append(out)
+			else:
+				processed_outcome.append(filename)
+
+		for out in processed_outcome:
+			generated_files.add(out)
+
+		return processed_income, processed_outcome
+	else:
+		return processed_income
+
+# ----------------------------------------------------------- parsing
 def get_vars(expr):
+	arr = []
 	for var in expr.get("vars"):
-		yield "  %s = %s\n" % (var.get("assign"), var.get("value"))
+		arr.append("  %s = %s\n" % (var.get("assign"), var.get("value")))
+	return " ".join(arr)
 def do_expr(expr):
 	if "assign" in expr:
 		return "%s = %s\n" % (expr.get("assign"), expr.get("value"))
@@ -69,6 +152,7 @@ def do_expr(expr):
 	else:
 		raise ValueError("unknown ast expr " + str(expr))
 
+# ----------------------------------------------------------- output generation
 def do_file(filename):
 	with open(filename, "r") as f:
 		input_text = f.read()
@@ -84,3 +168,5 @@ output_text = do_file(args.get("in"))
 if args.get("out"):
 	with open(args.get("out"), "w") as f:
 		f.write(output_text)
+else:
+	print(output_text)

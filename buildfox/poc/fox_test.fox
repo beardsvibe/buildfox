@@ -1,3 +1,6 @@
 # wuut
-a = b
-build *.exe: auto *.cpp
+#a = b
+
+# wuuuut
+build *.obj: auto *.cpp
+build test.exe: auto *.obj
