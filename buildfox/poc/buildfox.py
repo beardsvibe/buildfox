@@ -127,17 +127,34 @@ def do_expr(expr):
 	elif "rule" in expr:
 		return "rule %s\n%s" % (expr.get("rule"), get_vars(expr))
 	elif "build" in expr:
-		inputs, outputs = get_paths(expr.get("inputs_explicit"), expr.get("targets_explicit"))
+		targets = expr.get("targets_explicit")
+		fox_inputs = expr.get("inputs_explicit")
+
+		wildcard_target = False
+		for target in targets:
+			if target.startswith("r\"") or "*" in target or "?" in target or "[" in target:
+				wildcard_target = True
+
+		inputs, outputs = get_paths(fox_inputs, targets)
 		inputs_implicit = get_paths(expr.get("inputs_implicit"))
 		inputs_order = get_paths(expr.get("inputs_order"))
-		output = "build %s: %s" % (" ".join(outputs), expr.get("build"))
-		if inputs:
-			output += " " + " ".join(inputs)
+		add_inputs = ""
 		if inputs_implicit:
-			output += " | " + " ".join(inputs_implicit)
+			add_inputs += " | " + " ".join(inputs_implicit)
 		if inputs_order:
-			output += " | " + " ".join(inputs_order)
-		return "%s\n%s" % (output, get_vars(expr))
+			add_inputs += " | " + " ".join(inputs_order)
+
+		if wildcard_target and len(inputs) == len(outputs):
+			output = ""
+			for i, input in enumerate(inputs):
+				output += "build %s: %s %s%s\n" % (outputs[i], expr.get("build"), inputs[i], add_inputs)
+				output += get_vars(expr)
+			return output
+		else:
+			output = "build %s: %s" % (" ".join(outputs), expr.get("build"))
+			if inputs:
+				output += " " + " ".join(inputs)
+			return "%s%s\n%s" % (output, add_inputs, get_vars(expr))
 	elif "filters" in expr:
 		match = True
 		for var in expr.get("filters"):

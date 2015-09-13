@@ -1,4 +1,8 @@
 cxx2 = cl $in
 rule cxx
-  command = $cxx2
-build all.obj: cxx fox_test_a.cpp fox_test_b.cpp
+  command = cl -c $in /Fo$out
+rule link
+  command = cl $in /link /out:$out
+build fox_test_a.obj: cxx fox_test_a.cpp
+build fox_test_b.obj: cxx fox_test_b.cpp
+build fox_test.exe: link fox_test_b.obj fox_test_a.obj

@@ -9,10 +9,10 @@
 cxx2 = cl $in
 
 rule cxx
-  command = $cxx2
-#rule link
-#  command = $link2
+  command = cl -c $in /Fo$out
+rule link
+  command = cl $in /link /out:$out
 
 # magic
-#build *.obj: cxx *.cpp
-build all.obj: cxx *.cpp
+build *.obj: cxx *.cpp
+build fox_test.exe: link *.obj
