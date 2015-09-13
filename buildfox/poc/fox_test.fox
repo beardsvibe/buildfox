@@ -1,15 +1,18 @@
-# wuut
-a = wut1
+# compiler
+#filter toolset:msvc variation:debug
+#  cxx2 = cl /O0 -c $in /Fo$out
+#  link2 = cl $in /link /out:$out
+#filter toolset:msvc variation:release
+#  cxx2 = cl /Ox -c $in /Fo$out
+#  link2 = cl $in /link /out:$out
 
-# wuuuut
-build *.obj: auto *.cpp
-build test.exe: auto *.obj
+cxx2 = cl $in
 
-filter a: wut1
-  k = 123
-filter k: 2*
-  k = 234
-filter b: wut2
-  k2 = 1
-filter test:123
-  so_test = wow
+rule cxx
+  command = $cxx2
+#rule link
+#  command = $link2
+
+# magic
+#build *.obj: cxx *.cpp
+build all.obj: cxx *.cpp

@@ -2,3 +2,4 @@ prototype/__pycache__/
 *.pyc
 test_out.*
 tests/premake/test/build/
+buildfox/poc/.ninja_*
