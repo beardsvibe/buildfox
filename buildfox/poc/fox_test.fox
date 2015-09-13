@@ -1,1 +1,3 @@
+# wuut
+a = b
 build *.exe: auto *.cpp

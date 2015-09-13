@@ -1,1 +1,3 @@
-hello there
+a = b
+build *.exe: auto *.cpp
+<generator object get_vars at 0x02AA8DF0>
