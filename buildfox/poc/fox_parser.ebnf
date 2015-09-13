@@ -1,0 +1,69 @@
+@@whitespace :: / +/
+@@comments :: /#.*?$/
+@@eol_comments :: /#.*?$/
+whitespace_opt = / */;
+eol = >whitespace_opt /(\n|$)/;
+
+simple_varname = /[a-zA-Z0-9_-]+/;
+varname = /[a-zA-Z0-9_.-]+/;
+
+EXPR = /(\$\n|.)*?$/;
+PATH = /((?<!\$)\$\n|\$ |\$:|[^ :|\n])+/;
+REGEX_OR_PATH = ?/r"(?![*+?])(?:[^\r\n\[\"/\\]|\\.|\[(?:[^\r\n\]\\]|\\.)*\])+"|((?<!\$)\$\n|\$ |\$:|[^ :|\n])+/?;
+path_once = PATH;
+paths = {@+:PATH >whitespace_opt}*;
+
+assign = assign:varname "=" >whitespace_opt value:EXPR >eol;
+assign_paths = assign:varname "=" >whitespace_opt value:paths >eol;
+filter_var = >whitespace_opt var:varname ":" >whitespace_opt value:REGEX_OR_PATH;
+FILTER_VARS = {@+:filter_var}+;
+
+SCOPED_VARS = {/  / @+:assign}*;
+SCOPED_PATHS = {/  / @+:assign_paths}*;
+
+rule =
+	"rule"
+	rule:varname
+	>eol
+	vars:SCOPED_VARS;
+
+build =
+	"build"
+	targets_explicit:paths
+	[/(?<!\|)\|(?!\|)/ targets_implicit:paths]
+	/:/
+	build:varname
+	inputs_explicit:paths
+	[/(?<!\|)\|(?!\|)/ inputs_implicit:paths]
+	[/\|\|/ inputs_order:paths]
+	>eol
+	vars:SCOPED_VARS;
+
+default =
+	"default"
+	defaults:paths
+	>eol;
+
+pool =
+	"pool"
+	pool:varname
+	>eol
+	vars:SCOPED_VARS;
+
+include =
+	"include"
+	include:path_once
+	>eol;
+
+subninja =
+	"subninja"
+	subninja:path_once
+	>eol;
+
+filter =
+	"filter"
+	filters:FILTER_VARS
+	>eol
+	vars:SCOPED_VARS;
+
+manifest = {@+:rule | @+:build | @+:default | @+:pool | @+:include | @+:subninja | @+:assign | @+:filter}* $;

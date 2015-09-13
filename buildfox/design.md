@@ -18,8 +18,8 @@ Example :
 	# filtering	
 	# value in filter could be wildcard or regex
 	# TODO var-value-var-value separators
-	filter var1:value1 | var2:value2
-		var3 = value3
+	filter var1:value_or_wildcard_or_regex var2:value_or_wildcard_or_regex
+		var3 = value
 		...
 	
 	# wildcard file names
