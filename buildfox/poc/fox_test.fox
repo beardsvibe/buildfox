@@ -1,6 +1,15 @@
 # wuut
-#a = b
+a = wut1
 
 # wuuuut
 build *.obj: auto *.cpp
 build test.exe: auto *.obj
+
+filter a: wut1
+  k = 123
+filter k: 2*
+  k = 234
+filter b: wut2
+  k2 = 1
+filter test:123
+  so_test = wow

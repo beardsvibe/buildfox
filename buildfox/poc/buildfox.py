@@ -13,11 +13,10 @@ from fox_parser import fox_Parser
 argsparser = argparse.ArgumentParser(description = "buildfox ninja generator")
 argsparser.add_argument("-i", "--in", help = "input file", required = True)
 argsparser.add_argument("-o", "--out", help = "output file")
-argsparser.add_argument("-w", "--workdir", help = "working directory, root folder for file lookup")
-argsparser.add_argument("-d", "--define", nargs = 2, help = "define var value")
+argsparser.add_argument("-w", "--workdir", help = "working directory")
+argsparser.add_argument("-d", "--define", nargs = 2, help = "define var value", action="append")
 argsparser.add_argument("-v", "--verbose", action = "store_true", help = "verbose output")
 args = vars(argsparser.parse_args())
-
 #pprint(args)
 
 verbose = args.get("verbose", False)
@@ -111,6 +110,11 @@ def get_paths(income, outcome = None):
 		return processed_income
 
 # ----------------------------------------------------------- parsing
+variable_scope = {}
+
+for d in args.get("define"):
+	variable_scope[d[0]] = d[1]
+
 def get_vars(expr):
 	arr = []
 	for var in expr.get("vars"):
@@ -118,6 +122,7 @@ def get_vars(expr):
 	return " ".join(arr)
 def do_expr(expr):
 	if "assign" in expr:
+		variable_scope[expr.get("assign")] = expr.get("value")
 		return "%s = %s\n" % (expr.get("assign"), expr.get("value"))
 	elif "rule" in expr:
 		return "rule %s\n%s" % (expr.get("rule"), get_vars(expr))
@@ -133,10 +138,27 @@ def do_expr(expr):
 		if inputs_order:
 			output += " | " + " ".join(inputs_order)
 		return "%s\n%s" % (output, get_vars(expr))
-	elif "filter" in expr:
-		print("TODO support filter")
-		pprint(expr)
-		return ""
+	elif "filters" in expr:
+		match = True
+		for var in expr.get("filters"):
+			name = var.get("var")
+			val = var.get("value")
+			if name in variable_scope:
+				val_ref = variable_scope.get(name)
+				if val.startswith("r\""):
+					print("TODO regex")
+				elif "*" in val or "?" in val or "[" in val:
+					if not fnmatch.fnmatch(val_ref, val):
+						return ""
+				elif val != val_ref:
+					return ""
+			else:
+				return ""
+		output = ""
+		for var in expr.get("vars"):
+			variable_scope[var.get("assign")] = var.get("value")
+			output += "%s = %s\n" % (var.get("assign"), var.get("value"))
+		return output
 	elif "defaults" in expr:
 		return "defaults %s\n" % (" ".join(get_paths(expr.get("defaults"))))
 	elif "pool" in expr:

@@ -1,3 +1,5 @@
-a = b
-build fox_test_b.obj fox_test_a.obj: auto fox_test_a.cpp fox_test_b.cpp
+a = wut1
+build fox_test_a.obj fox_test_b.obj: auto fox_test_a.cpp fox_test_b.cpp
 build test.exe: auto fox_test_a.obj fox_test_b.obj
+k = 123
+so_test = wow

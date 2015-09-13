@@ -1,1 +1,1 @@
-python buildfox.py -i fox_test.fox -o fox_test.ninja
+python buildfox.py -i fox_test.fox -o fox_test.ninja -d test 123 -d test2 234
