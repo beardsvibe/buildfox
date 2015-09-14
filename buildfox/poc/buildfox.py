@@ -63,7 +63,10 @@ def translate(pat):
 
 def get_paths(income, outcome = None):
 	if not income:
-		return income
+		if outcome:
+			return income, outcome
+		else:
+			return income
 
 	processed_income = []
 	parsed_map = {}
@@ -134,6 +137,24 @@ def to_esc(str, escape_space = True):
 def from_esc(str):
 	#return str.replace("$\n", "").replace("$ ", " ").replace("$:", ":").replace("$$", "$")
 	return str.replace("$\n", "")
+def to_esc2(s):
+	if not s:
+		return None
+	if type(s) is str:
+		s = s.replace("$", "$$").replace(":", "$:").replace("\n", "$\n").replace(" ", "$ ")
+		def repl(matchobj):
+			return "${" + (matchobj.group(1) or matchobj.group(2)) + "}"
+		s = re.sub("\$\${([a-zA-Z0-9_.-]+)}|\$\$([a-zA-Z0-9_-]+)", repl, s)
+		return s
+	else:
+		return [to_esc2(str) for str in s]
+def from_esc2(s):
+	if not s:
+		return None
+	if type(s) is str:
+		return s.replace("$\n", "").replace("$ ", " ").replace("$:", ":").replace("$$", "$")
+	else:
+		return [from_esc2(str) for str in s]
 
 re_eval2 = True
 def evaluate_text(text):
@@ -168,8 +189,11 @@ def do_expr(expr):
 	elif "rule" in expr:
 		return "rule %s\n%s" % (expr.get("rule"), get_vars(expr))
 	elif "build" in expr:
-		targets = expr.get("targets_explicit")
-		fox_inputs = expr.get("inputs_explicit")
+		targets = from_esc2(expr.get("targets_explicit"))
+		fox_inputs = from_esc2(expr.get("inputs_explicit"))
+		
+		fox_inputs = [evaluate_text(text) for text in fox_inputs] if fox_inputs else None
+		targets = [evaluate_text(text) for text in targets] if targets else None
 
 		wildcard_target = False
 		for target in targets:
@@ -180,19 +204,21 @@ def do_expr(expr):
 		#pprint(inputs)
 		#pprint(outputs)
 		
-		inputs_implicit = get_paths(expr.get("inputs_implicit"))
-		inputs_order = get_paths(expr.get("inputs_order"))
+		inputs_implicit = get_paths(from_esc2(expr.get("inputs_implicit")))
+		inputs_order = get_paths(from_esc2(expr.get("inputs_order")))
+		inputs_implicit = [evaluate_text(text) for text in inputs_implicit] if inputs_implicit else None
+		inputs_order = [evaluate_text(text) for text in inputs_order] if inputs_order else None
 		add_inputs = ""
 		if inputs_implicit:
-			add_inputs += " | " + " ".join(inputs_implicit)
+			add_inputs += " | " + " ".join(to_esc2(inputs_implicit))
 		if inputs_order:
-			add_inputs += " | " + " ".join(inputs_order)
+			add_inputs += " | " + " ".join(to_esc2(inputs_order))
 
 		build = expr.get("build")
 
 		# magic
 		if build == "auto":
-			inputs_set = set(inputs)
+			inputs_set = set(inputs) if inputs else set()
 			outputs_set = set(outputs)
 			name_set = False
 			for name, val in auto_rules.items():
@@ -231,13 +257,13 @@ def do_expr(expr):
 		if wildcard_target and len(inputs) == len(outputs):
 			output = ""
 			for i, input in enumerate(inputs):
-				output += "build %s: %s %s%s\n" % (outputs[i], build, inputs[i], add_inputs)
+				output += "build %s: %s %s%s\n" % (to_esc2(outputs[i]), build, to_esc2(inputs[i]), add_inputs)
 				output += get_vars(expr)
 			return output
 		else:
-			output = "build %s: %s" % (" ".join(outputs), build)
+			output = "build %s: %s" % (" ".join(to_esc2(outputs)), build)
 			if inputs:
-				output += " " + " ".join(inputs)
+				output += " " + " ".join(to_esc2(inputs))
 			return "%s%s\n%s" % (output, add_inputs, get_vars(expr))
 	elif "filters" in expr:
 		match = True
