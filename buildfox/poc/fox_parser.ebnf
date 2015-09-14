@@ -66,4 +66,12 @@ filter =
 	>eol
 	vars:SCOPED_VARS;
 
-manifest = {@+:rule | @+:build | @+:default | @+:pool | @+:include | @+:subninja | @+:assign | @+:filter}* $;
+auto =
+	"auto"
+	targets:paths
+	/:/
+	auto:varname
+	inputs:paths
+	>eol;
+
+manifest = {@+:rule | @+:build | @+:default | @+:pool | @+:include | @+:subninja | @+:assign | @+:filter | @+:auto}* $;

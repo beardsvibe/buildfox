@@ -3,6 +3,7 @@
 
 filter a:b c:d e:r"wo oo" c:*wow
   k = 2
+auto a.txt:lol b.txt
 
 a = 1
 b = 2

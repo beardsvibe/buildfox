@@ -73,7 +73,7 @@ def get_paths(income, outcome = None):
 		elif "*" in filename or "?" in filename or "[" in filename:
 			regex_text = translate(filename)
 			regex = re.compile(regex_text)
-			files = glob(filename) + fnmatch.filter(generated_files, filename)
+			files = set(glob(filename)).union(set(fnmatch.filter(generated_files, filename)))
 			processed_income.extend(files)
 			for file in files:
 				obj = regex.match(file)
@@ -111,19 +111,58 @@ def get_paths(income, outcome = None):
 
 # ----------------------------------------------------------- parsing
 variable_scope = {}
-
 for d in args.get("define"):
 	variable_scope[d[0]] = d[1]
+
+auto_rules = {} # name: (inputs, outputs)
+
+# ninja escaping functions
+# "$\n" = "\n"
+# "$ " = " "
+# "$:" = ":"
+# "$$" = "$"
+def to_esc(str, escape_space = True):
+	str = str.replace("\n", "$\n")
+	#str = str.replace("$", "$$").replace(":", "$:").replace("\n", "$\n")
+	#if escape_space:
+	#	str = str.replace(" ", "$ ")
+	## TODO this is (facepalm) solution for variable escaping, fix it !
+	#def repl(matchobj):
+	#	return "${" + (matchobj.group(1) or matchobj.group(2)) + "}"
+	#str = re.sub("\$\${([a-zA-Z0-9_.-]+)}|\$\$([a-zA-Z0-9_-]+)", repl, str)
+	return str
+def from_esc(str):
+	#return str.replace("$\n", "").replace("$ ", " ").replace("$:", ":").replace("$$", "$")
+	return str.replace("$\n", "")
+
+def evaluate_text(text):
+	re_eval = True
+	def repl(matchobj):
+		name = matchobj.group(1) or matchobj.group(2)
+		#print("! '" + name + "'")
+		if name in variable_scope:
+			re_eval = True
+			return variable_scope.get(name)
+		else:
+			return "${" + name + "}"
+	while re_eval:
+		re_eval = False
+		text = re.sub("\${([a-zA-Z0-9_.-]+)}|\$([a-zA-Z0-9_-]+)", repl, text)
+	return text
 
 def get_vars(expr):
 	arr = []
 	for var in expr.get("vars"):
-		arr.append("  %s = %s\n" % (var.get("assign"), var.get("value")))
+		val = from_esc(var.get("value"))
+		val = evaluate_text(val)
+		arr.append("  %s = %s\n" % (var.get("assign"), to_esc(val, escape_space = False)))
 	return " ".join(arr)
 def do_expr(expr):
 	if "assign" in expr:
 		variable_scope[expr.get("assign")] = expr.get("value")
-		return "%s = %s\n" % (expr.get("assign"), expr.get("value"))
+		# TODO probably not needed
+		#return "%s = %s\n" % (expr.get("assign"), expr.get("value"))
+		return ""
 	elif "rule" in expr:
 		return "rule %s\n%s" % (expr.get("rule"), get_vars(expr))
 	elif "build" in expr:
@@ -136,6 +175,9 @@ def do_expr(expr):
 				wildcard_target = True
 
 		inputs, outputs = get_paths(fox_inputs, targets)
+		#pprint(inputs)
+		#pprint(outputs)
+		
 		inputs_implicit = get_paths(expr.get("inputs_implicit"))
 		inputs_order = get_paths(expr.get("inputs_order"))
 		add_inputs = ""
@@ -144,14 +186,54 @@ def do_expr(expr):
 		if inputs_order:
 			add_inputs += " | " + " ".join(inputs_order)
 
+		build = expr.get("build")
+
+		# magic
+		if build == "auto":
+			inputs_set = set(inputs)
+			outputs_set = set(outputs)
+			name_set = False
+			for name, val in auto_rules.items():
+				fail = False
+				for v in val[0]:
+					if v.startswith("r\""):
+						print("TODO regex")
+					elif "*" in v or "?" in v or "[" in v:
+						if not fnmatch.filter(inputs_set, v):
+							fail = True
+							break
+					else:
+						if v not in inputs_set:
+							fail = True
+							break
+				for v in val[1]:
+					if v.startswith("r\""):
+						print("TODO regex")
+					elif "*" in v or "?" in v or "[" in v:
+						if not fnmatch.filter(outputs_set, v):
+							fail = True
+							break
+					else:
+						if v not in outputs_set:
+							fail = True
+							break
+				if not fail:
+					build = name
+					name_set = True
+					break
+			
+			if not name_set:
+				print("Cant figure out build rule for : ")
+				pprint(expr)
+
 		if wildcard_target and len(inputs) == len(outputs):
 			output = ""
 			for i, input in enumerate(inputs):
-				output += "build %s: %s %s%s\n" % (outputs[i], expr.get("build"), inputs[i], add_inputs)
+				output += "build %s: %s %s%s\n" % (outputs[i], build, inputs[i], add_inputs)
 				output += get_vars(expr)
 			return output
 		else:
-			output = "build %s: %s" % (" ".join(outputs), expr.get("build"))
+			output = "build %s: %s" % (" ".join(outputs), build)
 			if inputs:
 				output += " " + " ".join(inputs)
 			return "%s%s\n%s" % (output, add_inputs, get_vars(expr))
@@ -174,8 +256,13 @@ def do_expr(expr):
 		output = ""
 		for var in expr.get("vars"):
 			variable_scope[var.get("assign")] = var.get("value")
-			output += "%s = %s\n" % (var.get("assign"), var.get("value"))
+			# TODO probably not needed
+			#output += "%s = %s\n" % (var.get("assign"), var.get("value"))
 		return output
+	elif "auto" in expr:
+		pprint(expr)
+		auto_rules[expr.get("auto")] = (expr.get("inputs"), expr.get("targets"))
+		return ""
 	elif "defaults" in expr:
 		return "defaults %s\n" % (" ".join(get_paths(expr.get("defaults"))))
 	elif "pool" in expr:

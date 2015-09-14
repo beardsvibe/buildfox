@@ -1,18 +1,21 @@
-# compiler
-#filter toolset:msvc variation:debug
-#  cxx2 = cl /O0 -c $in /Fo$out
-#  link2 = cl $in /link /out:$out
-#filter toolset:msvc variation:release
-#  cxx2 = cl /Ox -c $in /Fo$out
-#  link2 = cl $in /link /out:$out
+# figure out compiler commands
+filter toolset:msvc variation:debug
+  cxx = cl /O0 -c $in /Fo$out
+  link = cl $in /link /out:$out
+filter toolset:msvc variation:release
+  cxx = cl /Ox -c $in /Fo$out
+  link = cl $in /link /out:$out
 
-cxx2 = cl $in
-
+# write rules
 rule cxx
-  command = cl -c $in /Fo$out
+  command = $cxx
 rule link
-  command = cl $in /link /out:$out
+  command = $link
+
+# configure auto keyword
+auto *.obj: cxx *.cpp
+auto *.exe: link *.obj
 
 # magic
-build *.obj: cxx *.cpp
-build fox_test.exe: link *.obj
+build *.obj: auto *.cpp
+build fox_test.exe: auto *.obj

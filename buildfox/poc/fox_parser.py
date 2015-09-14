@@ -17,7 +17,7 @@ from grako.parsing import graken, Parser
 from grako.util import re, RE_FLAGS
 
 
-__version__ = (2015, 9, 13, 16, 59, 3, 6)
+__version__ = (2015, 9, 14, 18, 44, 36, 0)
 
 __all__ = [
     'fox_Parser',
@@ -287,6 +287,25 @@ class fox_Parser(Parser):
         )
 
     @graken()
+    def _auto_(self):
+        self._token('auto')
+        self._paths_()
+        self.ast['targets'] = self.last_node
+        self._pattern(r':')
+        self._varname_()
+        self.ast['auto'] = self.last_node
+        self._paths_()
+        self.ast['inputs'] = self.last_node
+        self._pattern(r' *')
+
+        self._pattern(r'(\n|$)')
+
+        self.ast._define(
+            ['targets', 'auto', 'inputs'],
+            []
+        )
+
+    @graken()
     def _manifest_(self):
 
         def block0():
@@ -314,6 +333,9 @@ class fox_Parser(Parser):
                     self.ast.setlist('@', self.last_node)
                 with self._option():
                     self._filter_()
+                    self.ast.setlist('@', self.last_node)
+                with self._option():
+                    self._auto_()
                     self.ast.setlist('@', self.last_node)
                 self._error('no available options')
         self._closure(block0)
@@ -385,6 +407,9 @@ class fox_Semantics(object):
         return ast
 
     def filter(self, ast):
+        return ast
+
+    def auto(self, ast):
         return ast
 
     def manifest(self, ast):
