@@ -1,7 +1,0 @@
-rule cxx
-  command = cl /O0 -c $in /Fo$out
-rule link
-  command = cl $in /link /out:$out
-build fox_test_a.obj: cxx fox_test_a.cpp
-build fox_test_b.obj: cxx fox_test_b.cpp
-build fox_test.exe: link fox_test_b.obj fox_test_a.obj

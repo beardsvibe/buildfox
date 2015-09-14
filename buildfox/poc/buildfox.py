@@ -135,18 +135,20 @@ def from_esc(str):
 	#return str.replace("$\n", "").replace("$ ", " ").replace("$:", ":").replace("$$", "$")
 	return str.replace("$\n", "")
 
+re_eval2 = True
 def evaluate_text(text):
-	re_eval = True
+	global re_eval2
+	re_eval2 = True
 	def repl(matchobj):
+		global re_eval2
 		name = matchobj.group(1) or matchobj.group(2)
-		#print("! '" + name + "'")
 		if name in variable_scope:
-			re_eval = True
+			re_eval2 = True
 			return variable_scope.get(name)
 		else:
 			return "${" + name + "}"
-	while re_eval:
-		re_eval = False
+	while re_eval2:
+		re_eval2 = False
 		text = re.sub("\${([a-zA-Z0-9_.-]+)}|\$([a-zA-Z0-9_-]+)", repl, text)
 	return text
 
@@ -156,7 +158,7 @@ def get_vars(expr):
 		val = from_esc(var.get("value"))
 		val = evaluate_text(val)
 		arr.append("  %s = %s\n" % (var.get("assign"), to_esc(val, escape_space = False)))
-	return " ".join(arr)
+	return "".join(arr)
 def do_expr(expr):
 	if "assign" in expr:
 		variable_scope[expr.get("assign")] = expr.get("value")
@@ -260,7 +262,6 @@ def do_expr(expr):
 			#output += "%s = %s\n" % (var.get("assign"), var.get("value"))
 		return output
 	elif "auto" in expr:
-		pprint(expr)
 		auto_rules[expr.get("auto")] = (expr.get("inputs"), expr.get("targets"))
 		return ""
 	elif "defaults" in expr:
@@ -289,7 +290,8 @@ def do_file(filename):
 			output += do_expr(expr)
 		return output
 
-output_text = do_file(args.get("in"))
+output_text = do_file(os.path.dirname(os.path.abspath(__file__)) + "/fox_core.fox") + "\n"
+output_text += do_file(args.get("in"))
 
 if args.get("out"):
 	with open(args.get("out"), "w") as f:

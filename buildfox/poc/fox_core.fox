@@ -1,0 +1,73 @@
+# ----------------------------------------------------------------------
+# buildfox core configuration
+# this file :
+# - specifies compiler settings for current platform
+# - create rules
+# - configure auto keyword
+
+# ----------------------------------------------------------------------
+# figure out compiler commands
+
+# ------------------------------- msvc support
+filter toolset:msvc
+  # core flags
+  cflags =
+  cxxflags = $cflags
+  ldflags = 
+  # core commands
+  cc = cl $cflags /nologo /showIncludes -c $in /Fo$out
+  cxx = cl $cxxflags /nologo /showIncludes -c $in /Fo$out
+  link = cl $ldflags /nologo $in /link /out:$out
+  deps = msvc
+  depfile =
+
+filter toolset:msvc variation:debug
+  cflags =
+  cxxflags = $cflags
+
+filter toolset:msvc variation:release
+  cflags = /Ox
+  cxxflags = $cflags
+
+# ------------------------------- gcc support (TODO need testing)
+filter toolset:gcc
+  # core flags
+  cflags = -O0
+  cxxflags = $cflags
+  ldflags = 
+  # core commands
+  cc = gcc $cflags -MMD -MF $out.d -c -o $out $in
+  cxx = g++ $cxxflags -MMD -MF $out.d -c -o $out $in
+  link = g++ $ldflags -o $out $in
+  deps = gcc
+  depfile = $out.d
+
+filter toolset:gcc variation:debug
+  cflags = -O0
+  cxxflags = $cflags
+
+filter toolset:gcc variation:release
+  cflags = -O3
+  cxxflags = $cflags
+
+
+# ----------------------------------------------------------------------
+# write rules
+rule cc
+  command = $cc
+  deps = $deps
+  depfile = $depfile
+
+rule cxx
+  command = $cxx
+  deps = $deps
+  depfile = $depfile
+
+rule link
+  command = $link
+
+# ----------------------------------------------------------------------
+# configure auto keyword
+auto *.obj: cc *.c
+auto *.obj: cxx *.cpp
+auto *.exe: link *.obj

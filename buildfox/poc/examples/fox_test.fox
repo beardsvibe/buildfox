@@ -1,0 +1,3 @@
+# magic
+build *.obj: auto *.cpp
+build fox_test.exe: auto *.obj

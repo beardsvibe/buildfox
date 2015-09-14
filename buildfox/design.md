@@ -12,6 +12,7 @@ Core features are :
 
 - variable filtering
 - regex/wildcard file names
+- auto build rule
 
 Example :
 
@@ -24,7 +25,11 @@ Example :
 	
 	# wildcard file names
 	build *.exe: auto *.c
-
+	
 	# regex file names
 	build r"\1\.exe": auto r"(.+)\.c"
+	
+	# configure auto build rule
+	# all auto build commands with .obj targets and .cpp inputs will be converted to cxx
+	auto *.obj: cxx *.cpp
 
