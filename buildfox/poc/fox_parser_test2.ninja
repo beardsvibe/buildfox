@@ -5,3 +5,8 @@ rule a # test two
 
 abc = $# def # test
 
+z $
+       a $$
+ b $$$
+  c $$$$
+   d
