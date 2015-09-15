@@ -1,0 +1,7 @@
+
+# test comment
+
+rule a # test two
+
+abc = $# def # test
+

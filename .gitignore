@@ -3,3 +3,4 @@ prototype/__pycache__/
 test_out.*
 tests/premake/test/build/
 buildfox/poc/.ninja_*
+buildfox/poc/fox_parser_test.json
