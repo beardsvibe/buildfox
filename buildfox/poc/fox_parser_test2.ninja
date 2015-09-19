@@ -7,14 +7,9 @@ default a b c d
 
 abc = $# def # test
 
-z $
-       a $$
- b $$$
-  c $$$$
-   d
+z = k $
+  b
 
-build a : e b || c
-# f g
-# | d k
+auto k1.txt : bb k2.txt
 
-# || z y w
+

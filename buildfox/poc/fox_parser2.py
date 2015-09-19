@@ -12,7 +12,7 @@ re_path = re.compile("(\$\||\$ |\$:|[^ :|\n])+")
 
 class Parser:
 	def __init__(self):
-		self.filename = "fox_parser_test2.ninja"
+		self.filename = "fox_parser_test.ninja"
 		with open(self.filename, "r") as f:
 			self.lines = f.read().splitlines()
 
@@ -133,7 +133,7 @@ class Parser:
 			inputs = []
 
 			# read targets
-			while self.line_stripped[0] != [":"]:
+			while self.line_stripped[0] != ":":
 				targets.append(self.read_path())
 				self.expect_token()
 
@@ -143,19 +143,23 @@ class Parser:
 			rule = self.read_identifier()
 
 			# read inputs
+			self.expect_token()
 			while self.line_stripped:
 				inputs.append(self.read_path())
 			self.read_eol()
 			# TODO
 		else:
-			# TODO assign
-			pass
+			name = self.command
+			self.expect_token("=")
+			value = self.line_stripped[1:].strip()
+			# TODO
+			print("%s = %s" % (name, value))
 
 	def read_identifier(self):
 		identifier = re_identifier.match(self.line_stripped)
 		if not identifier:
 			raise ValueError("expected token 'identifier' in '%s' (%s:%i)" % (
-				self.line,
+				self.line_stripped,
 				self.filename,
 				self.line_num
 			))
@@ -167,14 +171,14 @@ class Parser:
 			if (not self.line_stripped) or (not self.line_stripped.startswith(name)):
 				raise ValueError("expected token '%s' in '%s' (%s:%i)" % (
 					name,
-					self.line,
+					self.line_stripped,
 					self.filename,
 					self.line_num
 				))
 		else:
 			if not self.line_stripped:
 				raise ValueError("expected token(s) in '%s' (%s:%i)" % (
-					self.line,
+					self.line_stripped,
 					self.filename,
 					self.line_num
 				))
@@ -183,7 +187,7 @@ class Parser:
 		path = re_path.match(self.line_stripped)
 		if not path:
 			raise ValueError("expected token 'path' in '%s' (%s:%i)" % (
-				self.line,
+				self.line_stripped,
 				self.filename,
 				self.line_num
 			))
