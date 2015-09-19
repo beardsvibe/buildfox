@@ -3,6 +3,8 @@
 
 rule a # test two
 
+default a b c d
+
 abc = $# def # test
 
 z $
@@ -10,3 +12,9 @@ z $
  b $$$
   c $$$$
    d
+
+build a : e b || c
+# f g
+# | d k
+
+# || z y w
