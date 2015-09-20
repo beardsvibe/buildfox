@@ -1,33 +1,59 @@
 # fox engine
 
+import os, copy
 from fox_parser2 import Parser
 from pprint import pprint
 
 core_file = "fox_core.fox"
 
+workdir = os.getcwd()
 output = ["# generated with love by buildfox"]
 
+def rel_dir(filename):
+	return os.path.relpath(os.path.dirname(os.path.abspath(filename)), workdir) + "/"
+
 class Engine:
-	def __init__(self):
-		self.variables = {}
+	def __init__(self, parent = None):
+		if not parent:
+			self.variables = {} # name: value
+			self.auto_presets = {} # name: (inputs, outputs, assigns)
+			self.rel_path = "" # this should be prepended to all parsed paths
+		else:
+			self.variables = copy.copy(parent.variables)
+			self.auto_presets = copy.copy(parent.auto_presets)
+			self.rel_path = parent.rel_path
+
+	# load manifest
+	def load(self, filename):
+		self.rel_path = rel_dir(filename)
+		parser = Parser(self, filename)
+		parser.parse()
 
 	# load core definitions
 	def load_core(self):
-		parser = Parser(self, core_file)
-		parser.parse()
+		self.load(core_file)
 
 	def eval(self, text):
+		# TODO
 		return text
 
 	# input can be string or list of strings
+	# outputs are always lists
 	def eval_path(self, inputs, outputs = None):
+		# TODO
+		# TODO we also need to prepend relative manifest location
 		if outputs:
 			return inputs, outputs
 		else:
 			return inputs
 
 	def eval_auto(self, inputs, outputs):
+		# TODO
 		return "auto", []
+
+	def eval_filter(self, name, value):
+		# TODO
+		return True
 
 	def write_assigns(self, assigns):
 		for assign in assigns:
@@ -78,14 +104,19 @@ class Engine:
 		output.append("pool " + name)
 		self.write_assigns(assigns)
 
-	def filter(self, obj): # return True/False
+	def filter(self, obj):
+		for filt in obj:
+			name = self.eval(filt[0])
+			value = self.eval(filt[1])
+			if not self.eval_filter(name, value):
+				return False
 		return True
-		#[(name, value)]
 
 	def auto(self, obj, assigns):
-		#pprint((obj, assigns))
-		#(targets, rule, inputs)
-		pass
+		outputs = self.eval(obj[0]) # this shouldn't be eval_path !
+		name = self.eval(obj[1])
+		inputs = self.eval(obj[2]) # this shouldn't be eval_path !
+		self.auto_presets[name] = (inputs, outputs, assigns) # TODO do we need to eval vars here ?
 
 	def assign(self, obj):
 		name = self.eval(obj[0])
@@ -94,16 +125,20 @@ class Engine:
 
 	def include(self, obj):
 		path = self.eval_path(obj)
+		old_rel_path = self.rel_path
+		self.rel_path = rel_dir(filename)
 		parser = Parser(self, path)
 		parser.parse()
+		self.rel_path = old_rel_path
 
 	def subninja(self, obj):
 		path = self.eval_path(obj)
-		# TODO
+		engine = Engine(self)
+		engine.load(path)
+		# TODO we need namescope for rules, pools, auto
 
-e = Engine()
-e.load_core()
-p = Parser(e, "examples/fox_test.fox")
-p.parse()
+engine = Engine()
+engine.load_core()
+engine.load("examples/fox_test.fox")
 
 print("\n".join(output))
