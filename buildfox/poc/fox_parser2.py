@@ -4,9 +4,8 @@ import re
 
 re_newline_escaped = re.compile("\$+$")
 re_comment = re.compile("(?<!\$)\#.*$") # looking for not escaped #
-re_identifier = re.compile("[a-zA-Z0-9_.-]+")
-re_path = re.compile("(\$\||\$ |\$:|[^ :|\n])+")
-re_filter = re.compile(r"(r\"(?![*+?])(?:[^\r\n\[\"/\\]|\\.|\[(?:[^\r\n\]\\]|\\.)*\])+\")|((\$\||\$ |\$:|[^ :|\n])+)")
+re_identifier = re.compile("[a-zA-Z0-9\${}_.-]+")
+re_path = re.compile(r"(r\"(?![*+?])(?:[^\r\n\[\"/\\]|\\.|\[(?:[^\r\n\]\\]|\\.)*\])+\")|((\$\||\$ |\$:|[^ :|\n])+)")
 
 keywords = ["rule", "build", "default", "pool", "include", "subninja", "subfox", "filter", "auto"]
 
@@ -161,7 +160,7 @@ class Parser:
 			name = self.read_identifier()
 			self.expect_token(":")
 			self.line_stripped = self.line_stripped[1:].strip()
-			value = self.read_filter_value()
+			value = self.read_path()
 			filters.append((name, value))
 		self.read_eol()
 		return filters
@@ -271,17 +270,6 @@ class Parser:
 			))
 		self.line_stripped = self.line_stripped[path.span()[1]:].strip()
 		return path.group()
-
-	def read_filter_value(self):
-		filter = re_filter.match(self.line_stripped)
-		if not filter:
-			raise ValueError("expected token 'filter' in '%s' (%s:%i)" % (
-				self.line_stripped,
-				self.filename,
-				self.line_num
-			))
-		self.line_stripped = self.line_stripped[filter.span()[1]:].strip()
-		return filter.group()
 
 	def read_eol(self):
 		if self.line_stripped:
