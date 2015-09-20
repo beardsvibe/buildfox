@@ -9,26 +9,34 @@ re_newline_escaped = re.compile("\$+$")
 re_comment = re.compile("(?<!\$)\#.*$") # looking for not escaped #
 re_identifier = re.compile("[a-zA-Z0-9_.-]+")
 re_path = re.compile("(\$\||\$ |\$:|[^ :|\n])+")
+re_filter = re.compile(r"(r\"(?![*+?])(?:[^\r\n\[\"/\\]|\\.|\[(?:[^\r\n\]\\]|\\.)*\])+\")|((\$\||\$ |\$:|[^ :|\n])+)")
 
-keywords = ["rule", "build", "default", "pool", "include",
-	"subninja", "filter", "auto"]
+keywords = ["rule", "build", "default", "pool", "include", "subninja", "filter", "auto"]
 
 class Parser:
 	def __init__(self):
-		self.filename = "fox_parser_test2.ninja"
+		self.filename = "fox_core.fox"
 		self.whitespace_nested = None
 		with open(self.filename, "r") as f:
 			self.lines = f.read().splitlines()
 
 	def parse(self):
 		self.line_i = 0
-		while self.line_i < len(self.lines):
+		while self.next_line():
+			if self.whitespace != 0:
+				raise ValueError("unexpected indentation in '%s' (%s:%i)" % (
+					self.line,
+					self.filename,
+					self.line_num
+				))
 			self.parse_line()
 
 	def next_nested(self):
 		start_i = self.line_i
 		ws_ref = self.whitespace
-		self.next_line()
+		if not self.next_line():
+			self.whitespace_nested = None
+			return False
 		if not self.whitespace_nested:
 			if self.whitespace > ws_ref + 1: # at least two spaces
 				self.whitespace_nested = self.whitespace
@@ -45,11 +53,6 @@ class Parser:
 				return False
 
 	def parse_line(self):
-		# get line
-		if not self.next_line():
-			return
-
-		# find first identifier, next actions will be based on it
 		self.command = self.read_identifier()
 		if self.command == "rule":
 			self.read_rule()
@@ -71,7 +74,25 @@ class Parser:
 			self.read_subninja()
 			self.read_nested_assigns()
 		elif self.command == "filter":
-			pass
+			self.read_filter()
+			ws_ref = self.whitespace
+			ws_base = None
+			while self.line_i < len(self.lines):
+				start_i = self.line_i
+				if not self.next_line():
+					break
+				if self.whitespace <= ws_ref + 1:
+					self.line_i = start_i
+					break
+				if not ws_base:
+					ws_base = self.whitespace
+				elif self.whitespace != ws_base:
+					raise ValueError("unbalanced indentation in '%s' (%s:%i)" % (
+						self.line,
+						self.filename,
+						self.line_num
+					))
+				self.parse_line()
 		elif self.command == "auto":
 			self.read_auto()
 			self.read_nested_assigns()
@@ -153,6 +174,18 @@ class Parser:
 		self.read_eol()
 		return (path)
 
+	def read_filter(self):
+		self.expect_token()
+		filters = []
+		while self.line_stripped:
+			name = self.read_identifier()
+			self.expect_token(":")
+			self.line_stripped = self.line_stripped[1:].strip()
+			value = self.read_filter_value()
+			filters.append((name, value))
+		self.read_eol()
+		return filters
+
 	def read_auto(self):
 		self.expect_token()
 		targets = []
@@ -187,6 +220,7 @@ class Parser:
 		return all
 
 	def read_nested_assign(self):
+		print(self.line)
 		name = self.read_identifier()
 		if name in keywords:
 			raise ValueError("unexpected keyword token '%s' in '%s' (%s:%i)" % (
@@ -237,6 +271,17 @@ class Parser:
 			))
 		self.line_stripped = self.line_stripped[path.span()[1]:].strip()
 		return path.group()
+
+	def read_filter_value(self):
+		filter = re_filter.match(self.line_stripped)
+		if not filter:
+			raise ValueError("expected token 'filter' in '%s' (%s:%i)" % (
+				self.line_stripped,
+				self.filename,
+				self.line_num
+			))
+		self.line_stripped = self.line_stripped[filter.span()[1]:].strip()
+		return filter.group()
 
 	def read_eol(self):
 		if self.line_stripped:

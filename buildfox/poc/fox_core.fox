@@ -71,3 +71,11 @@ rule link
 auto *.obj: cc *.c
 auto *.obj: cxx *.cpp
 auto *.exe: link *.obj
+
+
+filter test:test
+  rule a
+    b = c
+  rule b
+    c = d
+  k = d
