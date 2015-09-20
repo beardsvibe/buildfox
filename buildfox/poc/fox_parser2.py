@@ -8,7 +8,7 @@ re_identifier = re.compile("[a-zA-Z0-9_.-]+")
 re_path = re.compile("(\$\||\$ |\$:|[^ :|\n])+")
 re_filter = re.compile(r"(r\"(?![*+?])(?:[^\r\n\[\"/\\]|\\.|\[(?:[^\r\n\]\\]|\\.)*\])+\")|((\$\||\$ |\$:|[^ :|\n])+)")
 
-keywords = ["rule", "build", "default", "pool", "include", "subninja", "filter", "auto"]
+keywords = ["rule", "build", "default", "pool", "include", "subninja", "subfox", "filter", "auto"]
 
 class Parser:
 	def __init__(self, engine, filename, text = None):
@@ -21,9 +21,11 @@ class Parser:
 			with open(self.filename, "r") as f:
 				self.lines = f.read().splitlines()
 
+	# parse everything
 	def parse(self):
 		self.line_i = 0
 		while self.next_line():
+			# root objects must have zero whitespace offset
 			if self.whitespace != 0:
 				raise ValueError("unexpected indentation in '%s' (%s:%i)" % (
 					self.line,
@@ -32,77 +34,47 @@ class Parser:
 				))
 			self.parse_line()
 
-	def next_nested(self):
-		start_i = self.line_i
-		ws_ref = self.whitespace
-		if not self.next_line():
-			self.whitespace_nested = None
-			return False
-		if not self.whitespace_nested:
-			if self.whitespace > ws_ref + 1: # at least two spaces
-				self.whitespace_nested = self.whitespace
-				return True
-			else:
-				self.line_i = start_i
-				return False
-		else:
-			if self.whitespace == self.whitespace_nested:
-				return True
-			else:
-				self.line_i = start_i
-				self.whitespace_nested = None
-				return False
-
 	def parse_line(self):
 		self.command = self.read_identifier()
+
 		if self.command == "rule":
 			obj = self.read_rule()
 			assigns = self.read_nested_assigns()
 			self.engine.rule(obj, assigns)
+
 		elif self.command == "build":
 			obj = self.read_build()
 			assigns = self.read_nested_assigns()
 			self.engine.build(obj, assigns)
+
 		elif self.command == "default":
 			obj = self.read_default()
 			assigns = self.read_nested_assigns()
 			self.engine.default(obj, assigns)
+
 		elif self.command == "pool":
 			obj = self.read_pool()
 			assigns = self.read_nested_assigns()
 			self.engine.pool(obj, assigns)
+
 		elif self.command == "include":
 			obj = self.read_include()
 			self.engine.include(obj)
-		elif self.command == "subninja":
+
+		elif self.command == "subninja" or self.command == "subfox":
 			obj = self.read_subninja()
 			self.engine.subninja(obj)
+
 		elif self.command == "filter":
 			obj = self.read_filter()
-			need_parse = self.engine.filter(obj)
-			ws_ref = self.whitespace
-			ws_base = None
-			while self.line_i < len(self.lines):
-				start_i = self.line_i
-				if not self.next_line():
-					break
-				if self.whitespace <= ws_ref + 1:
-					self.line_i = start_i
-					break
-				if not ws_base:
-					ws_base = self.whitespace
-				elif self.whitespace != ws_base:
-					raise ValueError("unbalanced indentation in '%s' (%s:%i)" % (
-						self.line,
-						self.filename,
-						self.line_num
-					))
-				if need_parse:
-					self.parse_line()
+			need_to_parse = self.engine.filter(obj)
+			self.process_filtered(need_to_parse)
+
 		elif self.command == "auto":
 			obj = self.read_auto()
 			assigns = self.read_nested_assigns()
 			self.engine.auto(obj, assigns)
+
 		else:
 			obj = self.read_assign()
 			self.engine.assign(obj)
@@ -110,7 +82,7 @@ class Parser:
 	def read_rule(self):
 		rule = self.read_identifier()
 		self.read_eol()
-		return (rule)
+		return rule
 
 	def read_build(self):
 		self.expect_token()
@@ -164,12 +136,12 @@ class Parser:
 		while self.line_stripped:
 			paths.append(self.read_path())
 		self.read_eol()
-		return (paths)
+		return paths
 
 	def read_pool(self):
 		pool = self.read_identifier()
 		self.read_eol()
-		return (pool)
+		return pool
 
 	def read_include(self):
 		return self.read_one_path()
@@ -180,7 +152,7 @@ class Parser:
 	def read_one_path(self):
 		path = self.read_path()
 		self.read_eol()
-		return (path)
+		return path
 
 	def read_filter(self):
 		self.expect_token()
@@ -193,6 +165,27 @@ class Parser:
 			filters.append((name, value))
 		self.read_eol()
 		return filters
+
+	def process_filtered(self, need_to_parse):
+		ws_ref = self.whitespace
+		ws_base = None
+		while self.line_i < len(self.lines):
+			start_i = self.line_i
+			if not self.next_line():
+				break
+			if self.whitespace <= ws_ref + 1:
+				self.line_i = start_i
+				break
+			if not ws_base:
+				ws_base = self.whitespace
+			elif self.whitespace != ws_base:
+				raise ValueError("unbalanced indentation in '%s' (%s:%i)" % (
+					self.line,
+					self.filename,
+					self.line_num
+				))
+			if need_to_parse: # if we know that filter is disabled, no need to parse then
+				self.parse_line()
 
 	def read_auto(self):
 		self.expect_token()
@@ -298,6 +291,28 @@ class Parser:
 				self.filename,
 				self.line_num
 			))
+
+	# try to read next nested line, roll-back if not successful
+	def next_nested(self):
+		start_i = self.line_i
+		ws_ref = self.whitespace
+		if not self.next_line():
+			self.whitespace_nested = None
+			return False
+		if not self.whitespace_nested:
+			if self.whitespace > ws_ref + 1: # at least two spaces
+				self.whitespace_nested = self.whitespace
+				return True
+			else:
+				self.line_i = start_i
+				return False
+		else:
+			if self.whitespace == self.whitespace_nested:
+				return True
+			else:
+				self.line_i = start_i
+				self.whitespace_nested = None
+				return False
 
 	def next_line(self):
 		if self.line_i >= len(self.lines):
