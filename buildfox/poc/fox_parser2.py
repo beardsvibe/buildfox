@@ -10,9 +10,13 @@ re_comment = re.compile("(?<!\$)\#.*$") # looking for not escaped #
 re_identifier = re.compile("[a-zA-Z0-9_.-]+")
 re_path = re.compile("(\$\||\$ |\$:|[^ :|\n])+")
 
+keywords = ["rule", "build", "default", "pool", "include",
+	"subninja", "filter", "auto"]
+
 class Parser:
 	def __init__(self):
-		self.filename = "fox_parser_test.ninja"
+		self.filename = "fox_parser_test2.ninja"
+		self.whitespace_nested = None
 		with open(self.filename, "r") as f:
 			self.lines = f.read().splitlines()
 
@@ -20,6 +24,25 @@ class Parser:
 		self.line_i = 0
 		while self.line_i < len(self.lines):
 			self.parse_line()
+
+	def next_nested(self):
+		start_i = self.line_i
+		ws_ref = self.whitespace
+		self.next_line()
+		if not self.whitespace_nested:
+			if self.whitespace > ws_ref + 1: # at least two spaces
+				self.whitespace_nested = self.whitespace
+				return True
+			else:
+				self.line_i = start_i
+				return False
+		else:
+			if self.whitespace == self.whitespace_nested:
+				return True
+			else:
+				self.line_i = start_i
+				self.whitespace_nested = None
+				return False
 
 	def parse_line(self):
 		# get line
@@ -30,20 +53,28 @@ class Parser:
 		self.command = self.read_identifier()
 		if self.command == "rule":
 			self.read_rule()
+			a = self.read_nested_assigns()
+			pprint(a)
 		elif self.command == "build":
 			self.read_build()
+			self.read_nested_assigns()
 		elif self.command == "default":
 			self.read_default()
+			self.read_nested_assigns()
 		elif self.command == "pool":
 			self.read_pool()
+			self.read_nested_assigns()
 		elif self.command == "include":
 			self.read_include()
+			self.read_nested_assigns()
 		elif self.command == "subninja":
 			self.read_subninja()
+			self.read_nested_assigns()
 		elif self.command == "filter":
 			pass
 		elif self.command == "auto":
 			self.read_auto()
+			self.read_nested_assigns()
 		else:
 			self.read_assign()
 
@@ -145,7 +176,25 @@ class Parser:
 		return (targets, rule, inputs)
 
 	def read_assign(self):
-		name = self.command
+		self.expect_token("=")
+		value = self.line_stripped[1:].strip()
+		return (self.command, value)
+
+	def read_nested_assigns(self):
+		all = []
+		while self.next_nested():
+			all.append(self.read_nested_assign())
+		return all
+
+	def read_nested_assign(self):
+		name = self.read_identifier()
+		if name in keywords:
+			raise ValueError("unexpected keyword token '%s' in '%s' (%s:%i)" % (
+				name,
+				self.line,
+				self.filename,
+				self.line_num
+			))
 		self.expect_token("=")
 		value = self.line_stripped[1:].strip()
 		return (name, value)
@@ -246,12 +295,8 @@ class Parser:
 
 		# get whitespace
 		self.whitespace = self.line[:self.line.index(self.line_stripped)]
-		if "\t" in self.whitespace and " " in self.whitespace:
-			raise ValueError("inconsistent whitespace in '%s' (%s:%i)" % (
-				self.line,
-				self.filename,
-				self.line_num
-			))
+		self.whitespace = self.whitespace.replace("\t", "    ")
+		self.whitespace = len(self.whitespace)
 		return True
 
 p = Parser()

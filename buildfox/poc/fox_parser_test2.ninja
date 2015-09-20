@@ -2,7 +2,12 @@
 # test comment
 
 rule a # test two
+  c = k
 
+  d = k
+s = k
+rule b
+   e = k
 default a b c d
 
 abc = $# def # test
