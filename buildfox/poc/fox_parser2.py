@@ -1,9 +1,6 @@
-
-# tired of grako unable parse whitespace correctly
-# lets see if it's easy to parse manifest by hand
+# build fox parser
 
 import re
-from pprint import pprint
 
 re_newline_escaped = re.compile("\$+$")
 re_comment = re.compile("(?<!\$)\#.*$") # looking for not escaped #
@@ -14,11 +11,15 @@ re_filter = re.compile(r"(r\"(?![*+?])(?:[^\r\n\[\"/\\]|\\.|\[(?:[^\r\n\]\\]|\\.
 keywords = ["rule", "build", "default", "pool", "include", "subninja", "filter", "auto"]
 
 class Parser:
-	def __init__(self):
-		self.filename = "fox_core.fox"
+	def __init__(self, engine, filename, text = None):
+		self.engine = engine
+		self.filename = filename
 		self.whitespace_nested = None
-		with open(self.filename, "r") as f:
-			self.lines = f.read().splitlines()
+		if text:
+			self.lines = text.splitlines()
+		else:
+			with open(self.filename, "r") as f:
+				self.lines = f.read().splitlines()
 
 	def parse(self):
 		self.line_i = 0
@@ -55,26 +56,30 @@ class Parser:
 	def parse_line(self):
 		self.command = self.read_identifier()
 		if self.command == "rule":
-			self.read_rule()
-			a = self.read_nested_assigns()
-			pprint(a)
+			obj = self.read_rule()
+			assigns = self.read_nested_assigns()
+			self.engine.rule(obj, assigns)
 		elif self.command == "build":
-			self.read_build()
-			self.read_nested_assigns()
+			obj = self.read_build()
+			assigns = self.read_nested_assigns()
+			self.engine.build(obj, assigns)
 		elif self.command == "default":
-			self.read_default()
-			self.read_nested_assigns()
+			obj = self.read_default()
+			assigns = self.read_nested_assigns()
+			self.engine.default(obj, assigns)
 		elif self.command == "pool":
-			self.read_pool()
-			self.read_nested_assigns()
+			obj = self.read_pool()
+			assigns = self.read_nested_assigns()
+			self.engine.pool(obj, assigns)
 		elif self.command == "include":
-			self.read_include()
-			self.read_nested_assigns()
+			obj = self.read_include()
+			self.engine.include(obj)
 		elif self.command == "subninja":
-			self.read_subninja()
-			self.read_nested_assigns()
+			obj = self.read_subninja()
+			self.engine.subninja(obj)
 		elif self.command == "filter":
-			self.read_filter()
+			obj = self.read_filter()
+			need_parse = self.engine.filter(obj)
 			ws_ref = self.whitespace
 			ws_base = None
 			while self.line_i < len(self.lines):
@@ -92,12 +97,15 @@ class Parser:
 						self.filename,
 						self.line_num
 					))
-				self.parse_line()
+				if need_parse:
+					self.parse_line()
 		elif self.command == "auto":
-			self.read_auto()
-			self.read_nested_assigns()
+			obj = self.read_auto()
+			assigns = self.read_nested_assigns()
+			self.engine.auto(obj, assigns)
 		else:
-			self.read_assign()
+			obj = self.read_assign()
+			self.engine.assign(obj)
 
 	def read_rule(self):
 		rule = self.read_identifier()
@@ -220,7 +228,6 @@ class Parser:
 		return all
 
 	def read_nested_assign(self):
-		print(self.line)
 		name = self.read_identifier()
 		if name in keywords:
 			raise ValueError("unexpected keyword token '%s' in '%s' (%s:%i)" % (
@@ -343,6 +350,3 @@ class Parser:
 		self.whitespace = self.whitespace.replace("\t", "    ")
 		self.whitespace = len(self.whitespace)
 		return True
-
-p = Parser()
-p.parse()
