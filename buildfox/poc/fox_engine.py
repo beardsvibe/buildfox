@@ -1,6 +1,6 @@
 # fox engine
 
-import os, copy
+import os, re, copy
 from fox_parser2 import Parser
 from pprint import pprint
 
@@ -22,6 +22,7 @@ class Engine:
 			self.variables = copy.copy(parent.variables)
 			self.auto_presets = copy.copy(parent.auto_presets)
 			self.rel_path = parent.rel_path
+		self.need_eval = False
 
 	# load manifest
 	def load(self, filename):
@@ -34,7 +35,17 @@ class Engine:
 		self.load(core_file)
 
 	def eval(self, text):
-		# TODO
+		def repl(matchobj):
+			name = matchobj.group(1) or matchobj.group(2)
+			if name in self.variables:
+				self.need_eval = True
+				return self.variables.get(name)
+			else:
+				return "${" + name + "}"
+		self.need_eval = len(text) > 0
+		while self.need_eval:
+			self.need_eval = False
+			text = re.sub("\${([a-zA-Z0-9_.-]+)}|\$([a-zA-Z0-9_-]+)", repl, text)
 		return text
 
 	# input can be string or list of strings
@@ -113,9 +124,9 @@ class Engine:
 		return True
 
 	def auto(self, obj, assigns):
-		outputs = self.eval(obj[0]) # this shouldn't be eval_path !
+		outputs = [self.eval(output) for output in obj[0]] # this shouldn't be eval_path !
 		name = self.eval(obj[1])
-		inputs = self.eval(obj[2]) # this shouldn't be eval_path !
+		inputs = [self.eval(input) for input in obj[2]] # this shouldn't be eval_path !
 		self.auto_presets[name] = (inputs, outputs, assigns) # TODO do we need to eval vars here ?
 
 	def assign(self, obj):
@@ -138,7 +149,8 @@ class Engine:
 		# TODO we need namescope for rules, pools, auto
 
 engine = Engine()
-engine.load_core()
-engine.load("examples/fox_test.fox")
+#engine.load_core()
+#engine.load("examples/fox_test.fox")
+engine.load("fox_parser_test2.ninja")
 
 print("\n".join(output))

@@ -1,20 +1,11 @@
 
 # test comment
 
-rule a # test two
-  c = k
+a = $b
+b = $c
+c = d
+e = f
 
-  d = k
-s = k
-rule b
-   e = k
-default a b c d
-
-abc = $# def # test
-
-z = k $
-  b
-
-auto k1.txt : bb k2.txt
-
+rule $e
+  k = $a
 
