@@ -9,3 +9,4 @@ e = f
 rule $e
   k = $a
 
+build test: test examples/*.cpp

@@ -5,12 +5,51 @@ from fox_parser2 import Parser
 from pprint import pprint
 
 core_file = "fox_core.fox"
+re_var = re.compile("\${([a-zA-Z0-9_.-]+)}|\$([a-zA-Z0-9_-]+)")
 
 workdir = os.getcwd()
 output = ["# generated with love by buildfox"]
 
 def rel_dir(filename):
 	return os.path.relpath(os.path.dirname(os.path.abspath(filename)), workdir) + "/"
+
+def wildcard_regex(filename):
+	if filename.startswith("r\""):
+		return filename
+	elif "*" in filename or "?" in filename or "[" in filename:
+		# based on fnmatch.translate with each wildcard is a capture group
+		i, n = 0, len(filename)
+		res = ""
+		while i < n:
+			c = filename[i]
+			i = i + 1
+			if c == "*":
+				res = res + "(.*)"
+			elif c == "?":
+				res = res + "(.)"
+			elif c == "[":
+				j = i
+				if j < n and filename[j] == "!":
+					j = j + 1
+				if j < n and filename[j] == "]":
+					j = j + 1
+				while j < n and filename[j] != "]":
+					j = j + 1
+				if j >= n:
+					res = res + "\\["
+				else:
+					stuff = filename[i:j].replace("\\", "\\\\")
+					i = j + 1
+					if stuff[0] == "!":
+						stuff = "^" + stuff[1:]
+					elif stuff[0] == "^":
+						stuff = "\\" + stuff
+					res = "%s([%s])" % (res, stuff)
+			else:
+				res = res + re.escape(c)
+		return res #+ "\Z(?ms)" # TODO do we need that ?
+	else:
+		return None
 
 class Engine:
 	def __init__(self, parent = None):
@@ -34,6 +73,7 @@ class Engine:
 	def load_core(self):
 		self.load(core_file)
 
+	# TODO what we do with from_esc / to_esc ? now text are just passing without escaping
 	def eval(self, text):
 		def repl(matchobj):
 			name = matchobj.group(1) or matchobj.group(2)
@@ -45,7 +85,7 @@ class Engine:
 		self.need_eval = len(text) > 0
 		while self.need_eval:
 			self.need_eval = False
-			text = re.sub("\${([a-zA-Z0-9_.-]+)}|\$([a-zA-Z0-9_-]+)", repl, text)
+			text = re_var.sub(repl, text)
 		return text
 
 	# input can be string or list of strings
@@ -53,6 +93,19 @@ class Engine:
 	def eval_path(self, inputs, outputs = None):
 		# TODO
 		# TODO we also need to prepend relative manifest location
+		
+		if inputs:
+			result = []
+			for input in inputs:
+				regex = wildcard_regex(input)
+				if regex:
+					
+				
+					print(regex)
+				else:
+					result.append(input)
+			inputs = result
+
 		if outputs:
 			return inputs, outputs
 		else:
