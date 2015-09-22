@@ -6,7 +6,8 @@ from pprint import pprint
 
 core_file = "fox_core.fox"
 re_var = re.compile("\${([a-zA-Z0-9_.-]+)}|\$([a-zA-Z0-9_-]+)")
-re_folder_part = re.compile(r"(?:[^\r\n(\[\"/\\]|\\.)+") # match folder part in filename regex
+re_folder_part = re.compile(r"(?:[^\r\n(\[\"\\]|\\.)+") # match folder part in filename regex
+re_capture_group_ref = re.compile(r"(?<!\\)\\(\d)") # match regex capture group reference
 
 workdir = os.getcwd()
 output = ["# generated with love by buildfox"]
@@ -14,20 +15,31 @@ output = ["# generated with love by buildfox"]
 def rel_dir(filename):
 	return os.path.relpath(os.path.dirname(os.path.abspath(filename)), workdir) + "/"
 
-def wildcard_regex(filename):
+def wildcard_regex(filename, output = False):
 	if filename.startswith("r\""):
 		return filename[2:-1] # strip r" and "
 	elif "*" in filename or "?" in filename or "[" in filename:
 		# based on fnmatch.translate with each wildcard is a capture group
 		i, n = 0, len(filename)
+		groups = 1
 		res = ""
 		while i < n:
 			c = filename[i]
 			i = i + 1
 			if c == "*":
-				res = res + "(.*)"
+				if output:
+					res = res + "\\" + str(groups)
+					groups += 1
+				else:
+					res = res + "(.*)"
 			elif c == "?":
-				res = res + "(.)"
+				if output:
+					res = res + "\\" + str(groups)
+					groups += 1
+				else:
+					res = res + "(.)"
+			elif output:
+				res = res + c
 			elif c == "[":
 				j = i
 				if j < n and filename[j] == "!":
@@ -48,7 +60,10 @@ def wildcard_regex(filename):
 					res = "%s([%s])" % (res, stuff)
 			else:
 				res = res + re.escape(c)
-		return res #+ "\Z(?ms)" # TODO do we need that ?
+		if output:
+			return res
+		else:
+			return res + "\Z(?ms)"
 	else:
 		return None
 
@@ -92,29 +107,57 @@ class Engine:
 	# input can be string or list of strings
 	# outputs are always lists
 	def eval_path(self, inputs, outputs = None):
-		# TODO
 		# TODO we also need to prepend relative manifest location
-		
+
 		if inputs:
 			result = []
+			matched = []
 			for input in inputs:
 				regex = wildcard_regex(input)
 				if regex:
+					# find the folder where to look for files
 					base_folder = re_folder_part.match(regex)
 					if base_folder:
-						base_folder = base_folder.group().replace("\\\\", "/").replace("\\/", "/")
+						base_folder = base_folder.group().replace("\\\\", "\\").replace("\\/", "/")
+						separator = "\\" if base_folder.rfind("\\") > base_folder.rfind("/") else "/"
 						base_folder = os.path.dirname(base_folder)
+						list_folder = base_folder
 					else:
+						separator = ""
 						base_folder = ""
+						list_folder = "."
 
-					print(base_folder)
-				
+					# look for files
+					re_regex = re.compile(regex)
+					for file in os.listdir(list_folder):
+						name = base_folder + separator + file
+						match = re_regex.match(name)
+						if match:
+							result.append(name)
+							matched.append(match.groups())
 				else:
 					result.append(input)
 			inputs = result
 
 		if outputs:
-			return inputs, outputs
+			result = []
+			for output in outputs:
+				# we want \number instead of capture groups
+				regex = wildcard_regex(output, True)
+				if regex:
+					for match in matched:
+						# replace \number with data
+						def replace_group(matchobj):
+							index = int(matchobj.group(1)) - 1
+							if index >= 0 and index < len(match):
+								return match[index]
+							else:
+								return ""
+						file = re_capture_group_ref.sub(replace_group, regex)
+						result.append(file)
+				else:
+					result.append(output)
+			return inputs, result
 		else:
 			return inputs
 
@@ -213,4 +256,5 @@ engine = Engine()
 #engine.load("examples/fox_test.fox")
 engine.load("fox_parser_test2.ninja")
 
+print("#------------------ result")
 print("\n".join(output))

@@ -9,4 +9,5 @@ e = f
 rule $e
   k = $a
 
-build test: test examples/t[e]st*.cpp\*.cpp
+build examples/*.obj: test examples/*.cpp
+build r"examples/\2_\1_\3.obj": test r"examples/(fox)_(test)_(.*)\.cpp"
