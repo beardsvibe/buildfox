@@ -109,6 +109,8 @@ class Engine:
 	def eval_path(self, inputs, outputs = None):
 		# TODO we also need to prepend relative manifest location
 
+		# TODO add output files to generated files list so next inputs can also catch them
+
 		if inputs:
 			result = []
 			matched = []
