@@ -6,6 +6,7 @@ from pprint import pprint
 
 core_file = "fox_core.fox"
 re_var = re.compile("\${([a-zA-Z0-9_.-]+)}|\$([a-zA-Z0-9_-]+)")
+re_folder_part = re.compile(r"(?:[^\r\n(\[\"/\\]|\\.)+") # match folder part in filename regex
 
 workdir = os.getcwd()
 output = ["# generated with love by buildfox"]
@@ -15,7 +16,7 @@ def rel_dir(filename):
 
 def wildcard_regex(filename):
 	if filename.startswith("r\""):
-		return filename
+		return filename[2:-1] # strip r" and "
 	elif "*" in filename or "?" in filename or "[" in filename:
 		# based on fnmatch.translate with each wildcard is a capture group
 		i, n = 0, len(filename)
@@ -99,9 +100,15 @@ class Engine:
 			for input in inputs:
 				regex = wildcard_regex(input)
 				if regex:
-					
+					base_folder = re_folder_part.match(regex)
+					if base_folder:
+						base_folder = base_folder.group().replace("\\\\", "/").replace("\\/", "/")
+						base_folder = os.path.dirname(base_folder)
+					else:
+						base_folder = ""
+
+					print(base_folder)
 				
-					print(regex)
 				else:
 					result.append(input)
 			inputs = result

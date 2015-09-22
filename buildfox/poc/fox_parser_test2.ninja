@@ -9,4 +9,4 @@ e = f
 rule $e
   k = $a
 
-build test: test examples/*.cpp
+build test: test examples/t[e]st*.cpp\*.cpp
