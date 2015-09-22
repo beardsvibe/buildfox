@@ -113,6 +113,7 @@ class Engine:
 			result = []
 			matched = []
 			for input in inputs:
+				input = self.eval(input)
 				regex = wildcard_regex(input)
 				if regex:
 					# find the folder where to look for files
@@ -142,6 +143,7 @@ class Engine:
 		if outputs:
 			result = []
 			for output in outputs:
+				output = self.eval(output)
 				# we want \number instead of capture groups
 				regex = wildcard_regex(output, True)
 				if regex:
