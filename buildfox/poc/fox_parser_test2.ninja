@@ -10,4 +10,4 @@ rule $e
   k = $a
 
 build ${a}/*.obj: test examples/*.cpp
-build r"examples/\2_\1_\3.obj": test r"examples/(fox)_(test)_(.*)\.cpp"
+build r"examples/\2_\1_\3.obj": test r"examples/([a-z]+)_([a-z]+)_(.*)\.cpp"
