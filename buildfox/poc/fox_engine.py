@@ -196,9 +196,13 @@ class Engine:
 		# if no rule found then just return None
 		return None, None
 
-	def eval_filter(self, name, value):
-		# TODO
-		return True
+	def eval_filter(self, name, regex_or_value):
+		value = self.variables.get(name, "")
+		regex = wildcard_regex(regex_or_value)
+		if regex:
+			return re.match(regex, value)
+		else:
+			return regex_or_value == value
 
 	def write_assigns(self, assigns):
 		for assign in assigns:
