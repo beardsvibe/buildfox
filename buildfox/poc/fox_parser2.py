@@ -42,9 +42,17 @@ class Parser:
 			self.engine.rule(obj, assigns)
 
 		elif self.command == "build":
+			line = self.line
+			line_num = self.line_num
 			obj = self.read_build()
 			assigns = self.read_nested_assigns()
-			self.engine.build(obj, assigns)
+			if not self.engine.build(obj, assigns):
+				# TODO find better way to spawn error from engine directly
+				raise ValueError("unable to deduce auto rule in '%s' (%s:%i)" % (
+					line,
+					self.filename,
+					line_num
+				))
 
 		elif self.command == "default":
 			obj = self.read_default()

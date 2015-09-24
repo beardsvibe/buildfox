@@ -166,8 +166,35 @@ class Engine:
 			return inputs
 
 	def eval_auto(self, inputs, outputs):
-		# TODO
-		return "auto", []
+		for rule_name, auto in self.auto_presets.items(): # name: (inputs, outputs, assigns)
+			# check if all inputs match required auto inputs
+			for auto_input in auto[0]:
+				regex = wildcard_regex(auto_input)
+				if regex:
+					re_regex = re.compile(regex)
+					match = all(re_regex.match(input) for input in inputs)
+				else:
+					match = all(input == auto_input for input in inputs)
+				if not match:
+					break
+			if not match:
+				continue
+			# check if all outputs match required auto outputs
+			for auto_output in auto[1]:
+				regex = wildcard_regex(auto_output)
+				if regex:
+					re_regex = re.compile(regex)
+					match = all(re_regex.match(output) for output in outputs)
+				else:
+					match = all(output == auto_output for output in outputs)
+				if not match:
+					break
+			if not match:
+				continue
+			# if everything match - return rule name and variables
+			return rule_name, auto[2]
+		# if no rule found then just return None
+		return None, None
 
 	def eval_filter(self, name, value):
 		# TODO
@@ -193,6 +220,8 @@ class Engine:
 
 		if rule_name == "auto":
 			name, vars = self.eval_auto(inputs_explicit, targets_explicit)
+			if not name:
+				return False
 			rule_name = name
 			assigns = vars + assigns
 
@@ -211,6 +240,7 @@ class Engine:
 				" ".join(targets_implicit),
 				" " + " ".join(targets_explicit),
 			))
+		return True
 
 	def default(self, obj, assigns):
 		paths = self.eval_path(obj)
