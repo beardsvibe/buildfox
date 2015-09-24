@@ -276,18 +276,21 @@ class Engine:
 		self.variables[name] = value
 
 	def include(self, obj):
-		path = self.eval_path(obj)
-		old_rel_path = self.rel_path
-		self.rel_path = rel_dir(filename)
-		parser = Parser(self, path)
-		parser.parse()
-		self.rel_path = old_rel_path
+		paths = self.eval_path([obj])
+		for path in paths:
+			old_rel_path = self.rel_path
+			self.rel_path = rel_dir(path)
+			parser = Parser(self, path)
+			parser.parse()
+			self.rel_path = old_rel_path
 
 	def subninja(self, obj):
-		path = self.eval_path(obj)
-		engine = Engine(self)
-		engine.load(path)
-		# TODO we need namescope for rules, pools, auto
+		paths = self.eval_path([obj])
+		for path in paths:
+			engine = Engine(self)
+			print("LOAD " + path)
+			engine.load(path)
+			# TODO we need namescope for rules, pools, auto
 
 engine = Engine()
 #engine.load_core()

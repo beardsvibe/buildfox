@@ -14,5 +14,9 @@ auto *.zzz: rule1 *.cpp
 filter e : r"a|b|f"
 	auto *.obj: rule2 *.cpp
 
+auto *.exe: rule3 *.obj
+
 build ${a}/*.obj: auto examples/*.cpp
 build r"examples/\2_\1_\3.obj": test r"examples/([a-z]+)_([a-z]+)_(.*)\.cpp"
+
+subfox examples/*.fox
