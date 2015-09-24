@@ -268,7 +268,7 @@ class Engine:
 		outputs = [self.eval(output) for output in obj[0]] # this shouldn't be eval_path !
 		name = self.eval(obj[1])
 		inputs = [self.eval(input) for input in obj[2]] # this shouldn't be eval_path !
-		self.auto_presets[name] = (inputs, outputs, assigns) # TODO do we need to eval vars here ?
+		self.auto_presets[name] = (inputs, outputs, assigns)
 
 	def assign(self, obj):
 		name = self.eval(obj[0])
