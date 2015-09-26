@@ -3,7 +3,7 @@
 import re
 
 re_newline_escaped = re.compile("\$+$")
-re_comment = re.compile("(?<!\$)\#.*$") # looking for not escaped #
+re_comment = re.compile("(?<!\$)\#(.*)$") # looking for not escaped #
 re_identifier = re.compile("[a-zA-Z0-9\${}_.-]+")
 re_path = re.compile(r"(r\"(?![*+?])(?:[^\r\n\[\"/\\]|\\.|\[(?:[^\r\n\]\\]|\\.)*\])+\")|((\$\||\$ |\$:|[^ :|\n])+)")
 
@@ -14,6 +14,7 @@ class Parser:
 		self.engine = engine
 		self.filename = filename
 		self.whitespace_nested = None
+		self.comments = []
 		if text:
 			self.lines = text.splitlines()
 		else:
@@ -35,6 +36,11 @@ class Parser:
 
 	def parse_line(self):
 		self.command = self.read_identifier()
+
+		if len(self.comments):
+			for comment in self.comments:
+				self.engine.comment(comment)
+			self.comments = []
 
 		if self.command == "rule":
 			obj = self.read_rule()
@@ -292,6 +298,7 @@ class Parser:
 	def next_nested(self):
 		start_i = self.line_i
 		ws_ref = self.whitespace
+		comments_len = len(self.comments)
 		if not self.next_line():
 			self.whitespace_nested = None
 			return False
@@ -301,6 +308,7 @@ class Parser:
 				return True
 			else:
 				self.line_i = start_i
+				self.comments = self.comments[:comments_len]
 				return False
 		else:
 			if self.whitespace == self.whitespace_nested:
@@ -308,6 +316,7 @@ class Parser:
 			else:
 				self.line_i = start_i
 				self.whitespace_nested = None
+				self.comments = self.comments[:comments_len]
 				return False
 
 	def next_line(self):
@@ -344,12 +353,14 @@ class Parser:
 
 			# fast strip comment
 			if self.line_stripped and self.line_stripped[0] == "#":
+				self.comments.append(self.line_stripped[1:])
 				self.line_stripped = ""
 				continue
 
 			# slower strip comments
 			comment_eol = re_comment.search(self.line_stripped)
 			if comment_eol:
+				self.comments.append(comment_eol.group(1))
 				self.line_stripped = self.line_stripped[:comment_eol.span()[0]].strip()
 
 		# if we can't skip empty lines, than just return failure

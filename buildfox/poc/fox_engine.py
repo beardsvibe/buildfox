@@ -129,7 +129,10 @@ class Engine:
 					else:
 						separator = ""
 						base_folder = ""
-						list_folder = self.rel_path + "."
+						if len(self.rel_path):
+							list_folder = self.rel_path[:-1] # strip last /
+						else:
+							list_folder = "."
 
 					# look for files
 					re_regex = re.compile(regex)
@@ -211,6 +214,9 @@ class Engine:
 			name = self.eval(assign[0])
 			value = self.eval(assign[1])
 			output.append("  %s = %s" % (name, value))
+
+	def comment(self, comment):
+		output.append("#" + comment)
 
 	def rule(self, obj, assigns):
 		name = self.eval(obj)
