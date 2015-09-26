@@ -7,7 +7,7 @@ re_comment = re.compile("(?<!\$)\#(.*)$") # looking for not escaped #
 re_identifier = re.compile("[a-zA-Z0-9\${}_.-]+")
 re_path = re.compile(r"(r\"(?![*+?])(?:[^\r\n\[\"/\\]|\\.|\[(?:[^\r\n\]\\]|\\.)*\])+\")|((\$\||\$ |\$:|[^ :|\n])+)")
 
-keywords = ["rule", "build", "default", "pool", "include", "subninja", "subfox", "filter", "auto"]
+keywords = ["rule", "build", "default", "pool", "include", "subninja", "subfox", "filter", "auto", "print"]
 
 class Parser:
 	def __init__(self, engine, filename, text = None):
@@ -87,6 +87,10 @@ class Parser:
 			obj = self.read_auto()
 			assigns = self.read_nested_assigns()
 			self.engine.auto(obj, assigns)
+
+		elif self.command == "print":
+			obj = self.read_print()
+			self.engine.print(obj)
 
 		else:
 			obj = self.read_assign()
@@ -221,6 +225,9 @@ class Parser:
 			inputs.append(self.read_path())
 		self.read_eol()
 		return (targets, rule, inputs)
+
+	def read_print(self):
+		return self.line_stripped.strip()
 
 	def read_assign(self):
 		self.expect_token("=")

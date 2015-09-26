@@ -144,7 +144,6 @@ class Engine:
 						match = re_regex.match(name)
 						if match:
 							result.append(self.rel_path + name)
-							#result.append(name)
 							matched.append(match.groups())
 				else:
 					result.append(self.rel_path + input)
@@ -280,6 +279,9 @@ class Engine:
 		name = self.eval(obj[1])
 		inputs = [self.eval(input) for input in obj[2]] # this shouldn't be eval_path !
 		self.auto_presets[name] = (inputs, outputs, assigns)
+
+	def print(self, obj):
+		print(self.eval(obj))
 
 	def assign(self, obj):
 		name = self.eval(obj[0])

@@ -2,3 +2,4 @@
 build *.obj: auto ../*.cpp
 build fox_test2.exe: auto *.obj
 a = 2
+print test $a
