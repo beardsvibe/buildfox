@@ -1,6 +1,6 @@
 # fox engine
 
-import os, re, copy
+import os, re, copy, collections
 from fox_parser2 import Parser
 from pprint import pprint
 
@@ -9,8 +9,10 @@ re_var = re.compile("\${([a-zA-Z0-9_.-]+)}|\$([a-zA-Z0-9_-]+)")
 re_folder_part = re.compile(r"(?:[^\r\n(\[\"\\]|\\.)+") # match folder part in filename regex
 re_capture_group_ref = re.compile(r"(?<!\\)\\(\d)") # match regex capture group reference
 
-workdir = os.getcwd()
+workdir = os.getcwd() # TODO make this work
 output = ["# generated with love by buildfox"]
+
+generated = collections.defaultdict(set) # key is folder name, value is set of file names
 
 def rel_dir(filename):
 	path = os.path.relpath(os.path.dirname(os.path.abspath(filename)), workdir).replace("\\", "/") + "/"
@@ -110,8 +112,6 @@ class Engine:
 	# input can be string or list of strings
 	# outputs are always lists
 	def eval_path(self, inputs, outputs = None):
-		# TODO add output files to generated files list so next inputs can also catch them
-
 		if inputs:
 			result = []
 			matched = []
@@ -138,8 +138,11 @@ class Engine:
 							list_folder = "."
 
 					# look for files
+					list_folder = os.path.normpath(list_folder).replace("\\", "/")
 					re_regex = re.compile(regex)
-					for file in os.listdir(list_folder):
+					fs_files = set(os.listdir(list_folder))
+					generated_files = generated.get(list_folder, set())
+					for file in fs_files.union(generated_files):
 						name = base_folder + separator + file
 						match = re_regex.match(name)
 						if match:
@@ -168,6 +171,25 @@ class Engine:
 						result.append(self.rel_path + file)
 				else:
 					result.append(self.rel_path + output)
+
+			# normalize results
+			result = [os.path.normpath(file).replace("\\", "/") for file in result]
+
+			# add them to generated files dict
+			for file in result:
+				dir = os.path.dirname(file)
+				name = os.path.basename(file)
+				if name in generated[dir]:
+					raise ValueError("two or more commands generate '%s'" % ( # TODO add debug info like line number and file name
+						file,
+					))
+				else:
+					generated[dir].add(name)
+
+		# normalize inputs
+		inputs = [os.path.normpath(file).replace("\\", "/") for file in inputs]
+
+		if outputs:
 			return inputs, result
 		else:
 			return inputs
@@ -301,7 +323,7 @@ class Engine:
 		paths = self.eval_path([obj])
 		for path in paths:
 			engine = Engine(self)
-			print("LOAD " + path)
+			#print("LOAD " + path)
 			engine.load(path)
 			# TODO we need namescope for rules, pools, auto
 
