@@ -1,4 +1,4 @@
-# magic
+# fox_test.fox
 build fox_test_a.obj: auto fox_test_a.cpp
 build *.obj: auto *.cpp
 build fox_test.exe: auto *.obj

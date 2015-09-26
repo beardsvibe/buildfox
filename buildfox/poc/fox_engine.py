@@ -13,7 +13,7 @@ workdir = os.getcwd()
 output = ["# generated with love by buildfox"]
 
 def rel_dir(filename):
-	path = os.path.relpath(os.path.dirname(os.path.abspath(filename)), workdir) + "/"
+	path = os.path.relpath(os.path.dirname(os.path.abspath(filename)), workdir).replace("\\", "/") + "/"
 	if path == "./":
 		path = ""
 	return path
@@ -122,10 +122,13 @@ class Engine:
 					# find the folder where to look for files
 					base_folder = re_folder_part.match(regex)
 					if base_folder:
-						base_folder = base_folder.group().replace("\\\\", "\\").replace("\\/", "/")
+						base_folder = base_folder.group()
+						for fix in [("\\\\", "\\"), ("\\/", "/"), ("\\.", ".")]: # rename regex back to readable form
+							base_folder = base_folder.replace(fix[0], fix[1])
 						separator = "\\" if base_folder.rfind("\\") > base_folder.rfind("/") else "/"
 						base_folder = os.path.dirname(base_folder)
 						list_folder = self.rel_path + base_folder
+						
 					else:
 						separator = ""
 						base_folder = ""
