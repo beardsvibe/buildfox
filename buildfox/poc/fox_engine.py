@@ -13,7 +13,10 @@ workdir = os.getcwd()
 output = ["# generated with love by buildfox"]
 
 def rel_dir(filename):
-	return os.path.relpath(os.path.dirname(os.path.abspath(filename)), workdir) + "/"
+	path = os.path.relpath(os.path.dirname(os.path.abspath(filename)), workdir) + "/"
+	if path == "./":
+		path = ""
+	return path
 
 def wildcard_regex(filename, output = False):
 	if filename.startswith("r\""):
@@ -107,8 +110,6 @@ class Engine:
 	# input can be string or list of strings
 	# outputs are always lists
 	def eval_path(self, inputs, outputs = None):
-		# TODO we also need to prepend relative manifest location
-
 		# TODO add output files to generated files list so next inputs can also catch them
 
 		if inputs:
@@ -124,11 +125,11 @@ class Engine:
 						base_folder = base_folder.group().replace("\\\\", "\\").replace("\\/", "/")
 						separator = "\\" if base_folder.rfind("\\") > base_folder.rfind("/") else "/"
 						base_folder = os.path.dirname(base_folder)
-						list_folder = base_folder
+						list_folder = self.rel_path + base_folder
 					else:
 						separator = ""
 						base_folder = ""
-						list_folder = "."
+						list_folder = self.rel_path + "."
 
 					# look for files
 					re_regex = re.compile(regex)
@@ -136,10 +137,11 @@ class Engine:
 						name = base_folder + separator + file
 						match = re_regex.match(name)
 						if match:
-							result.append(name)
+							result.append(self.rel_path + name)
+							#result.append(name)
 							matched.append(match.groups())
 				else:
-					result.append(input)
+					result.append(self.rel_path + input)
 			inputs = result
 
 		if outputs:
@@ -158,9 +160,9 @@ class Engine:
 							else:
 								return ""
 						file = re_capture_group_ref.sub(replace_group, regex)
-						result.append(file)
+						result.append(self.rel_path + file)
 				else:
-					result.append(output)
+					result.append(self.rel_path + output)
 			return inputs, result
 		else:
 			return inputs
