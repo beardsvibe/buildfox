@@ -247,10 +247,10 @@ class Engine:
 		else:
 			return regex_or_value == value
 
-	def write_assigns(self, assigns):
+	def write_assigns(self, assigns, do_not_eval = False):
 		for assign in assigns:
-			name = self.eval(assign[0])
-			value = self.eval(assign[1])
+			name = assign[0] if do_not_eval else self.eval(assign[0])
+			value = assign[1] if do_not_eval else self.eval(assign[1])
 			output.append("  %s = %s" % (name, value))
 
 	def comment(self, comment):
@@ -259,7 +259,7 @@ class Engine:
 	def rule(self, obj, assigns):
 		name = self.eval(obj)
 		output.append("rule " + name)
-		self.write_assigns(assigns)
+		self.write_assigns(assigns, do_not_eval = True)
 
 	def build(self, obj, assigns):
 		inputs_explicit, targets_explicit = self.eval_path(obj[3], obj[0])
@@ -320,6 +320,7 @@ class Engine:
 		name = self.eval(obj[0])
 		value = obj[1]
 		self.variables[name] = value
+		output.append("%s = %s" % (name, value))
 
 	def include(self, obj):
 		paths = self.eval_path([obj])
