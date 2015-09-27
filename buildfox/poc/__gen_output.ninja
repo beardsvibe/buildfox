@@ -29,7 +29,7 @@ c = d
 e = f
 rule f
   k = $a
-build d/fox_test_a.obj d/fox_test_b.obj: rule2 examples/fox_test_a.cpp examples/fox_test_b.cpp
+build d/fox_test_a.obj d/fox_test_b.obj: cxx examples/fox_test_a.cpp examples/fox_test_b.cpp
 build examples/test_fox_a.obj examples/test_fox_b.obj: test examples/fox_test_a.cpp examples/fox_test_b.cpp
 subninja __gen_0_fox_test.ninja
 rule test

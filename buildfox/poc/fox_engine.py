@@ -291,6 +291,13 @@ class Engine:
 			rule_name = name
 			assigns = vars + assigns
 
+		# make generated output stable
+		targets_explicit = sorted(targets_explicit)
+		targets_implicit = sorted(targets_implicit)
+		inputs_explicit = sorted(inputs_explicit)
+		inputs_implicit = sorted(inputs_implicit)
+		inputs_order = sorted(inputs_order)
+
 		self.output.append("build %s: %s%s%s%s" % (
 			" ".join(self.to_esc(targets_explicit)),
 			rule_name,
