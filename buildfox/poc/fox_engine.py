@@ -83,9 +83,13 @@ class Engine:
 			self.auto_presets = copy.copy(parent.auto_presets)
 			self.rel_path = parent.rel_path
 		self.need_eval = False
+		self.filename = ""
+		self.current_line = ""
+		self.current_line_i = 0
 
 	# load manifest
 	def load(self, filename):
+		self.filename = filename
 		self.rel_path = rel_dir(filename)
 		parser = Parser(self, filename)
 		parser.parse()
@@ -180,8 +184,11 @@ class Engine:
 				dir = os.path.dirname(file)
 				name = os.path.basename(file)
 				if name in generated[dir]:
-					raise ValueError("two or more commands generate '%s'" % ( # TODO add debug info like line number and file name
+					raise ValueError("two or more commands generate '%s' in '%s' (%s:%i)" % ( # TODO add debug info like line number and file name
 						file,
+						self.current_line,
+						self.filename,
+						self.current_line_i,
 					))
 				else:
 					generated[dir].add(name)
@@ -222,7 +229,12 @@ class Engine:
 				continue
 			# if everything match - return rule name and variables
 			return rule_name, auto[2]
-		# if no rule found then just return None
+		# if no rule found then just fail and optionally return None 
+		raise ValueError("unable to deduce auto rule in '%s' (%s:%i)" % (
+			self.current_line,
+			self.filename,
+			self.current_line_i,
+		))
 		return None, None
 
 	def eval_filter(self, name, regex_or_value):
@@ -256,8 +268,6 @@ class Engine:
 
 		if rule_name == "auto":
 			name, vars = self.eval_auto(inputs_explicit, targets_explicit)
-			if not name:
-				return False
 			rule_name = name
 			assigns = vars + assigns
 
@@ -276,7 +286,6 @@ class Engine:
 				" ".join(targets_implicit),
 				" " + " ".join(targets_explicit),
 			))
-		return True
 
 	def default(self, obj, assigns):
 		paths = self.eval_path(obj)

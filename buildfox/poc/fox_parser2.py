@@ -37,6 +37,9 @@ class Parser:
 	def parse_line(self):
 		self.command = self.read_identifier()
 
+		self.engine.current_line = self.line
+		self.engine.current_line_i = self.line_num
+
 		if len(self.comments):
 			for comment in self.comments:
 				self.engine.comment(comment)
@@ -52,13 +55,7 @@ class Parser:
 			line_num = self.line_num
 			obj = self.read_build()
 			assigns = self.read_nested_assigns()
-			if not self.engine.build(obj, assigns):
-				# TODO find better way to spawn error from engine directly
-				raise ValueError("unable to deduce auto rule in '%s' (%s:%i)" % (
-					line,
-					self.filename,
-					line_num
-				))
+			self.engine.build(obj, assigns)
 
 		elif self.command == "default":
 			obj = self.read_default()
