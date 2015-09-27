@@ -1,13 +1,125 @@
-# BuildFox proof of concept (POC)
+# BuildFox ninja generator
+#
+# The MIT License (MIT)
+#
+# Copyright (c) 2015 Dmytro Ivanov
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 
 import os
 import re
 import copy
 import argparse
 import collections
-from pprint import pprint
 
-core_file = "fox_core.fox"
+# ----------------------------------------------------------- fox core definitions
+
+fox_core = r"""
+# ----------------------------------------------------------------------
+# buildfox core configuration
+# this file :
+# - specifies compiler settings for current platform
+# - create rules
+# - configure auto keyword
+
+# ----------------------------------------------------------------------
+# figure out compiler commands
+
+filter toolset:msvc
+  # ------------------------------- msvc support
+  # core flags
+  cflags =
+  cxxflags = $cflags
+  ldflags = 
+  # core commands
+  cc = cl $cflags /nologo /showIncludes -c $in /Fo$out
+  cxx = cl $cxxflags /nologo /showIncludes -c $in /Fo$out
+  link = cl $ldflags /nologo $in /link /out:$out
+  deps = msvc
+  depfile =
+
+filter toolset:msvc variation:debug
+  cflags =
+  cxxflags = $cflags
+
+filter toolset:msvc variation:release
+  cflags = /Ox
+  cxxflags = $cflags
+
+filter toolset:gcc
+  # ------------------------------- gcc support (TODO need testing)
+  # core flags
+  cflags = -O0
+  cxxflags = $cflags
+  ldflags = 
+  # core commands
+  cc = gcc $cflags -MMD -MF $out.d -c -o $out $in
+  cxx = g++ $cxxflags -MMD -MF $out.d -c -o $out $in
+  link = g++ $ldflags -o $out $in
+  deps = gcc
+  depfile = $out.d
+
+filter toolset:gcc variation:debug
+  cflags = -O0
+  cxxflags = $cflags
+
+filter toolset:gcc variation:release
+  cflags = -O3
+  cxxflags = $cflags
+
+
+# ----------------------------------------------------------------------
+# write rules
+rule cc
+  command = $cc
+  deps = $deps
+  depfile = $depfile
+
+rule cxx
+  command = $cxx
+  deps = $deps
+  depfile = $depfile
+
+rule link
+  command = $link
+
+# ----------------------------------------------------------------------
+# configure auto keyword
+auto *.obj: cc *.c
+auto *.obj: cxx *.cpp
+auto *.exe: link *.obj
+
+# test
+#test = test
+#
+#filter test:test
+#  rule a
+#    b = c
+#  filter test:test
+#    rule b
+#      c = d
+#  k = d
+#
+"""
+
+# ----------------------------------------------------------- constants
+
 keywords = ["rule", "build", "default", "pool", "include", "subninja",
 	"subfox", "filter", "auto", "print"]
 
@@ -24,6 +136,19 @@ re_capture_group_ref = re.compile(r"(?<!\\)\\(\d)") # match regex capture group 
 re_variable = re.compile("\$\${([a-zA-Z0-9_.-]+)}|\$\$([a-zA-Z0-9_-]+)")
 re_non_escaped_char = re.compile(r"(?<!\\)\\(.)") # looking for not escaped \ with char
 re_alphanumeric = re.compile(r"\W+")
+
+# ----------------------------------------------------------- args
+
+argsparser = argparse.ArgumentParser(description = "buildfox ninja generator")
+argsparser.add_argument("-i", "--in", help = "input file", required = True)
+argsparser.add_argument("-o", "--out", help = "output file", default = "build.ninja")
+argsparser.add_argument("-w", "--workdir", help = "working directory")
+argsparser.add_argument("-d", "--define", nargs = 2, help = "define var value",
+	default = [], action = "append")
+#argsparser.add_argument("-v", "--verbose", action = "store_true", help = "verbose output") # TODO
+argsparser.add_argument("--no-core", action = "store_false",
+	help = "disable parsing fox core definitions", default = True, dest = "core")
+args = vars(argsparser.parse_args())
 
 # ----------------------------------------------------------- parser
 
@@ -440,7 +565,10 @@ class Engine:
 
 	# load core definitions
 	def load_core(self):
-		self.load(core_file)
+		self.filename = "fox_core.fox"
+		self.rel_path = ""
+		parser = Parser(self, self.filename, text = fox_core)
+		parser.parse()
 
 	# return output text
 	def text(self):
@@ -774,31 +902,17 @@ class Engine:
 		else:
 			return [self.to_esc(str) for str in value]
 
-# ----------------------------------------------------------- args
-argsparser = argparse.ArgumentParser(description = "buildfox ninja generator")
-argsparser.add_argument("-i", "--in", help = "input file", required = True)
-argsparser.add_argument("-w", "--workdir", help = "working directory")
-argsparser.add_argument("-d", "--define", nargs = 2, help = "define var value", action = "append")
-argsparser.add_argument("-v", "--verbose", action = "store_true", help = "verbose output")
-args = vars(argsparser.parse_args())
-#verbose = args.get("verbose", False)
-#if args.get("workdir"):
-#	os.chdir(args.get("workdir"))
-#
-#if args.get("out"):
-#	with open(args.get("out"), "w") as f:
-#		f.write(output_text)
-#else:
-#	print(output_text)
-#
+# ----------------------------------------------------------- processing
+if args.get("workdir"):
+	os.chdir(args.get("workdir"))
 
-#os.chdir("..")
 engine = Engine()
-engine.load_core()
-#engine.load("examples/fox_test.fox")
-engine.load("fox_parser_test.ninja")
 
-print("#------------------ result")
-print(engine.text())
+for define in args.get("define"):
+	engine.assign(define)
 
-engine.save("__gen_output.ninja")
+if args.get("core"):
+	engine.load_core()
+
+engine.load(args.get("in"))
+engine.save(args.get("out"))

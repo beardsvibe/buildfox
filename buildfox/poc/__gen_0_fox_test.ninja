@@ -1,6 +1,0 @@
-# generated with love by buildfox from examples/fox_test.fox
-# fox_test.fox
-#build fox_test_a.obj: auto fox_test_a.cpp
-build examples/fox_test_a.obj examples/fox_test_b.obj: rule2 examples/fox_test_a.cpp examples/fox_test_b.cpp
-build examples/fox_test.exe: link examples/fox_test_a.obj examples/fox_test_b.obj examples/test_fox_a.obj examples/test_fox_b.obj
-subninja __gen_1_test2.ninja
