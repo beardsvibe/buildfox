@@ -8,14 +8,15 @@ core_file = "fox_core.fox"
 re_var = re.compile("\${([a-zA-Z0-9_.-]+)}|\$([a-zA-Z0-9_-]+)")
 re_folder_part = re.compile(r"(?:[^\r\n(\[\"\\]|\\.)+") # match folder part in filename regex
 re_capture_group_ref = re.compile(r"(?<!\\)\\(\d)") # match regex capture group reference
+re_variable = re.compile("\$\${([a-zA-Z0-9_.-]+)}|\$\$([a-zA-Z0-9_-]+)")
+re_non_escaped_char = re.compile(r"(?<!\\)\\(.)") # looking for not escaped \ with char
 
-workdir = os.getcwd() # TODO make this work
 output = ["# generated with love by buildfox"]
 
 generated = collections.defaultdict(set) # key is folder name, value is set of file names
 
 def rel_dir(filename):
-	path = os.path.relpath(os.path.dirname(os.path.abspath(filename)), workdir).replace("\\", "/") + "/"
+	path = os.path.relpath(os.path.dirname(os.path.abspath(filename)), os.getcwd()).replace("\\", "/") + "/"
 	if path == "./":
 		path = ""
 	return path
@@ -98,7 +99,6 @@ class Engine:
 	def load_core(self):
 		self.load(core_file)
 
-	# TODO what we do with from_esc / to_esc ? now text are just passing without escaping
 	def eval(self, text):
 		def repl(matchobj):
 			name = matchobj.group(1) or matchobj.group(2)
@@ -127,8 +127,10 @@ class Engine:
 					base_folder = re_folder_part.match(regex)
 					if base_folder:
 						base_folder = base_folder.group()
-						for fix in [("\\\\", "\\"), ("\\/", "/"), ("\\.", ".")]: # rename regex back to readable form
-							base_folder = base_folder.replace(fix[0], fix[1])
+						# rename regex back to readable form
+						def replace_non_esc(match_group):
+							return match_group.group(1)
+						base_folder = re_non_escaped_char.sub(replace_non_esc, base_folder)
 						separator = "\\" if base_folder.rfind("\\") > base_folder.rfind("/") else "/"
 						base_folder = os.path.dirname(base_folder)
 						list_folder = self.rel_path + base_folder
@@ -184,7 +186,7 @@ class Engine:
 				dir = os.path.dirname(file)
 				name = os.path.basename(file)
 				if name in generated[dir]:
-					raise ValueError("two or more commands generate '%s' in '%s' (%s:%i)" % ( # TODO add debug info like line number and file name
+					raise ValueError("two or more commands generate '%s' in '%s' (%s:%i)" % (
 						file,
 						self.current_line,
 						self.filename,
@@ -272,24 +274,24 @@ class Engine:
 			assigns = vars + assigns
 
 		output.append("build %s: %s%s%s%s" % (
-			" ".join(targets_explicit),
+			" ".join(self.to_esc(targets_explicit)),
 			rule_name,
-			" " + " ".join(inputs_explicit) if inputs_explicit else "",
-			" | " + " ".join(inputs_implicit) if inputs_implicit else "",
-			" || " + " ".join(inputs_order) if inputs_order else "",
+			" " + " ".join(self.to_esc(inputs_explicit)) if inputs_explicit else "",
+			" | " + " ".join(self.to_esc(inputs_implicit)) if inputs_implicit else "",
+			" || " + " ".join(self.to_esc(inputs_order)) if inputs_order else "",
 		))
 
 		self.write_assigns(assigns)
 
 		if targets_implicit: # TODO remove this when https://github.com/martine/ninja/pull/989 is merged
 			output.append("build %s: phony %s" % (
-				" ".join(targets_implicit),
-				" " + " ".join(targets_explicit),
+				" ".join(self.to_esc(targets_implicit)),
+				" " + " ".join(self.to_esc(targets_explicit)),
 			))
 
 	def default(self, obj, assigns):
 		paths = self.eval_path(obj)
-		output.append("default " + " ".join(paths))
+		output.append("default " + " ".join(self.to_esc(paths)))
 		self.write_assigns(assigns)
 
 	def pool(self, obj, assigns):
@@ -336,10 +338,23 @@ class Engine:
 			engine.load(path)
 			# TODO we need namescope for rules, pools, auto
 
+	def to_esc(self, value):
+		if value == None:
+			return None
+		elif type(value) is str:
+			value = value.replace("$", "$$").replace(":", "$:").replace("\n", "$\n").replace(" ", "$ ")
+			# escaping variables
+			def repl(matchobj):
+				return "${" + (matchobj.group(1) or matchobj.group(2)) + "}"
+			return re_variable.sub(repl, value)
+		else:
+			return [self.to_esc(str) for str in value]
+
+os.chdir("..")
 engine = Engine()
 #engine.load_core()
 #engine.load("examples/fox_test.fox")
-engine.load("fox_parser_test2.ninja")
+engine.load("poc/fox_parser_test2.ninja")
 
 print("#------------------ result")
 print("\n".join(output))

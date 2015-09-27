@@ -142,7 +142,14 @@ class Parser:
 					inputs_order.append(self.read_path())
 
 		self.read_eol()
-		return (targets_explicit, targets_implicit, rule, inputs_explicit, inputs_implicit, inputs_order)
+		return (
+			self.from_esc(targets_explicit),
+			self.from_esc(targets_implicit),
+			rule,
+			self.from_esc(inputs_explicit),
+			self.from_esc(inputs_implicit),
+			self.from_esc(inputs_order)
+		)
 
 	def read_default(self):
 		self.expect_token()
@@ -150,7 +157,7 @@ class Parser:
 		while self.line_stripped:
 			paths.append(self.read_path())
 		self.read_eol()
-		return paths
+		return self.from_esc(paths)
 
 	def read_pool(self):
 		pool = self.read_identifier()
@@ -166,7 +173,7 @@ class Parser:
 	def read_one_path(self):
 		path = self.read_path()
 		self.read_eol()
-		return path
+		return self.from_esc(path)
 
 	def read_filter(self):
 		self.expect_token()
@@ -176,7 +183,7 @@ class Parser:
 			self.expect_token(":")
 			self.line_stripped = self.line_stripped[1:].strip()
 			value = self.read_path()
-			filters.append((name, value))
+			filters.append((name, self.from_esc(value)))
 		self.read_eol()
 		return filters
 
@@ -221,7 +228,7 @@ class Parser:
 		while self.line_stripped:
 			inputs.append(self.read_path())
 		self.read_eol()
-		return (targets, rule, inputs)
+		return (self.from_esc(targets), rule, self.from_esc(inputs))
 
 	def read_print(self):
 		return self.line_stripped.strip()
@@ -376,3 +383,11 @@ class Parser:
 		self.whitespace = self.whitespace.replace("\t", "    ")
 		self.whitespace = len(self.whitespace)
 		return True
+
+	def from_esc(self, value):
+		if value == None:
+			return None
+		elif type(value) is str:
+			return value.replace("$\n", "").replace("$ ", " ").replace("$:", ":").replace("$$", "$")
+		else:
+			return [self.from_esc(str) for str in value]
