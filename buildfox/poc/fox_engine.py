@@ -385,7 +385,7 @@ class Engine:
 engine = Engine()
 engine.load_core()
 #engine.load("examples/fox_test.fox")
-engine.load("fox_parser_test2.ninja")
+engine.load("fox_parser_test.ninja")
 
 print("#------------------ result")
 print(engine.text())

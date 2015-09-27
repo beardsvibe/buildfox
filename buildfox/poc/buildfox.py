@@ -1,326 +1,804 @@
 # BuildFox proof of concept (POC)
 
-import re
 import os
-import string
-import fnmatch
+import re
+import copy
 import argparse
-from glob import glob
+import collections
 from pprint import pprint
-from fox_parser import fox_Parser
+
+core_file = "fox_core.fox"
+keywords = ["rule", "build", "default", "pool", "include", "subninja",
+	"subfox", "filter", "auto", "print"]
+
+# parser regexes
+re_newline_escaped = re.compile("\$+$")
+re_comment = re.compile("(?<!\$)\#(.*)$") # looking for not escaped #
+re_identifier = re.compile("[a-zA-Z0-9\${}_.-]+")
+re_path = re.compile(r"(r\"(?![*+?])(?:[^\r\n\[\"/\\]|\\.|\[(?:[^\r\n\]\\]|\\.)*\])+\")|((\$\||\$ |\$:|[^ :|\n])+)")
+
+# engine regexes
+re_var = re.compile("\${([a-zA-Z0-9_.-]+)}|\$([a-zA-Z0-9_-]+)")
+re_folder_part = re.compile(r"(?:[^\r\n(\[\"\\]|\\.)+") # match folder part in filename regex
+re_capture_group_ref = re.compile(r"(?<!\\)\\(\d)") # match regex capture group reference
+re_variable = re.compile("\$\${([a-zA-Z0-9_.-]+)}|\$\$([a-zA-Z0-9_-]+)")
+re_non_escaped_char = re.compile(r"(?<!\\)\\(.)") # looking for not escaped \ with char
+re_alphanumeric = re.compile(r"\W+")
+
+# ----------------------------------------------------------- parser
+
+class Parser:
+	def __init__(self, engine, filename, text = None):
+		self.engine = engine
+		self.filename = filename
+		self.whitespace_nested = None
+		self.comments = []
+		if text:
+			self.lines = text.splitlines()
+		else:
+			with open(self.filename, "r") as f:
+				self.lines = f.read().splitlines()
+
+	# parse everything
+	def parse(self):
+		self.line_i = 0
+		while self.next_line():
+			# root objects must have zero whitespace offset
+			if self.whitespace != 0:
+				raise ValueError("unexpected indentation in '%s' (%s:%i)" % (
+					self.line,
+					self.filename,
+					self.line_num
+				))
+			self.parse_line()
+
+	def parse_line(self):
+		self.command = self.read_identifier()
+
+		self.engine.current_line = self.line
+		self.engine.current_line_i = self.line_num
+
+		if len(self.comments):
+			for comment in self.comments:
+				self.engine.comment(comment)
+			self.comments = []
+
+		if self.command == "rule":
+			obj = self.read_rule()
+			assigns = self.read_nested_assigns()
+			self.engine.rule(obj, assigns)
+
+		elif self.command == "build":
+			obj = self.read_build()
+			assigns = self.read_nested_assigns()
+			self.engine.build(obj, assigns)
+
+		elif self.command == "default":
+			obj = self.read_default()
+			assigns = self.read_nested_assigns()
+			self.engine.default(obj, assigns)
+
+		elif self.command == "pool":
+			obj = self.read_pool()
+			assigns = self.read_nested_assigns()
+			self.engine.pool(obj, assigns)
+
+		elif self.command == "include":
+			obj = self.read_include()
+			self.engine.include(obj)
+
+		elif self.command == "subninja" or self.command == "subfox":
+			obj = self.read_subninja()
+			self.engine.subninja(obj)
+
+		elif self.command == "filter":
+			obj = self.read_filter()
+			need_to_parse = self.engine.filter(obj)
+			self.process_filtered(need_to_parse)
+
+		elif self.command == "auto":
+			obj = self.read_auto()
+			assigns = self.read_nested_assigns()
+			self.engine.auto(obj, assigns)
+
+		elif self.command == "print":
+			obj = self.read_print()
+			self.engine.print(obj)
+
+		else:
+			obj = self.read_assign()
+			self.engine.assign(obj)
+
+	def read_rule(self):
+		rule = self.read_identifier()
+		self.read_eol()
+		return rule
+
+	def read_build(self):
+		self.expect_token()
+		targets_explicit = []
+		targets_implicit = []
+		inputs_explicit = []
+		inputs_implicit = []
+		inputs_order = []
+
+		# read targets explicit
+		while self.line_stripped[0] not in ["|", ":"]:
+			targets_explicit.append(self.read_path())
+			self.expect_token()
+
+		# read targets implicit
+		if self.line_stripped[0] == "|":
+			self.line_stripped = self.line_stripped[1:].strip()
+			self.expect_token()
+			while self.line_stripped[0] != ":":
+				targets_implicit.append(self.read_path())
+				self.expect_token()
+
+		# read rule name
+		self.expect_token(":")
+		self.line_stripped = self.line_stripped[1:].strip()
+		rule = self.read_identifier()
+
+		if self.line_stripped:
+			# read inputs explicit
+			while self.line_stripped and (self.line_stripped[0] != "|"):
+				inputs_explicit.append(self.read_path())
+
+			# read inputs implicit
+			if (len(self.line_stripped) >= 2) and (self.line_stripped[0] == "|") and (self.line_stripped[1] != "|"):
+				self.line_stripped = self.line_stripped[1:].strip()
+				while self.line_stripped and (self.line_stripped[0] != "|"):
+					inputs_implicit.append(self.read_path())
+
+			# read inputs order
+			if self.line_stripped and (self.line_stripped[0] == "|") and (self.line_stripped[1] == "|"):
+				self.line_stripped = self.line_stripped[2:].strip()
+				while self.line_stripped:
+					inputs_order.append(self.read_path())
+
+		self.read_eol()
+		return (
+			self.from_esc(targets_explicit),
+			self.from_esc(targets_implicit),
+			rule,
+			self.from_esc(inputs_explicit),
+			self.from_esc(inputs_implicit),
+			self.from_esc(inputs_order)
+		)
+
+	def read_default(self):
+		self.expect_token()
+		paths = []
+		while self.line_stripped:
+			paths.append(self.read_path())
+		self.read_eol()
+		return self.from_esc(paths)
+
+	def read_pool(self):
+		pool = self.read_identifier()
+		self.read_eol()
+		return pool
+
+	def read_include(self):
+		return self.read_one_path()
+
+	def read_subninja(self):
+		return self.read_one_path()
+
+	def read_one_path(self):
+		path = self.read_path()
+		self.read_eol()
+		return self.from_esc(path)
+
+	def read_filter(self):
+		self.expect_token()
+		filters = []
+		while self.line_stripped:
+			name = self.read_identifier()
+			self.expect_token(":")
+			self.line_stripped = self.line_stripped[1:].strip()
+			value = self.read_path()
+			filters.append((name, self.from_esc(value)))
+		self.read_eol()
+		return filters
+
+	def process_filtered(self, need_to_parse):
+		ws_ref = self.whitespace
+		while self.line_i < len(self.lines):
+			start_i = self.line_i
+			if not self.next_line(preserve_comments = need_to_parse):
+				break
+			# if offset is less then two spaces
+			# then we stop processing
+			if self.whitespace <= ws_ref + 1:
+				self.line_i = start_i
+				break
+			if need_to_parse: # if we know that filter is disabled, no need to parse then
+				self.parse_line()
+
+	def read_auto(self):
+		self.expect_token()
+		targets = []
+		inputs = []
+
+		# read targets
+		while self.line_stripped[0] != ":":
+			targets.append(self.read_path())
+			self.expect_token()
+
+		# read rule name
+		self.expect_token(":")
+		self.line_stripped = self.line_stripped[1:].strip()
+		rule = self.read_identifier()
+
+		# read inputs
+		self.expect_token()
+		while self.line_stripped:
+			inputs.append(self.read_path())
+		self.read_eol()
+		return (self.from_esc(targets), rule, self.from_esc(inputs))
+
+	def read_print(self):
+		return self.line_stripped.strip()
+
+	def read_assign(self):
+		self.expect_token("=")
+		value = self.line_stripped[1:].strip()
+		return (self.command, value)
+
+	def read_nested_assigns(self):
+		all = []
+		while self.next_nested():
+			all.append(self.read_nested_assign())
+		return all
+
+	def read_nested_assign(self):
+		name = self.read_identifier()
+		if name in keywords:
+			raise ValueError("unexpected keyword token '%s' in '%s' (%s:%i)" % (
+				name,
+				self.line,
+				self.filename,
+				self.line_num
+			))
+		self.expect_token("=")
+		value = self.line_stripped[1:].strip()
+		return (name, value)
+
+	def read_identifier(self):
+		identifier = re_identifier.match(self.line_stripped)
+		if not identifier:
+			raise ValueError("expected token 'identifier' in '%s' (%s:%i)" % (
+				self.line_stripped,
+				self.filename,
+				self.line_num
+			))
+		self.line_stripped = self.line_stripped[identifier.span()[1]:].strip()
+		return identifier.group()
+
+	def expect_token(self, name = ""):
+		if name:
+			if (not self.line_stripped) or (not self.line_stripped.startswith(name)):
+				raise ValueError("expected token '%s' in '%s' (%s:%i)" % (
+					name,
+					self.line_stripped,
+					self.filename,
+					self.line_num
+				))
+		else:
+			if not self.line_stripped:
+				raise ValueError("expected token(s) in '%s' (%s:%i)" % (
+					self.line_stripped,
+					self.filename,
+					self.line_num
+				))
+
+	def read_path(self):
+		path = re_path.match(self.line_stripped)
+		if not path:
+			raise ValueError("expected token 'path' in '%s' (%s:%i)" % (
+				self.line_stripped,
+				self.filename,
+				self.line_num
+			))
+		self.line_stripped = self.line_stripped[path.span()[1]:].strip()
+		return path.group()
+
+	def read_eol(self):
+		if self.line_stripped:
+			raise ValueError("unexpected token '%s' in '%s' (%s:%i)" % (
+				self.line_stripped,
+				self.line,
+				self.filename,
+				self.line_num
+			))
+
+	# try to read next nested line, roll-back if not successful
+	def next_nested(self):
+		start_i = self.line_i
+		ws_ref = self.whitespace
+		comments_len = len(self.comments)
+		if not self.next_line():
+			self.whitespace_nested = None
+			return False
+		if not self.whitespace_nested:
+			if self.whitespace > ws_ref + 1: # at least two spaces
+				self.whitespace_nested = self.whitespace
+				return True
+			else:
+				self.line_i = start_i
+				self.comments = self.comments[:comments_len]
+				return False
+		else:
+			if self.whitespace == self.whitespace_nested:
+				return True
+			else:
+				self.line_i = start_i
+				self.whitespace_nested = None
+				self.comments = self.comments[:comments_len]
+				return False
+
+	def next_line(self, preserve_comments = True):
+		if self.line_i >= len(self.lines):
+			return False
+
+		self.line_stripped = ""
+		while (not self.line_stripped) and (self.line_i < len(self.lines)):
+			self.line = ""
+			self.line_num = self.line_i + 1
+
+			# dealing with escaped newlines
+			newline_escaped = True
+			while newline_escaped and (self.line_i < len(self.lines)):
+				self.line += self.lines[self.line_i]
+				self.line_i += 1
+				newline_escaped = re_newline_escaped.search(self.line)
+				if newline_escaped:
+					l, r = newline_escaped.span()
+					# in some cases we can have $$, $$$$, etc in the end
+					# which are escaped $ combinations, and they don't escape newline
+					if (r - l) % 2:
+						# in case if they do $, $$$, etc, we need to strip last one
+						self.line = self.line[:-1]
+					else:
+						newline_escaped = None
+
+			# line is ready for processing
+			self.line_stripped = self.line.strip()
+
+			# skip empty lines
+			if not self.line_stripped:
+				continue
+
+			# fast strip comment
+			if self.line_stripped and self.line_stripped[0] == "#":
+				if preserve_comments:
+					self.comments.append(self.line_stripped[1:])
+				self.line_stripped = ""
+				continue
+
+			# slower strip comments
+			comment_eol = re_comment.search(self.line_stripped)
+			if comment_eol:
+				if preserve_comments:
+					self.comments.append(comment_eol.group(1))
+				self.line_stripped = self.line_stripped[:comment_eol.span()[0]].strip()
+
+		# if we can't skip empty lines, than just return failure
+		if not self.line_stripped:
+			return False
+
+		# get whitespace
+		self.whitespace = self.line[:self.line.index(self.line_stripped)]
+		self.whitespace = self.whitespace.replace("\t", "    ")
+		self.whitespace = len(self.whitespace)
+		return True
+
+	def from_esc(self, value):
+		if value == None:
+			return None
+		elif type(value) is str:
+			return value.replace("$\n", "").replace("$ ", " ").replace("$:", ":").replace("$$", "$")
+		else:
+			return [self.from_esc(str) for str in value]
+
+# ----------------------------------------------------------- fox engine
+
+class Engine:
+	class Context:
+		def __init__(self):
+			# key is folder name, value is set of file names
+			self.generated = collections.defaultdict(set)
+			# number of generated subninja files
+			self.subninja_num = 0
+
+	def __init__(self, parent = None):
+		if not parent:
+			self.variables = {} # name: value
+			self.auto_presets = {} # name: (inputs, outputs, assigns)
+			self.rel_path = "" # this should be prepended to all parsed paths
+			self.context = Engine.Context()
+		else:
+			self.variables = copy.copy(parent.variables)
+			self.auto_presets = copy.copy(parent.auto_presets)
+			self.rel_path = parent.rel_path
+			self.context = parent.context
+		self.output = []
+		self.need_eval = False
+		self.filename = ""
+		self.current_line = ""
+		self.current_line_i = 0
+
+	# load manifest
+	def load(self, filename):
+		self.filename = filename
+		self.rel_path = self.rel_dir(filename)
+		self.output.append("# generated with love by buildfox from %s" % filename)
+		parser = Parser(self, filename)
+		parser.parse()
+
+	# load core definitions
+	def load_core(self):
+		self.load(core_file)
+
+	# return output text
+	def text(self):
+		return "\n".join(self.output)
+
+	def save(self, filename):
+		with open(filename, "w") as f:
+			f.write(self.text())
+
+	# return relative path to current work dir
+	def rel_dir(self, filename):
+		path = os.path.relpath(os.path.dirname(os.path.abspath(filename)), os.getcwd()).replace("\\", "/") + "/"
+		if path == "./":
+			path = ""
+		return path
+
+	def eval(self, text):
+		def repl(matchobj):
+			name = matchobj.group(1) or matchobj.group(2)
+			if name in self.variables:
+				self.need_eval = True
+				return self.variables.get(name)
+			else:
+				return "${" + name + "}"
+		self.need_eval = len(text) > 0
+		while self.need_eval:
+			self.need_eval = False
+			text = re_var.sub(repl, text)
+		return text
+
+	# return regex value in filename is regex or wildcard
+	def wildcard_regex(self, filename, output = False):
+		if filename.startswith("r\""):
+			return filename[2:-1] # strip r" and "
+		elif "*" in filename or "?" in filename or "[" in filename:
+			# based on fnmatch.translate with each wildcard is a capture group
+			i, n = 0, len(filename)
+			groups = 1
+			res = ""
+			while i < n:
+				c = filename[i]
+				i = i + 1
+				if c == "*":
+					if output:
+						res = res + "\\" + str(groups)
+						groups += 1
+					else:
+						res = res + "(.*)"
+				elif c == "?":
+					if output:
+						res = res + "\\" + str(groups)
+						groups += 1
+					else:
+						res = res + "(.)"
+				elif output:
+					res = res + c
+				elif c == "[":
+					j = i
+					if j < n and filename[j] == "!":
+						j = j + 1
+					if j < n and filename[j] == "]":
+						j = j + 1
+					while j < n and filename[j] != "]":
+						j = j + 1
+					if j >= n:
+						res = res + "\\["
+					else:
+						stuff = filename[i:j].replace("\\", "\\\\")
+						i = j + 1
+						if stuff[0] == "!":
+							stuff = "^" + stuff[1:]
+						elif stuff[0] == "^":
+							stuff = "\\" + stuff
+						res = "%s([%s])" % (res, stuff)
+				else:
+					res = res + re.escape(c)
+			if output:
+				return res
+			else:
+				return res + "\Z(?ms)"
+		else:
+			return None
+
+	# input can be string or list of strings
+	# outputs are always lists
+	def eval_path(self, inputs, outputs = None):
+		if inputs:
+			result = []
+			matched = []
+			for input in inputs:
+				input = self.eval(input)
+				regex = self.wildcard_regex(input)
+				if regex:
+					# find the folder where to look for files
+					base_folder = re_folder_part.match(regex)
+					if base_folder:
+						base_folder = base_folder.group()
+						# rename regex back to readable form
+						def replace_non_esc(match_group):
+							return match_group.group(1)
+						base_folder = re_non_escaped_char.sub(replace_non_esc, base_folder)
+						separator = "\\" if base_folder.rfind("\\") > base_folder.rfind("/") else "/"
+						base_folder = os.path.dirname(base_folder)
+						list_folder = self.rel_path + base_folder
+						
+					else:
+						separator = ""
+						base_folder = ""
+						if len(self.rel_path):
+							list_folder = self.rel_path[:-1] # strip last /
+						else:
+							list_folder = "."
+
+					# look for files
+					list_folder = os.path.normpath(list_folder).replace("\\", "/")
+					re_regex = re.compile(regex)
+					fs_files = set(os.listdir(list_folder))
+					generated_files = self.context.generated.get(list_folder, set())
+					for file in fs_files.union(generated_files):
+						name = base_folder + separator + file
+						match = re_regex.match(name)
+						if match:
+							result.append(self.rel_path + name)
+							matched.append(match.groups())
+				else:
+					result.append(self.rel_path + input)
+			inputs = result
+
+		if outputs:
+			result = []
+			for output in outputs:
+				output = self.eval(output)
+				# we want \number instead of capture groups
+				regex = self.wildcard_regex(output, True)
+				if regex:
+					for match in matched:
+						# replace \number with data
+						def replace_group(matchobj):
+							index = int(matchobj.group(1)) - 1
+							if index >= 0 and index < len(match):
+								return match[index]
+							else:
+								return ""
+						file = re_capture_group_ref.sub(replace_group, regex)
+						result.append(self.rel_path + file)
+				else:
+					result.append(self.rel_path + output)
+
+			# normalize results
+			result = [os.path.normpath(file).replace("\\", "/") for file in result]
+
+			# add them to generated files dict
+			for file in result:
+				dir = os.path.dirname(file)
+				name = os.path.basename(file)
+				if name in self.context.generated[dir]:
+					raise ValueError("two or more commands generate '%s' in '%s' (%s:%i)" % (
+						file,
+						self.current_line,
+						self.filename,
+						self.current_line_i,
+					))
+				else:
+					self.context.generated[dir].add(name)
+
+		# normalize inputs
+		inputs = [os.path.normpath(file).replace("\\", "/") for file in inputs]
+
+		if outputs:
+			return inputs, result
+		else:
+			return inputs
+
+	def eval_auto(self, inputs, outputs):
+		for rule_name, auto in self.auto_presets.items(): # name: (inputs, outputs, assigns)
+			# check if all inputs match required auto inputs
+			for auto_input in auto[0]:
+				regex = self.wildcard_regex(auto_input)
+				if regex:
+					re_regex = re.compile(regex)
+					match = all(re_regex.match(input) for input in inputs)
+				else:
+					match = all(input == auto_input for input in inputs)
+				if not match:
+					break
+			if not match:
+				continue
+			# check if all outputs match required auto outputs
+			for auto_output in auto[1]:
+				regex = self.wildcard_regex(auto_output)
+				if regex:
+					re_regex = re.compile(regex)
+					match = all(re_regex.match(output) for output in outputs)
+				else:
+					match = all(output == auto_output for output in outputs)
+				if not match:
+					break
+			if not match:
+				continue
+			# if everything match - return rule name and variables
+			return rule_name, auto[2]
+		# if no rule found then just fail and optionally return None 
+		raise ValueError("unable to deduce auto rule in '%s' (%s:%i)" % (
+			self.current_line,
+			self.filename,
+			self.current_line_i,
+		))
+		return None, None
+
+	def eval_filter(self, name, regex_or_value):
+		value = self.variables.get(name, "")
+		regex = self.wildcard_regex(regex_or_value)
+		if regex:
+			return re.match(regex, value)
+		else:
+			return regex_or_value == value
+
+	def write_assigns(self, assigns, do_not_eval = False):
+		for assign in assigns:
+			name = assign[0] if do_not_eval else self.eval(assign[0])
+			value = assign[1] if do_not_eval else self.eval(assign[1])
+			self.output.append("  %s = %s" % (name, value))
+
+	def comment(self, comment):
+		self.output.append("#" + comment)
+
+	def rule(self, obj, assigns):
+		name = self.eval(obj)
+		self.output.append("rule " + name)
+		self.write_assigns(assigns, do_not_eval = True)
+
+	def build(self, obj, assigns):
+		inputs_explicit, targets_explicit = self.eval_path(obj[3], obj[0])
+		targets_implicit = self.eval_path(obj[1])
+		rule_name = self.eval(obj[2])
+		inputs_implicit = self.eval_path(obj[4])
+		inputs_order = self.eval_path(obj[5])
+
+		if rule_name == "auto":
+			name, vars = self.eval_auto(inputs_explicit, targets_explicit)
+			rule_name = name
+			assigns = vars + assigns
+
+		# make generated output stable
+		targets_explicit = sorted(targets_explicit)
+		targets_implicit = sorted(targets_implicit)
+		inputs_explicit = sorted(inputs_explicit)
+		inputs_implicit = sorted(inputs_implicit)
+		inputs_order = sorted(inputs_order)
+
+		self.output.append("build %s: %s%s%s%s" % (
+			" ".join(self.to_esc(targets_explicit)),
+			rule_name,
+			" " + " ".join(self.to_esc(inputs_explicit)) if inputs_explicit else "",
+			" | " + " ".join(self.to_esc(inputs_implicit)) if inputs_implicit else "",
+			" || " + " ".join(self.to_esc(inputs_order)) if inputs_order else "",
+		))
+
+		self.write_assigns(assigns)
+
+		if targets_implicit: # TODO remove this when https://github.com/martine/ninja/pull/989 is merged
+			self.output.append("build %s: phony %s" % (
+				" ".join(self.to_esc(targets_implicit)),
+				" " + " ".join(self.to_esc(targets_explicit)),
+			))
+
+	def default(self, obj, assigns):
+		paths = self.eval_path(obj)
+		self.output.append("default " + " ".join(self.to_esc(paths)))
+		self.write_assigns(assigns)
+
+	def pool(self, obj, assigns):
+		name = self.eval(obj)
+		self.output.append("pool " + name)
+		self.write_assigns(assigns)
+
+	def filter(self, obj):
+		for filt in obj:
+			name = self.eval(filt[0])
+			value = self.eval(filt[1])
+			if not self.eval_filter(name, value):
+				return False
+		return True
+
+	def auto(self, obj, assigns):
+		outputs = [self.eval(output) for output in obj[0]] # this shouldn't be eval_path !
+		name = self.eval(obj[1])
+		inputs = [self.eval(input) for input in obj[2]] # this shouldn't be eval_path !
+		self.auto_presets[name] = (inputs, outputs, assigns)
+
+	def print(self, obj):
+		print(self.eval(obj))
+
+	def assign(self, obj):
+		name = self.eval(obj[0])
+		value = obj[1]
+		self.variables[name] = value
+		self.output.append("%s = %s" % (name, value))
+
+	def include(self, obj):
+		paths = self.eval_path([obj])
+		for path in paths:
+			old_rel_path = self.rel_path
+			self.rel_path = self.rel_dir(path)
+			parser = Parser(self, path)
+			parser.parse()
+			self.rel_path = old_rel_path
+
+	def subninja(self, obj):
+		paths = self.eval_path([obj])
+		for path in paths:
+			gen_filename = "__gen_%i_%s.ninja" % (
+				self.context.subninja_num,
+				re_alphanumeric.sub("", os.path.splitext(os.path.basename(path))[0])
+			)
+			self.context.subninja_num += 1
+			engine = Engine(self)
+			engine.load(path)
+			engine.save(gen_filename)
+			self.output.append("subninja " + self.to_esc(gen_filename))
+
+	def to_esc(self, value):
+		if value == None:
+			return None
+		elif type(value) is str:
+			value = value.replace("$", "$$").replace(":", "$:").replace("\n", "$\n").replace(" ", "$ ")
+			# escaping variables
+			def repl(matchobj):
+				return "${" + (matchobj.group(1) or matchobj.group(2)) + "}"
+			return re_variable.sub(repl, value)
+		else:
+			return [self.to_esc(str) for str in value]
 
 # ----------------------------------------------------------- args
 argsparser = argparse.ArgumentParser(description = "buildfox ninja generator")
 argsparser.add_argument("-i", "--in", help = "input file", required = True)
-argsparser.add_argument("-o", "--out", help = "output file")
 argsparser.add_argument("-w", "--workdir", help = "working directory")
-argsparser.add_argument("-d", "--define", nargs = 2, help = "define var value", action="append")
+argsparser.add_argument("-d", "--define", nargs = 2, help = "define var value", action = "append")
 argsparser.add_argument("-v", "--verbose", action = "store_true", help = "verbose output")
 args = vars(argsparser.parse_args())
-#pprint(args)
+#verbose = args.get("verbose", False)
+#if args.get("workdir"):
+#	os.chdir(args.get("workdir"))
+#
+#if args.get("out"):
+#	with open(args.get("out"), "w") as f:
+#		f.write(output_text)
+#else:
+#	print(output_text)
+#
 
-verbose = args.get("verbose", False)
+#os.chdir("..")
+engine = Engine()
+engine.load_core()
+#engine.load("examples/fox_test.fox")
+engine.load("fox_parser_test.ninja")
 
-if args.get("workdir"):
-	os.chdir(args.get("workdir"))
+print("#------------------ result")
+print(engine.text())
 
-# ----------------------------------------------------------- regex/wildcard lookup
-generated_files = set()
-
-def translate(pat):
-	# based on fnmatch.translate
-	# and each wildcard is a capture group now
-	i, n = 0, len(pat)
-	res = ''
-	while i < n:
-		c = pat[i]
-		i = i+1
-		if c == '*':
-			res = res + '(.*)'
-		elif c == '?':
-			res = res + '(.)'
-		elif c == '[':
-			j = i
-			if j < n and pat[j] == '!':
-				j = j+1
-			if j < n and pat[j] == ']':
-				j = j+1
-			while j < n and pat[j] != ']':
-				j = j+1
-			if j >= n:
-				res = res + '\\['
-			else:
-				stuff = pat[i:j].replace('\\','\\\\')
-				i = j+1
-				if stuff[0] == '!':
-					stuff = '^' + stuff[1:]
-				elif stuff[0] == '^':
-					stuff = '\\' + stuff
-				res = '%s([%s])' % (res, stuff)
-		else:
-			res = res + re.escape(c)
-	return res + '\Z(?ms)'
-
-def get_paths(income, outcome = None):
-	if not income:
-		if outcome:
-			return income, outcome
-		else:
-			return income
-
-	processed_income = []
-	parsed_map = {}
-	for filename in income:
-		if filename.startswith("r\""):
-			print("TODO regex")
-		elif "*" in filename or "?" in filename or "[" in filename:
-			regex_text = translate(filename)
-			regex = re.compile(regex_text)
-			files = set(glob(filename)).union(set(fnmatch.filter(generated_files, filename)))
-			processed_income.extend(files)
-			for file in files:
-				obj = regex.match(file)
-				parsed_map[file] = obj.groups()
-		else:
-			processed_income.append(filename)
-
-	if outcome:
-		wildcard_files = [val for k, val in parsed_map.items()]
-
-		processed_outcome = []
-		for filename in outcome:
-			if filename.startswith("r\""):
-				print("TODO regex")
-			elif "*" in filename or "?" in filename: # TODO [ ?
-				for f in wildcard_files:
-					out = ""
-					group = 0
-					for c in filename:
-						if c in ["*", "?"]:
-							if group < len(f):
-								out += f[group]
-						else:
-							out += c
-					processed_outcome.append(out)
-			else:
-				processed_outcome.append(filename)
-
-		for out in processed_outcome:
-			generated_files.add(out)
-
-		return processed_income, processed_outcome
-	else:
-		return processed_income
-
-# ----------------------------------------------------------- parsing
-variable_scope = {}
-for d in args.get("define"):
-	variable_scope[d[0]] = d[1]
-
-auto_rules = {} # name: (inputs, outputs)
-
-# ninja escaping functions
-# "$\n" = "\n"
-# "$ " = " "
-# "$:" = ":"
-# "$$" = "$"
-def to_esc(str, escape_space = True):
-	str = str.replace("\n", "$\n")
-	#str = str.replace("$", "$$").replace(":", "$:").replace("\n", "$\n")
-	#if escape_space:
-	#	str = str.replace(" ", "$ ")
-	## TODO this is (facepalm) solution for variable escaping, fix it !
-	#def repl(matchobj):
-	#	return "${" + (matchobj.group(1) or matchobj.group(2)) + "}"
-	#str = re.sub("\$\${([a-zA-Z0-9_.-]+)}|\$\$([a-zA-Z0-9_-]+)", repl, str)
-	return str
-def from_esc(str):
-	#return str.replace("$\n", "").replace("$ ", " ").replace("$:", ":").replace("$$", "$")
-	return str.replace("$\n", "")
-def to_esc2(s):
-	if not s:
-		return None
-	if type(s) is str:
-		s = s.replace("$", "$$").replace(":", "$:").replace("\n", "$\n").replace(" ", "$ ")
-		def repl(matchobj):
-			return "${" + (matchobj.group(1) or matchobj.group(2)) + "}"
-		s = re.sub("\$\${([a-zA-Z0-9_.-]+)}|\$\$([a-zA-Z0-9_-]+)", repl, s)
-		return s
-	else:
-		return [to_esc2(str) for str in s]
-def from_esc2(s):
-	if not s:
-		return None
-	if type(s) is str:
-		return s.replace("$\n", "").replace("$ ", " ").replace("$:", ":").replace("$$", "$")
-	else:
-		return [from_esc2(str) for str in s]
-
-re_eval2 = True
-def evaluate_text(text):
-	global re_eval2
-	re_eval2 = True
-	def repl(matchobj):
-		global re_eval2
-		name = matchobj.group(1) or matchobj.group(2)
-		if name in variable_scope:
-			re_eval2 = True
-			return variable_scope.get(name)
-		else:
-			return "${" + name + "}"
-	while re_eval2:
-		re_eval2 = False
-		text = re.sub("\${([a-zA-Z0-9_.-]+)}|\$([a-zA-Z0-9_-]+)", repl, text)
-	return text
-
-def get_vars(expr):
-	arr = []
-	for var in expr.get("vars"):
-		val = from_esc(var.get("value"))
-		val = evaluate_text(val)
-		arr.append("  %s = %s\n" % (var.get("assign"), to_esc(val, escape_space = False)))
-	return "".join(arr)
-def do_expr(expr):
-	if "assign" in expr:
-		variable_scope[expr.get("assign")] = expr.get("value")
-		# TODO probably not needed
-		#return "%s = %s\n" % (expr.get("assign"), expr.get("value"))
-		return ""
-	elif "rule" in expr:
-		return "rule %s\n%s" % (expr.get("rule"), get_vars(expr))
-	elif "build" in expr:
-		targets = from_esc2(expr.get("targets_explicit"))
-		fox_inputs = from_esc2(expr.get("inputs_explicit"))
-		
-		fox_inputs = [evaluate_text(text) for text in fox_inputs] if fox_inputs else None
-		targets = [evaluate_text(text) for text in targets] if targets else None
-
-		wildcard_target = False
-		for target in targets:
-			if target.startswith("r\"") or "*" in target or "?" in target or "[" in target:
-				wildcard_target = True
-
-		inputs, outputs = get_paths(fox_inputs, targets)
-		#pprint(inputs)
-		#pprint(outputs)
-		
-		inputs_implicit = get_paths(from_esc2(expr.get("inputs_implicit")))
-		inputs_order = get_paths(from_esc2(expr.get("inputs_order")))
-		inputs_implicit = [evaluate_text(text) for text in inputs_implicit] if inputs_implicit else None
-		inputs_order = [evaluate_text(text) for text in inputs_order] if inputs_order else None
-		add_inputs = ""
-		if inputs_implicit:
-			add_inputs += " | " + " ".join(to_esc2(inputs_implicit))
-		if inputs_order:
-			add_inputs += " | " + " ".join(to_esc2(inputs_order))
-
-		build = expr.get("build")
-
-		# magic
-		if build == "auto":
-			inputs_set = set(inputs) if inputs else set()
-			outputs_set = set(outputs)
-			name_set = False
-			for name, val in auto_rules.items():
-				fail = False
-				for v in val[0]:
-					if v.startswith("r\""):
-						print("TODO regex")
-					elif "*" in v or "?" in v or "[" in v:
-						if not fnmatch.filter(inputs_set, v):
-							fail = True
-							break
-					else:
-						if v not in inputs_set:
-							fail = True
-							break
-				for v in val[1]:
-					if v.startswith("r\""):
-						print("TODO regex")
-					elif "*" in v or "?" in v or "[" in v:
-						if not fnmatch.filter(outputs_set, v):
-							fail = True
-							break
-					else:
-						if v not in outputs_set:
-							fail = True
-							break
-				if not fail:
-					build = name
-					name_set = True
-					break
-			
-			if not name_set:
-				print("Cant figure out build rule for : ")
-				pprint(expr)
-
-		if wildcard_target and len(inputs) == len(outputs):
-			output = ""
-			for i, input in enumerate(inputs):
-				output += "build %s: %s %s%s\n" % (to_esc2(outputs[i]), build, to_esc2(inputs[i]), add_inputs)
-				output += get_vars(expr)
-			return output
-		else:
-			output = "build %s: %s" % (" ".join(to_esc2(outputs)), build)
-			if inputs:
-				output += " " + " ".join(to_esc2(inputs))
-			return "%s%s\n%s" % (output, add_inputs, get_vars(expr))
-	elif "filters" in expr:
-		match = True
-		for var in expr.get("filters"):
-			name = var.get("var")
-			val = var.get("value")
-			if name in variable_scope:
-				val_ref = variable_scope.get(name)
-				if val.startswith("r\""):
-					print("TODO regex")
-				elif "*" in val or "?" in val or "[" in val:
-					if not fnmatch.fnmatch(val_ref, val):
-						return ""
-				elif val != val_ref:
-					return ""
-			else:
-				return ""
-		output = ""
-		for var in expr.get("vars"):
-			variable_scope[var.get("assign")] = var.get("value")
-			# TODO probably not needed
-			#output += "%s = %s\n" % (var.get("assign"), var.get("value"))
-		return output
-	elif "auto" in expr:
-		auto_rules[expr.get("auto")] = (expr.get("inputs"), expr.get("targets"))
-		return ""
-	elif "defaults" in expr:
-		return "defaults %s\n" % (" ".join(get_paths(expr.get("defaults"))))
-	elif "pool" in expr:
-		return "pool %s\n%s" % (expr.get("pool"), get_vars(expr))
-	elif "include" in expr:
-		print("TODO support include")
-		pprint(expr)
-		return ""
-	elif "subninja" in expr:
-		print("TODO support subninja")
-		pprint(expr)
-		return ""
-	else:
-		raise ValueError("unknown ast expr " + str(expr))
-
-# ----------------------------------------------------------- output generation
-def do_file(filename):
-	with open(filename, "r") as f:
-		input_text = f.read()
-		parser = fox_Parser(parseinfo = False)
-		ast = parser.parse(input_text, "manifest", trace = False, whitespace = string.whitespace, nameguard = True)
-		output = ""
-		for expr in ast:
-			output += do_expr(expr)
-		return output
-
-output_text = do_file(os.path.dirname(os.path.abspath(__file__)) + "/fox_core.fox") + "\n"
-output_text += do_file(args.get("in"))
-
-if args.get("out"):
-	with open(args.get("out"), "w") as f:
-		f.write(output_text)
-else:
-	print(output_text)
+engine.save("__gen_output.ninja")
