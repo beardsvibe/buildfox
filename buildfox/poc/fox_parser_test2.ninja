@@ -20,3 +20,8 @@ build ${a}/*.obj: auto examples/*.cpp
 build r"examples/\2_\1_\3.obj": test r"examples/([a-z]+)_([a-z]+)_(.*)\.cpp"
 
 subfox examples/*.fox
+
+rule test
+  command = $wow
+
+wow = 12

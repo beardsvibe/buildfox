@@ -8,8 +8,8 @@
 # ----------------------------------------------------------------------
 # figure out compiler commands
 
-# ------------------------------- msvc support
 filter toolset:msvc
+  # ------------------------------- msvc support
   # core flags
   cflags =
   cxxflags = $cflags
@@ -29,8 +29,8 @@ filter toolset:msvc variation:release
   cflags = /Ox
   cxxflags = $cflags
 
-# ------------------------------- gcc support (TODO need testing)
 filter toolset:gcc
+  # ------------------------------- gcc support (TODO need testing)
   # core flags
   cflags = -O0
   cxxflags = $cflags
@@ -72,10 +72,14 @@ auto *.obj: cc *.c
 auto *.obj: cxx *.cpp
 auto *.exe: link *.obj
 
-
-filter test:test
-  rule a
-    b = c
-  rule b
-    c = d
-  k = d
+# test
+#test = test
+#
+#filter test:test
+#  rule a
+#    b = c
+#  filter test:test
+#    rule b
+#      c = d
+#  k = d
+#

@@ -1,0 +1,5 @@
+# generated with love by buildfox from examples/test very/test2.fox
+# test2.fox
+build examples/test$ very/fox_test_a.obj examples/test$ very/fox_test_b.obj: rule2 examples/fox_test_a.cpp examples/fox_test_b.cpp
+build examples/test$ very/fox_test2.exe: rule3 examples/test$ very/fox_test_a.obj examples/test$ very/fox_test_b.obj
+a = 2

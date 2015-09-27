@@ -51,8 +51,6 @@ class Parser:
 			self.engine.rule(obj, assigns)
 
 		elif self.command == "build":
-			line = self.line
-			line_num = self.line_num
 			obj = self.read_build()
 			assigns = self.read_nested_assigns()
 			self.engine.build(obj, assigns)
@@ -189,22 +187,15 @@ class Parser:
 
 	def process_filtered(self, need_to_parse):
 		ws_ref = self.whitespace
-		ws_base = None
 		while self.line_i < len(self.lines):
 			start_i = self.line_i
-			if not self.next_line():
+			if not self.next_line(preserve_comments = need_to_parse):
 				break
+			# if offset is less then two spaces
+			# then we stop processing
 			if self.whitespace <= ws_ref + 1:
 				self.line_i = start_i
 				break
-			if not ws_base:
-				ws_base = self.whitespace
-			elif self.whitespace != ws_base:
-				raise ValueError("unbalanced indentation in '%s' (%s:%i)" % (
-					self.line,
-					self.filename,
-					self.line_num
-				))
 			if need_to_parse: # if we know that filter is disabled, no need to parse then
 				self.parse_line()
 
@@ -330,14 +321,14 @@ class Parser:
 				self.comments = self.comments[:comments_len]
 				return False
 
-	def next_line(self):
+	def next_line(self, preserve_comments = True):
 		if self.line_i >= len(self.lines):
 			return False
 
 		self.line_stripped = ""
 		while (not self.line_stripped) and (self.line_i < len(self.lines)):
 			self.line = ""
-			self.line_num = self.line_i
+			self.line_num = self.line_i + 1
 
 			# dealing with escaped newlines
 			newline_escaped = True
@@ -364,14 +355,16 @@ class Parser:
 
 			# fast strip comment
 			if self.line_stripped and self.line_stripped[0] == "#":
-				self.comments.append(self.line_stripped[1:])
+				if preserve_comments:
+					self.comments.append(self.line_stripped[1:])
 				self.line_stripped = ""
 				continue
 
 			# slower strip comments
 			comment_eol = re_comment.search(self.line_stripped)
 			if comment_eol:
-				self.comments.append(comment_eol.group(1))
+				if preserve_comments:
+					self.comments.append(comment_eol.group(1))
 				self.line_stripped = self.line_stripped[:comment_eol.span()[0]].strip()
 
 		# if we can't skip empty lines, than just return failure

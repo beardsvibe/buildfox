@@ -10,10 +10,12 @@ re_folder_part = re.compile(r"(?:[^\r\n(\[\"\\]|\\.)+") # match folder part in f
 re_capture_group_ref = re.compile(r"(?<!\\)\\(\d)") # match regex capture group reference
 re_variable = re.compile("\$\${([a-zA-Z0-9_.-]+)}|\$\$([a-zA-Z0-9_-]+)")
 re_non_escaped_char = re.compile(r"(?<!\\)\\(.)") # looking for not escaped \ with char
+re_alphanumeric = re.compile(r"\W+")
 
-output = ["# generated with love by buildfox"]
-
-generated = collections.defaultdict(set) # key is folder name, value is set of file names
+class Context:
+	def __init__(self):
+		self.generated = collections.defaultdict(set) # key is folder name, value is set of file names
+		self.subninja_num = 0
 
 def rel_dir(filename):
 	path = os.path.relpath(os.path.dirname(os.path.abspath(filename)), os.getcwd()).replace("\\", "/") + "/"
@@ -79,10 +81,13 @@ class Engine:
 			self.variables = {} # name: value
 			self.auto_presets = {} # name: (inputs, outputs, assigns)
 			self.rel_path = "" # this should be prepended to all parsed paths
+			self.context = Context()
 		else:
 			self.variables = copy.copy(parent.variables)
 			self.auto_presets = copy.copy(parent.auto_presets)
 			self.rel_path = parent.rel_path
+			self.context = parent.context
+		self.output = []
 		self.need_eval = False
 		self.filename = ""
 		self.current_line = ""
@@ -92,12 +97,21 @@ class Engine:
 	def load(self, filename):
 		self.filename = filename
 		self.rel_path = rel_dir(filename)
+		self.output.append("# generated with love by buildfox from %s" % filename)
 		parser = Parser(self, filename)
 		parser.parse()
 
 	# load core definitions
 	def load_core(self):
 		self.load(core_file)
+
+	# return output text
+	def text(self):
+		return "\n".join(self.output)
+
+	def save(self, filename):
+		with open(filename, "w") as f:
+			f.write(self.text())
 
 	def eval(self, text):
 		def repl(matchobj):
@@ -147,7 +161,7 @@ class Engine:
 					list_folder = os.path.normpath(list_folder).replace("\\", "/")
 					re_regex = re.compile(regex)
 					fs_files = set(os.listdir(list_folder))
-					generated_files = generated.get(list_folder, set())
+					generated_files = self.context.generated.get(list_folder, set())
 					for file in fs_files.union(generated_files):
 						name = base_folder + separator + file
 						match = re_regex.match(name)
@@ -185,7 +199,7 @@ class Engine:
 			for file in result:
 				dir = os.path.dirname(file)
 				name = os.path.basename(file)
-				if name in generated[dir]:
+				if name in self.context.generated[dir]:
 					raise ValueError("two or more commands generate '%s' in '%s' (%s:%i)" % (
 						file,
 						self.current_line,
@@ -193,7 +207,7 @@ class Engine:
 						self.current_line_i,
 					))
 				else:
-					generated[dir].add(name)
+					self.context.generated[dir].add(name)
 
 		# normalize inputs
 		inputs = [os.path.normpath(file).replace("\\", "/") for file in inputs]
@@ -251,14 +265,14 @@ class Engine:
 		for assign in assigns:
 			name = assign[0] if do_not_eval else self.eval(assign[0])
 			value = assign[1] if do_not_eval else self.eval(assign[1])
-			output.append("  %s = %s" % (name, value))
+			self.output.append("  %s = %s" % (name, value))
 
 	def comment(self, comment):
-		output.append("#" + comment)
+		self.output.append("#" + comment)
 
 	def rule(self, obj, assigns):
 		name = self.eval(obj)
-		output.append("rule " + name)
+		self.output.append("rule " + name)
 		self.write_assigns(assigns, do_not_eval = True)
 
 	def build(self, obj, assigns):
@@ -273,7 +287,7 @@ class Engine:
 			rule_name = name
 			assigns = vars + assigns
 
-		output.append("build %s: %s%s%s%s" % (
+		self.output.append("build %s: %s%s%s%s" % (
 			" ".join(self.to_esc(targets_explicit)),
 			rule_name,
 			" " + " ".join(self.to_esc(inputs_explicit)) if inputs_explicit else "",
@@ -284,19 +298,19 @@ class Engine:
 		self.write_assigns(assigns)
 
 		if targets_implicit: # TODO remove this when https://github.com/martine/ninja/pull/989 is merged
-			output.append("build %s: phony %s" % (
+			self.output.append("build %s: phony %s" % (
 				" ".join(self.to_esc(targets_implicit)),
 				" " + " ".join(self.to_esc(targets_explicit)),
 			))
 
 	def default(self, obj, assigns):
 		paths = self.eval_path(obj)
-		output.append("default " + " ".join(self.to_esc(paths)))
+		self.output.append("default " + " ".join(self.to_esc(paths)))
 		self.write_assigns(assigns)
 
 	def pool(self, obj, assigns):
 		name = self.eval(obj)
-		output.append("pool " + name)
+		self.output.append("pool " + name)
 		self.write_assigns(assigns)
 
 	def filter(self, obj):
@@ -320,7 +334,7 @@ class Engine:
 		name = self.eval(obj[0])
 		value = obj[1]
 		self.variables[name] = value
-		output.append("%s = %s" % (name, value))
+		self.output.append("%s = %s" % (name, value))
 
 	def include(self, obj):
 		paths = self.eval_path([obj])
@@ -334,10 +348,15 @@ class Engine:
 	def subninja(self, obj):
 		paths = self.eval_path([obj])
 		for path in paths:
+			gen_filename = "__gen_%i_%s.ninja" % (
+				self.context.subninja_num,
+				re_alphanumeric.sub("", os.path.splitext(os.path.basename(path))[0])
+			)
+			self.context.subninja_num += 1
 			engine = Engine(self)
-			#print("LOAD " + path)
 			engine.load(path)
-			# TODO we need namescope for rules, pools, auto
+			engine.save(gen_filename)
+			self.output.append("subninja " + self.to_esc(gen_filename))
 
 	def to_esc(self, value):
 		if value == None:
@@ -351,11 +370,13 @@ class Engine:
 		else:
 			return [self.to_esc(str) for str in value]
 
-os.chdir("..")
+#os.chdir("..")
 engine = Engine()
-#engine.load_core()
+engine.load_core()
 #engine.load("examples/fox_test.fox")
-engine.load("poc/fox_parser_test2.ninja")
+engine.load("fox_parser_test2.ninja")
 
 print("#------------------ result")
-print("\n".join(output))
+print(engine.text())
+
+engine.save("__gen_output.ninja")

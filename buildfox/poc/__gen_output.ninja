@@ -1,0 +1,37 @@
+# generated with love by buildfox from fox_core.fox
+# ----------------------------------------------------------------------
+# buildfox core configuration
+# this file :
+# - specifies compiler settings for current platform
+# - create rules
+# - configure auto keyword
+# ----------------------------------------------------------------------
+# figure out compiler commands
+# ----------------------------------------------------------------------
+# write rules
+rule cc
+  command = $cc
+  deps = $deps
+  depfile = $depfile
+rule cxx
+  command = $cxx
+  deps = $deps
+  depfile = $depfile
+rule link
+  command = $link
+# ----------------------------------------------------------------------
+# configure auto keyword
+# generated with love by buildfox from fox_parser_test2.ninja
+# test comment
+a = $b
+b = $c
+c = d
+e = f
+rule f
+  k = $a
+build d/fox_test_a.obj d/fox_test_b.obj: rule2 examples/fox_test_a.cpp examples/fox_test_b.cpp
+build examples/test_fox_a.obj examples/test_fox_b.obj: test examples/fox_test_a.cpp examples/fox_test_b.cpp
+subninja __gen_0_fox_test.ninja
+rule test
+  command = $wow
+wow = 12
