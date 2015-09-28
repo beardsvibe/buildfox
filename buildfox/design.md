@@ -33,3 +33,13 @@ Example :
 	# all auto build commands with .obj targets and .cpp inputs will be converted to cxx
 	auto *.obj: cxx *.cpp
 
+### Generator
+
+BuildFox is written in python and compatible with python 3.3+
+
+App contains four main parts :
+
+- Parser
+- Engine
+- Environment
+- Fox Core - contains core definitions and toolset support
