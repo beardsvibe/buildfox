@@ -25,6 +25,7 @@
 import os
 import re
 import copy
+import shutil
 import argparse
 import collections
 
@@ -107,17 +108,6 @@ auto *.obj: cc *.c
 auto *.obj: cxx *.cpp
 auto *.exe: link *.obj
 
-# test
-#test = test
-#
-#filter test:test
-#  rule a
-#    b = c
-#  filter test:test
-#    rule b
-#      c = d
-#  k = d
-#
 """
 
 # ----------------------------------------------------------- constants
@@ -968,11 +958,39 @@ class Engine:
 		else:
 			return [self.to_esc(str) for str in value]
 
+# ----------------------------------------------------------- environment
+
+class Environment:
+	def __init__(self):
+		self.vars = {
+			"variation": "debug"
+		}
+
+		if shutil.which("cl") and shutil.which("link") and shutil.which("lib"):
+			self.vars["toolset_msvc"] = "true"
+		if shutil.which("clang"):
+			self.vars["toolset_clang"] = "true"
+		if shutil.which("gcc") and shutil.which("g++"):
+			self.vars["toolset_gcc"] = "true"
+
+		if self.vars.get("toolset_msvc"):
+			self.vars["toolset"] = "msvc"
+		elif self.vars.get("toolset_clang"):
+			self.vars["toolset"] = "clang"
+		elif self.vars.get("toolset_gcc"):
+			self.vars["toolset"] = "gcc"
+		else:
+			raise ValueError("cant find any compiler")
+
 # ----------------------------------------------------------- processing
 if args.get("workdir"):
 	os.chdir(args.get("workdir"))
 
 engine = Engine()
+
+env = Environment()
+for name, value in env.vars.items():
+	engine.assign((name, value))
 
 for define in args.get("define"):
 	engine.assign(define)
