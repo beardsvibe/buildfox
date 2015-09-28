@@ -90,11 +90,13 @@ rule cc
   command = $cc
   deps = $deps
   depfile = $depfile
+  expand = true
 
 rule cxx
   command = $cxx
   deps = $deps
   depfile = $depfile
+  expand = true
 
 rule link
   command = $link
@@ -543,11 +545,13 @@ class Engine:
 			self.variables = {} # name: value
 			self.auto_presets = {} # name: (inputs, outputs, assigns)
 			self.rel_path = "" # this should be prepended to all parsed paths
+			self.rules = {} # rule_name: {var_name: var_value}
 			self.context = Engine.Context()
 		else:
 			self.variables = copy.copy(parent.variables)
 			self.auto_presets = copy.copy(parent.auto_presets)
 			self.rel_path = parent.rel_path
+			self.rules = copy.copy(parent.rules)
 			self.context = parent.context
 		self.output = []
 		self.need_eval = False
@@ -685,7 +689,10 @@ class Engine:
 					# look for files
 					list_folder = os.path.normpath(list_folder).replace("\\", "/")
 					re_regex = re.compile(regex)
-					fs_files = set(os.listdir(list_folder))
+					if os.path.isdir(list_folder):
+						fs_files = set(os.listdir(list_folder))
+					else:
+						fs_files = set()
 					generated_files = self.context.generated.get(list_folder, set())
 					for file in fs_files.union(generated_files):
 						name = base_folder + separator + file
@@ -723,6 +730,8 @@ class Engine:
 			# add them to generated files dict
 			for file in result:
 				dir = os.path.dirname(file)
+				if dir == "":
+					dir = "."
 				name = os.path.basename(file)
 				if name in self.context.generated[dir]:
 					raise ValueError("two or more commands generate '%s' in '%s' (%s:%i)" % (
@@ -786,19 +795,26 @@ class Engine:
 		else:
 			return regex_or_value == value
 
-	def write_assigns(self, assigns, do_not_eval = False):
+	def write_assigns(self, assigns):
 		for assign in assigns:
-			name = assign[0] if do_not_eval else self.eval(assign[0])
-			value = assign[1] if do_not_eval else self.eval(assign[1])
+			name = self.eval(assign[0])
+			value = self.eval(assign[1])
 			self.output.append("  %s = %s" % (name, value))
 
 	def comment(self, comment):
 		self.output.append("#" + comment)
 
 	def rule(self, obj, assigns):
-		name = self.eval(obj)
-		self.output.append("rule " + name)
-		self.write_assigns(assigns, do_not_eval = True)
+		rule_name = self.eval(obj)
+		self.output.append("rule " + rule_name)
+		vars = {}
+		for assign in assigns:
+			name = assign[0]
+			value = assign[1]
+			vars[name] = value
+			if name != "expand":
+				self.output.append("  %s = %s" % (name, value))
+		self.rules[rule_name] = vars
 
 	def build(self, obj, assigns):
 		inputs_explicit, targets_explicit = self.eval_path(obj[3], obj[0])
@@ -807,33 +823,83 @@ class Engine:
 		inputs_implicit = self.eval_path(obj[4])
 		inputs_order = self.eval_path(obj[5])
 
+		# deduce auto rule
 		if rule_name == "auto":
 			name, vars = self.eval_auto(inputs_explicit, targets_explicit)
 			rule_name = name
 			assigns = vars + assigns
 
-		# make generated output stable
-		targets_explicit = sorted(targets_explicit)
-		targets_implicit = sorted(targets_implicit)
-		inputs_explicit = sorted(inputs_explicit)
-		inputs_implicit = sorted(inputs_implicit)
-		inputs_order = sorted(inputs_order)
-
-		self.output.append("build %s: %s%s%s%s" % (
-			" ".join(self.to_esc(targets_explicit)),
-			rule_name,
-			" " + " ".join(self.to_esc(inputs_explicit)) if inputs_explicit else "",
-			" | " + " ".join(self.to_esc(inputs_implicit)) if inputs_implicit else "",
-			" || " + " ".join(self.to_esc(inputs_order)) if inputs_order else "",
-		))
-
-		self.write_assigns(assigns)
-
-		if targets_implicit: # TODO remove this when https://github.com/martine/ninja/pull/989 is merged
-			self.output.append("build %s: phony %s" % (
-				" ".join(self.to_esc(targets_implicit)),
-				" " + " ".join(self.to_esc(targets_explicit)),
+		# rule should exist
+		if rule_name not in self.rules:
+			raise ValueError("unknown rule %s at '%s' (%s:%i)" % (
+				rule_name,
+				self.current_line,
+				self.filename,
+				self.current_line_i,
 			))
+
+		# expand this rule
+		expand = self.rules.get(rule_name).get("expand", None)
+
+		if expand:
+			# TODO probably this expand implementation is not enough
+
+			if len(targets_explicit) != len(inputs_explicit):
+				raise ValueError("cannot expand rule %s because of different amount of targets and inputs at '%s' (%s:%i)" % (
+					rule_name,
+					self.current_line,
+					self.filename,
+					self.current_line_i,
+				))
+
+			targets_explicit_indx = sorted(range(len(targets_explicit)), key = lambda k: targets_explicit[k])
+			inputs_explicit_indx = sorted(range(len(inputs_explicit)), key = lambda k: inputs_explicit[k])
+			targets_implicit = sorted(targets_implicit)
+			inputs_implicit = sorted(inputs_implicit)
+			inputs_order = sorted(inputs_order)
+
+			for target_index in targets_explicit_indx:
+				target = targets_explicit[target_index]
+				input = inputs_explicit[target_index]
+
+				self.output.append("build %s: %s %s%s%s" % (
+					self.to_esc(target),
+					rule_name,
+					self.to_esc(input),
+					" | " + " ".join(self.to_esc(inputs_implicit)) if inputs_implicit else "",
+					" || " + " ".join(self.to_esc(inputs_order)) if inputs_order else "",
+				))
+
+				self.write_assigns(assigns)
+
+			if targets_implicit: # TODO remove this when https://github.com/martine/ninja/pull/989 is merged
+				self.output.append("build %s: phony %s" % (
+					" ".join(self.to_esc(targets_implicit)),
+					" " + " ".join(self.to_esc(sorted(targets_explicit))),
+				))
+		else:
+			# make generated output stable
+			targets_explicit = sorted(targets_explicit)
+			targets_implicit = sorted(targets_implicit)
+			inputs_explicit = sorted(inputs_explicit)
+			inputs_implicit = sorted(inputs_implicit)
+			inputs_order = sorted(inputs_order)
+
+			self.output.append("build %s: %s%s%s%s" % (
+				" ".join(self.to_esc(targets_explicit)),
+				rule_name,
+				" " + " ".join(self.to_esc(inputs_explicit)) if inputs_explicit else "",
+				" | " + " ".join(self.to_esc(inputs_implicit)) if inputs_implicit else "",
+				" || " + " ".join(self.to_esc(inputs_order)) if inputs_order else "",
+			))
+
+			self.write_assigns(assigns)
+
+			if targets_implicit: # TODO remove this when https://github.com/martine/ninja/pull/989 is merged
+				self.output.append("build %s: phony %s" % (
+					" ".join(self.to_esc(targets_implicit)),
+					" " + " ".join(self.to_esc(targets_explicit)),
+				))
 
 	def default(self, obj, assigns):
 		paths = self.eval_path(obj)
