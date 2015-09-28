@@ -32,82 +32,28 @@ import collections
 # ----------------------------------------------------------- fox core definitions
 
 fox_core = r"""
-# ----------------------------------------------------------------------
 # buildfox core configuration
-# this file :
-# - specifies compiler settings for current platform
-# - create rules
-# - configure auto keyword
-
-# ----------------------------------------------------------------------
-# figure out compiler commands
 
 filter toolset:msvc
-  # ------------------------------- msvc support
-  # core flags
-  cflags =
-  cxxflags = $cflags
-  ldflags = 
-  # core commands
-  cc = cl $cflags /nologo /showIncludes -c $in /Fo$out
-  cxx = cl $cxxflags /nologo /showIncludes -c $in /Fo$out
-  link = cl $ldflags /nologo $in /link /out:$out
-  deps = msvc
-  depfile =
+	# msvc support
+	rule cxx
+		command = cl $cxxflags /nologo /showIncludes -c $in /Fo$out
+		deps = msvc
+		expand = true
 
-filter toolset:msvc variation:debug
-  cflags =
-  cxxflags = $cflags
+	rule link
+		command = cl $ldflags /nologo $in /link /out:$out
 
-filter toolset:msvc variation:release
-  cflags = /Ox
-  cxxflags = $cflags
+	auto *.obj: cxx r".*\.(cpp|cxx|c)$"
+	auto *.exe: link *.obj
 
-filter toolset:gcc
-  # ------------------------------- gcc support (TODO need testing)
-  # core flags
-  cflags = -O0
-  cxxflags = $cflags
-  ldflags = 
-  # core commands
-  cc = gcc $cflags -MMD -MF $out.d -c -o $out $in
-  cxx = g++ $cxxflags -MMD -MF $out.d -c -o $out $in
-  link = g++ $ldflags -o $out $in
-  deps = gcc
-  depfile = $out.d
+	filter variation:debug
+		cxxflags = /O1
+		ldflags =
 
-filter toolset:gcc variation:debug
-  cflags = -O0
-  cxxflags = $cflags
-
-filter toolset:gcc variation:release
-  cflags = -O3
-  cxxflags = $cflags
-
-
-# ----------------------------------------------------------------------
-# write rules
-rule cc
-  command = $cc
-  deps = $deps
-  depfile = $depfile
-  expand = true
-
-rule cxx
-  command = $cxx
-  deps = $deps
-  depfile = $depfile
-  expand = true
-
-rule link
-  command = $link
-
-# ----------------------------------------------------------------------
-# configure auto keyword
-auto *.obj: cc *.c
-auto *.obj: cxx r".*\.(cpp|cxx|c)$"
-auto *.exe: link *.obj
-
+	filter variation:release
+		cxxflags = /Ox
+		ldflags =
 """
 
 # ----------------------------------------------------------- constants
