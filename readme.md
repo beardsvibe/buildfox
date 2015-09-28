@@ -1,82 +1,45 @@
-# Mask
+# BuildFox
 
-Intermediate representation for build systems.
+Minimalistic ninja generator
 
-## Philosophy
+WIP document
+ 
+### Manifest
 
-There are "build systems" - they build dependency trees or DAG's between sources and targets,
-[some of them](https://martine.github.io/ninja/) are doing it really good.
-There are also "project generators", they make decisions how and what to build,
-they usually provide abstractions for packages, toolsets, etc.
+BuildFox manifest is a super set to ninja manifest.
 
-Mask IR aims to be intermediate media between. Similar to ninja, all possible decisions should be made up front by mask generator.
+Core features are :
 
-Mask IR can replace project generators for most build systems and potentially simplify them a lot.
+- variable filtering
+- regex/wildcard file names
+- auto build rule
 
-## Infrastructure
+Example :
 
-![](mask_ir.png)
+	# filtering	
+	# value in filter could be wildcard or regex
+	# TODO var-value-var-value separators
+	filter var1:value_or_wildcard_or_regex var2:value_or_wildcard_or_regex
+		var3 = value
+		...
+	
+	# wildcard file names
+	build *.exe: auto *.c
+	
+	# regex file names
+	build r"\1\.exe": auto r"(.+)\.c"
+	
+	# configure auto build rule
+	# all auto build commands with .obj targets and .cpp inputs will be converted to cxx
+	auto *.obj: cxx *.cpp
 
-## Status
+### Generator
 
-* Overall status is proof-of-concept
-* Current implementation is in Python, planned to be rewritten in C later
-* Ninja parser is done, but it's very slow
-* Shell parser is in proof-of-concept stage, we still need to retrieve DAG from shell
-* Ninja generator is done
-* Shell generator is done
-* QMake generator is somewhat working
-* VCXproj generator is broken and disabled
+BuildFox is written in python and compatible with python 3.3+
 
-## Goals
+App contains four main parts :
 
-From [here](https://github.com/martine/ninja/blob/master/src/build_log_perftest.cc#L42-L61) we know :
-
-	The average command length is 4.1 kB and there were 28674 commands in total,
-	which makes for a total log size of ~120 MB (also counting output filenames).
-
-Let's make some goals :
-
-* (#1) Parsing and saving of mask IR file without need to reconstruct all data in memory in advance.
-* (#2) Human readable format
-* (#3) Easily generated from existing build systems
-* (#4) Translate raw 120 MB shell script into compact IR format in less then 1 second on modern machine with SSD.
-* (#5) Translate this compacted IR file into raw 120 MB shell script in less then 1 second on modern machine with SSD.
-
-## Format
-
-Format is based of ninja manifest format with some limitations which make it possible to achieve (#1) (#2) (#3)
-
-* no standalone variables
-* variables are only allowed in rules and projects (not you cannot reference another variable in this variables, except for ${in}, ${out}, etc) 
-* only one variable reference syntax is allowed : ${name}, syntax $name is not valid
-* strict order of declaration :
-	* rules first
-	* build command second
-	* project commands last
-* strict indentation rules :
-	* all lines, except for variables in rules, must contain no whitespace in the beginning
-	* indent in rule and project variables is 2 spaces only
-	* only one space is allowed between tokens
-* no "include" or "subninja", no variable scoping
-* no "phony" rules
-* no "default" keyword
-* added "project" command
-* build commands should be topologically sorted by dependencies, meaning if we execute them from top to bottom everything should be valid
-* order\_only\_dep is needed because in most cases some build steps can be placed in multiple locations (if two build steps are not related to each other then it doesn't matter in which order we execute them), mask is free to sort build steps as needed 
-
-For example :
-
-	# comment
-	rule rule_name
-	  command = ...
-
-	# build calls are sorted by dependencies
-	build target: rule_name input
-
-	build target | target2: rule_name input | implicit_input || order_only_dep
-
-	# specify project and variations
-	project test
-	  debug = target1 target2 ...
-	  any_other_variation_name = ...
+- Parser
+- Engine
+- Environment
+- Fox Core - contains core definitions and toolset support
