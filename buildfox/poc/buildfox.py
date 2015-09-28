@@ -569,7 +569,7 @@ class Engine:
 
 	# return output text
 	def text(self):
-		return "\n".join(self.output)
+		return "\n".join(self.output) + "\n"
 
 	def save(self, filename):
 		with open(filename, "w") as f:
