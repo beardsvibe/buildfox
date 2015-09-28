@@ -105,7 +105,7 @@ rule link
 # ----------------------------------------------------------------------
 # configure auto keyword
 auto *.obj: cc *.c
-auto *.obj: cxx *.cpp
+auto *.obj: cxx r".*\.(cpp|cxx|c)$"
 auto *.exe: link *.obj
 
 """
@@ -516,7 +516,10 @@ class Parser:
 		if value == None:
 			return None
 		elif type(value) is str:
-			return value.replace("$\n", "").replace("$ ", " ").replace("$:", ":").replace("$$", "$")
+			if value.startswith("r\""):
+				return value
+			else:
+				return value.replace("$\n", "").replace("$ ", " ").replace("$:", ":").replace("$$", "$")
 		else:
 			return [self.from_esc(str) for str in value]
 
