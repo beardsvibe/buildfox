@@ -42,7 +42,9 @@ filter toolset:msvc
 		expand = true
 
 	rule link
-		command = cl $ldflags /nologo $in /link /out:$out
+		command = cl $ldflags /nologo @$out.rsp /link /out:$out
+		rspfile = $out.rsp
+		rspfile_content = $in
 
 	auto *.obj: cxx r".*\.(cpp|cxx|c)$"
 	auto *.exe: link *.obj
