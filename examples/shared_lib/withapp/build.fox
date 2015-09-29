@@ -1,0 +1,20 @@
+
+# output folder
+out = build/bin_${variation}
+
+# TODO
+cxxflags_org = $cxxflags /Itest1 /Itest2
+
+# build all
+
+build $out/test1/*.obj: auto test1/*.cpp
+	cxxflags = $cxxflags_org /DDLL_EXPORT # TODO
+build $out/test1.dll | $out/test1.lib: auto $out/test1/*.obj
+
+build $out/test2/*.obj: auto test2/*.cpp
+	cxxflags = $cxxflags_org /DDLL_EXPORT2 # TODO
+build $out/test2.dll | $out/test2.lib: auto $out/test2/*.obj
+
+build $out/*.obj: auto *.cpp
+	cxxflags = $cxxflags_org # TODO
+build $out/app.exe: auto $out/*.obj $out/*.lib
