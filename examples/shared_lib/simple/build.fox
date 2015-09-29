@@ -1,0 +1,4 @@
+cxxflags = $cxxflags /DDLL_EXPORT
+
+build *.obj: auto *.cpp
+build app.dll | app.lib: auto *.obj
