@@ -556,12 +556,14 @@ class Engine:
 	def eval(self, text):
 		def repl(matchobj):
 			name = matchobj.group(1) or matchobj.group(2)
-			if name in self.variables:
+			if (name in self.variables) and (name not in self.visited_vars):
 				self.need_eval = True
+				self.visited_vars.add(name)
 				return self.variables.get(name)
 			else:
 				return "${" + name + "}"
 		self.need_eval = len(text) > 0
+		self.visited_vars = set()
 		while self.need_eval:
 			self.need_eval = False
 			text = re_var.sub(repl, text)
