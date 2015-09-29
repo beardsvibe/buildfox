@@ -48,6 +48,12 @@ filter toolset:msvc
 		rspfile = $out.rsp
 		rspfile_content = $in
 
+	rule link_dll
+		command = cl /nologo @$out.rsp /link /DLL $ldflags /out:$out
+		description = link $out
+		rspfile = $out.rsp
+		rspfile_content = $in
+
 	rule lib
 		command = lib $libflags @$out.rsp /nologo -OUT:$out
 		description = lib $out
@@ -56,6 +62,7 @@ filter toolset:msvc
 
 	auto *.obj: cxx r".*\.(cpp|cxx|c)$"
 	auto *.exe: link r".*\.(obj|lib)$"
+	auto *.dll: link_dll r".*\.(obj|lib)$"
 	auto *.lib: lib r".*\.(obj|lib)$"
 
 	filter variation:debug
@@ -829,7 +836,7 @@ class Engine:
 			if targets_implicit: # TODO remove this when https://github.com/martine/ninja/pull/989 is merged
 				self.output.append("build %s: phony %s" % (
 					" ".join(self.to_esc(targets_implicit)),
-					" " + " ".join(self.to_esc(sorted(targets_explicit))),
+					" ".join(self.to_esc(sorted(targets_explicit))),
 				))
 		else:
 			# make generated output stable
@@ -852,7 +859,7 @@ class Engine:
 			if targets_implicit: # TODO remove this when https://github.com/martine/ninja/pull/989 is merged
 				self.output.append("build %s: phony %s" % (
 					" ".join(self.to_esc(targets_implicit)),
-					" " + " ".join(self.to_esc(targets_explicit)),
+					" ".join(self.to_esc(targets_explicit)),
 				))
 
 	def default(self, obj, assigns):
