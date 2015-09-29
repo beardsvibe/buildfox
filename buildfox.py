@@ -82,7 +82,7 @@ re_alphanumeric = re.compile(r"\W+")
 # ----------------------------------------------------------- args
 
 argsparser = argparse.ArgumentParser(description = "buildfox ninja generator")
-argsparser.add_argument("-i", "--in", help = "input file", required = True)
+argsparser.add_argument("-i", "--in", help = "input file", default = "build.fox")
 argsparser.add_argument("-o", "--out", help = "output file", default = "build.ninja")
 argsparser.add_argument("-w", "--workdir", help = "working directory")
 argsparser.add_argument("-d", "--define", nargs = 2, help = "define var value",
@@ -90,6 +90,8 @@ argsparser.add_argument("-d", "--define", nargs = 2, help = "define var value",
 #argsparser.add_argument("-v", "--verbose", action = "store_true", help = "verbose output") # TODO
 argsparser.add_argument("--no-core", action = "store_false",
 	help = "disable parsing fox core definitions", default = True, dest = "core")
+argsparser.add_argument("--no-env", action = "store_false",
+	help = "disable environment discovery", default = True, dest = "env")
 args = vars(argsparser.parse_args())
 
 # ----------------------------------------------------------- parser
@@ -936,14 +938,16 @@ class Environment:
 			raise ValueError("cant find any compiler")
 
 # ----------------------------------------------------------- processing
+
 if args.get("workdir"):
 	os.chdir(args.get("workdir"))
 
 engine = Engine()
 
-env = Environment()
-for name, value in env.vars.items():
-	engine.assign((name, value))
+if args.get("env"):
+	env = Environment()
+	for name, value in env.vars.items():
+		engine.assign((name, value))
 
 for define in args.get("define"):
 	engine.assign(define)
