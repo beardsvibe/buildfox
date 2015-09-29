@@ -38,11 +38,13 @@ filter toolset:msvc
 	# msvc support
 	rule cxx
 		command = cl $cxxflags /nologo /showIncludes -c $in /Fo$out
+		description = cxx $in
 		deps = msvc
 		expand = true
 
 	rule link
 		command = cl $ldflags /nologo @$out.rsp /link /out:$out
+		description = link $out
 		rspfile = $out.rsp
 		rspfile_content = $in
 
