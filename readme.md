@@ -2,8 +2,24 @@
 
 Minimalistic ninja generator
 
-WIP document
- 
+WIP
+
+### Usage
+
+Installation on windows :
+
+	doskey buildfox=python %path_to_buildfox%\build.fox $*
+
+Usage :
+
+	buildfox
+	ninja
+
+Release build :
+
+	buildfox -d variation release
+	ninja
+
 ### Manifest
 
 BuildFox manifest is a super set to ninja manifest.
