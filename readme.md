@@ -8,7 +8,7 @@ WIP
 
 Installation on windows :
 
-	doskey buildfox=python %path_to_buildfox%\build.fox $*
+	doskey buildfox=python %path_to_buildfox%\buildfox.py $*
 
 Usage :
 
