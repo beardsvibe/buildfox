@@ -1,0 +1,7 @@
+
+# output folder
+out = build/bin_${variation}
+
+# build all
+build ${out}/*.obj: auto *.cpp *.c
+build ${out}/app.exe: auto ${out}/*.obj
