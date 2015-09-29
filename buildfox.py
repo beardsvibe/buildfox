@@ -34,6 +34,9 @@ import collections
 fox_core = r"""
 # buildfox core configuration
 
+# buildfox relies on scoped rules and they were added in ninja v1.6
+ninja_required_version = 1.6
+
 filter toolset:msvc
 	# msvc support
 	rule cxx
