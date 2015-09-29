@@ -43,21 +43,30 @@ filter toolset:msvc
 		expand = true
 
 	rule link
-		command = cl $ldflags /nologo @$out.rsp /link /out:$out
+		command = cl /nologo @$out.rsp /link $ldflags /out:$out
 		description = link $out
 		rspfile = $out.rsp
 		rspfile_content = $in
 
+	rule lib
+		command = lib $libflags @$out.rsp /nologo -OUT:$out
+		description = lib $out
+		rspfile = $out.rsp
+		rspfile_content = $in
+
 	auto *.obj: cxx r".*\.(cpp|cxx|c)$"
-	auto *.exe: link *.obj
+	auto *.exe: link r".*\.(obj|lib)$"
+	auto *.lib: lib r".*\.(obj|lib)$"
 
 	filter variation:debug
 		cxxflags = /O1
 		ldflags =
+		libflags =
 
 	filter variation:release
 		cxxflags = /Ox
 		ldflags =
+		libflags =
 """
 
 # ----------------------------------------------------------- constants
