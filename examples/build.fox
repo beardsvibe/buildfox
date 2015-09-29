@@ -1,3 +1,0 @@
-# fox_test.fox
-build build/*.obj: auto *.cpp
-build build/fox_test.exe: auto build/*.obj
