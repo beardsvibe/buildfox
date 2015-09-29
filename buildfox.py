@@ -693,22 +693,6 @@ class Engine:
 			# normalize results
 			result = [os.path.normpath(file).replace("\\", "/") for file in result]
 
-			# add them to generated files dict
-			for file in result:
-				dir = os.path.dirname(file)
-				if dir == "":
-					dir = "."
-				name = os.path.basename(file)
-				if name in self.context.generated[dir]:
-					raise ValueError("two or more commands generate '%s' in '%s' (%s:%i)" % (
-						file,
-						self.current_line,
-						self.filename,
-						self.current_line_i,
-					))
-				else:
-					self.context.generated[dir].add(name)
-
 		# normalize inputs
 		inputs = [os.path.normpath(file).replace("\\", "/") for file in inputs]
 
@@ -716,6 +700,22 @@ class Engine:
 			return inputs, result
 		else:
 			return inputs
+
+	def add_generated_files(self, files):
+		for file in files:
+			dir = os.path.dirname(file)
+			if dir == "":
+				dir = "."
+			name = os.path.basename(file)
+			if name in self.context.generated[dir]:
+				raise ValueError("two or more commands generate '%s' in '%s' (%s:%i)" % (
+					file,
+					self.current_line,
+					self.filename,
+					self.current_line_i,
+				))
+			else:
+				self.context.generated[dir].add(name)
 
 	def eval_auto(self, inputs, outputs):
 		for rule_name, auto in self.auto_presets.items(): # name: (inputs, outputs, assigns)
@@ -788,6 +788,11 @@ class Engine:
 		rule_name = self.eval(obj[2])
 		inputs_implicit = self.eval_path(obj[4])
 		inputs_order = self.eval_path(obj[5])
+
+		self.add_generated_files(targets_explicit)
+
+		if targets_implicit:
+			self.add_generated_files(targets_implicit)
 
 		# deduce auto rule
 		if rule_name == "auto":
