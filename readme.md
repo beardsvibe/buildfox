@@ -29,6 +29,7 @@ Core features are :
 - variable filtering
 - regex/wildcard file names
 - auto build rule
+- transformers for cross-toolchain options and more
 
 Example :
 
@@ -48,6 +49,13 @@ Example :
 	# configure auto build rule
 	# all auto build commands with .obj targets and .cpp inputs will be converted to cxx
 	auto *.obj: cxx *.cpp
+
+	# macro-like transformer
+	transformer define: /D${param}
+
+	# matching replace transformer
+	transformer options:
+		optimize = /Ox
 
 ### Generator
 
