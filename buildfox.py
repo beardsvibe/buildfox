@@ -82,7 +82,7 @@ filter toolset:msvc
 # ----------------------------------------------------------- constants
 
 keywords = ["rule", "build", "default", "pool", "include", "subninja",
-	"subfox", "filter", "auto", "print"]
+	"subfox", "filter", "auto", "print", "transformer"]
 
 # parser regexes
 re_newline_escaped = re.compile("\$+$")
@@ -192,6 +192,10 @@ class Parser:
 		elif self.command == "print":
 			obj = self.read_print()
 			self.engine.print(obj)
+
+		elif self.command == "transformer":
+			obj = self.read_transformer()
+			self.engine.setup_transform(obj)
 
 		else:
 			obj = self.read_assign()
@@ -326,6 +330,15 @@ class Parser:
 			inputs.append(self.read_path())
 		self.read_eol()
 		return (self.from_esc(targets), rule, self.from_esc(inputs))
+
+	def read_transformer(self):
+		self.expect_token()
+
+		name = self.read_identifier()
+		self.expect_token(":")
+		pattern = self.line_stripped = self.line_stripped[1:].strip()
+
+		return (name, pattern)
 
 	def read_print(self):
 		return self.line_stripped.strip()
@@ -510,12 +523,14 @@ class Engine:
 			self.auto_presets = {} # name: (inputs, outputs, assigns)
 			self.rel_path = "" # this should be prepended to all parsed paths
 			self.rules = {} # rule_name: {var_name: var_value}
+			self.transformers = {} # target: pattern
 			self.context = Engine.Context()
 		else:
 			self.variables = copy.copy(parent.variables)
 			self.auto_presets = copy.copy(parent.auto_presets)
 			self.rel_path = parent.rel_path
 			self.rules = copy.copy(parent.rules)
+			self.transformers = copy.copy(parent.transformers)
 			self.context = parent.context
 		self.output = []
 		self.need_eval = False
@@ -902,8 +917,25 @@ class Engine:
 	def assign(self, obj):
 		name = self.eval(obj[0])
 		value = obj[1]
+
+		optional_transformer = self.transformers.get(name)
+		if optional_transformer:
+			value = self.transform(optional_transformer, value)
+
 		self.variables[name] = value
 		self.output.append("%s = %s" % (name, value))
+
+	def setup_transform(self, obj):
+		target = self.eval(obj[0])
+		pattern = obj[1]
+		self.transformers[target] = pattern
+
+	def transform(self, pattern, values):
+		def transform_one(value):
+			# TODO: Use supplied pattern
+			return "/D%s" % value
+		transformed = [transform_one(v) for v in values.split(' ')]
+		return " ".join(transformed)
 
 	def include(self, obj):
 		paths = self.eval_path([obj])

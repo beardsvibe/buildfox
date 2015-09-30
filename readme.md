@@ -29,7 +29,7 @@ Core features are :
 - variable filtering
 - regex/wildcard file names
 - auto build rule
-- transformers for cross-toolchain options and more
+- transformers for cross-toolchain defines, includes, etc.
 
 Example :
 
@@ -52,10 +52,6 @@ Example :
 
 	# macro-like transformer
 	transformer define: /D${param}
-
-	# matching replace transformer
-	transformer options:
-		optimize = /Ox
 
 ### Generator
 
