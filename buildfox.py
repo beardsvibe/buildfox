@@ -834,7 +834,7 @@ class Engine:
 			name = assign[0]
 			value = assign[1]
 			op = assign[2]
-			# only = is supported because += and -= is not native ninja feature
+			# only = is supported because += and -= are not native ninja features
 			# and rule nested variables are evaluated in ninja
 			# so there is no way to implement this in current setup
 			if op != "=":
