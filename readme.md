@@ -17,7 +17,7 @@ Usage :
 
 Release build :
 
-	buildfox -d variation release
+	buildfox variation=release
 	ninja
 
 ### Manifest
