@@ -348,9 +348,9 @@ class Parser:
 		return self.line_stripped.strip()
 
 	def read_assign(self):
-		self.expect_token("=")
-		value = self.line_stripped[1:].strip()
-		return (self.command, value)
+		op = self.read_assign_op()
+		value = self.line_stripped
+		return (self.command, value, op)
 
 	def read_nested_assigns(self):
 		all = []
@@ -367,9 +367,22 @@ class Parser:
 				self.filename,
 				self.line_num
 			))
-		self.expect_token("=")
-		value = self.line_stripped[1:].strip()
-		return (name, value)
+		op = self.read_assign_op()
+		value = self.line_stripped
+		return (name, value, op)
+
+	def read_assign_op(self):
+		# TODO make it nicer
+		self.expect_token(("=", "+=", "-="))
+		if self.line_stripped[0] == "+":
+			self.line_stripped = self.line_stripped[2:].strip()
+			return "+="
+		elif self.line_stripped[0] == "-":
+			self.line_stripped = self.line_stripped[2:].strip()
+			return "-="
+		else:
+			self.line_stripped = self.line_stripped[1:].strip()
+			return "="
 
 	def read_identifier(self):
 		identifier = re_identifier.match(self.line_stripped)
