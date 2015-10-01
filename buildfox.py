@@ -200,7 +200,7 @@ class Parser:
 
 		elif self.command == "transformer":
 			obj = self.read_transformer()
-			self.engine.setup_transform(obj)
+			self.engine.eval_transform(obj)
 
 		else:
 			obj = self.read_assign()
@@ -930,7 +930,7 @@ class Engine:
 		self.variables[name] = value
 		self.output.append("%s = %s" % (name, value))
 
-	def setup_transform(self, obj):
+	def eval_transform(self, obj):
 		target = self.eval(obj[0])
 		pattern = obj[1]
 		self.transformers[target] = pattern
