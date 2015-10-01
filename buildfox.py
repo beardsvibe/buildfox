@@ -109,8 +109,7 @@ argsparser = argparse.ArgumentParser(description = "buildfox ninja generator")
 argsparser.add_argument("-i", "--in", help = "input file", default = "build.fox")
 argsparser.add_argument("-o", "--out", help = "output file", default = "build.ninja")
 argsparser.add_argument("-w", "--workdir", help = "working directory")
-argsparser.add_argument("-d", "--define", nargs = 2, help = "define var value",
-	default = [], action = "append")
+argsparser.add_argument("variables", metavar = "name=value", type = str, nargs = "*", help = "variables with values to setup", default = [])
 #argsparser.add_argument("-v", "--verbose", action = "store_true", help = "verbose output") # TODO
 argsparser.add_argument("--no-core", action = "store_false",
 	help = "disable parsing fox core definitions", default = True, dest = "core")
@@ -1018,8 +1017,13 @@ if args.get("env"):
 	for name, value in env.vars.items():
 		engine.assign((name, value))
 
-for define in args.get("define"):
-	engine.assign(define)
+for var in args.get("variables"):
+	parts = var.split("=")
+	if len(parts) == 2:
+		name, value = parts[0], parts[1]
+		engine.assign((name, value))
+	else:
+		raise SyntaxError("unknown argument '%s'. you should use name=value syntax to setup a variable" % var)
 
 if args.get("core"):
 	engine.load_core()
