@@ -348,9 +348,9 @@ class Parser:
 		return self.line_stripped.strip()
 
 	def read_assign(self):
-		self.expect_token("=")
-		value = self.line_stripped[1:].strip()
-		return (self.command, value)
+		op = self.read_assign_op()
+		value = self.line_stripped
+		return (self.command, value, op)
 
 	def read_nested_assigns(self):
 		all = []
@@ -367,9 +367,26 @@ class Parser:
 				self.filename,
 				self.line_num
 			))
-		self.expect_token("=")
-		value = self.line_stripped[1:].strip()
-		return (name, value)
+		op = self.read_assign_op()
+		value = self.line_stripped
+		return (name, value, op)
+
+	def read_assign_op(self):
+		# TODO make it nicer
+		self.expect_token(("=", "+=", "-="))
+		if self.line_stripped[0] == "+":
+			# don't strip whitespace here
+			# because we want to preserve it so we can process it correctly
+			self.line_stripped = self.line_stripped[2:]
+			return "+="
+		elif self.line_stripped[0] == "-":
+			# don't strip whitespace here
+			# because we want to preserve it so we can process it correctly
+			self.line_stripped = self.line_stripped[2:]
+			return "-="
+		else:
+			self.line_stripped = self.line_stripped[1:].strip()
+			return "="
 
 	def read_identifier(self):
 		identifier = re_identifier.match(self.line_stripped)
@@ -386,7 +403,7 @@ class Parser:
 		if name:
 			if (not self.line_stripped) or (not self.line_stripped.startswith(name)):
 				raise ValueError("expected token '%s' in '%s' (%s:%i)" % (
-					name,
+					str(name),
 					self.line_stripped,
 					self.filename,
 					self.line_num
@@ -780,11 +797,31 @@ class Engine:
 		else:
 			return regex_or_value == value
 
+	def eval_assign_op(self, value, prev_value, op):
+		if op == "+=":
+			return prev_value + value
+		elif op == "-=":
+			if value in prev_value:
+				return prev_value.replace(value, "")
+			else:
+				return prev_value.replace(value.strip(), "")
+		else:
+			return value
+
 	def write_assigns(self, assigns):
+		local_scope = {}
 		for assign in assigns:
 			name = self.eval(assign[0])
 			value = self.eval(assign[1])
+			op = assign[2]
+
+			if name in local_scope:
+				value = self.eval_assign_op(value, local_scope.get(name), op)
+			else:
+				value = self.eval_assign_op(value, self.variables.get(name, ""), op)
+
 			self.output.append("  %s = %s" % (name, value))
+			local_scope[name] = value
 
 	def comment(self, comment):
 		self.output.append("#" + comment)
@@ -796,6 +833,18 @@ class Engine:
 		for assign in assigns:
 			name = assign[0]
 			value = assign[1]
+			op = assign[2]
+			# only = is supported because += and -= are not native ninja features
+			# and rule nested variables are evaluated in ninja
+			# so there is no way to implement this in current setup
+			if op != "=":
+				raise ValueError("only \"=\" is supported in rule nested variables, "\
+								 "got invalid assign operation '%s' at rule '%s' (%s:%i)" % (
+					op,
+					self.current_line,
+					self.filename,
+					self.current_line_i,
+				))
 			vars[name] = value
 			if name != "expand":
 				self.output.append("  %s = %s" % (name, value))
@@ -920,11 +969,14 @@ class Engine:
 
 	def assign(self, obj):
 		name = self.eval(obj[0])
-		value = obj[1]
+		value = self.eval(obj[1])
+		op = obj[2]
 
 		optional_transformer = self.transformers.get(name)
 		if optional_transformer:
 			value = self.eval_transform(optional_transformer, value)
+
+		value = self.eval_assign_op(value, self.variables.get(name), op)
 
 		self.variables[name] = value
 		self.output.append("%s = %s" % (name, value))
@@ -936,8 +988,11 @@ class Engine:
 
 	def eval_transform(self, pattern, values):
 		def transform_one(value):
-			return self.from_esc(re_subst.sub(value, pattern))
-		transformed = [transform_one(v) for v in values.split(' ')]
+			if value:
+				return self.from_esc(re_subst.sub(value, pattern))
+			else:
+				return ""
+		transformed = [transform_one(v) for v in values.split(" ")]
 		return " ".join(transformed)
 
 	def include(self, obj):
@@ -1015,13 +1070,13 @@ engine = Engine()
 if args.get("env"):
 	env = Environment()
 	for name, value in env.vars.items():
-		engine.assign((name, value))
+		engine.assign((name, value, "="))
 
 for var in args.get("variables"):
 	parts = var.split("=")
 	if len(parts) == 2:
 		name, value = parts[0], parts[1]
-		engine.assign((name, value))
+		engine.assign((name, value, "="))
 	else:
 		raise SyntaxError("unknown argument '%s'. you should use name=value syntax to setup a variable" % var)
 
