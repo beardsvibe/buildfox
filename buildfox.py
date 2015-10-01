@@ -97,6 +97,7 @@ re_capture_group_ref = re.compile(r"(?<!\\)\\(\d)") # match regex capture group 
 re_variable = re.compile("\$\${([a-zA-Z0-9_.-]+)}|\$\$([a-zA-Z0-9_-]+)")
 re_non_escaped_char = re.compile(r"(?<!\\)\\(.)") # looking for not escaped \ with char
 re_alphanumeric = re.compile(r"\W+")
+re_subst = re.compile(r"(?<!\$)\$\{param\}")
 
 # ----------------------------------------------------------- args
 
@@ -932,8 +933,7 @@ class Engine:
 
 	def transform(self, pattern, values):
 		def transform_one(value):
-			# TODO: Use supplied pattern
-			return "/D%s" % value
+			return re_subst.sub(value, pattern)
 		transformed = [transform_one(v) for v in values.split(' ')]
 		return " ".join(transformed)
 
