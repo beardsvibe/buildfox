@@ -988,8 +988,11 @@ class Engine:
 
 	def eval_transform(self, pattern, values):
 		def transform_one(value):
-			return self.from_esc(re_subst.sub(value, pattern))
-		transformed = [transform_one(v) for v in values.split(' ')]
+			if value:
+				return self.from_esc(re_subst.sub(value, pattern))
+			else:
+				return ""
+		transformed = [transform_one(v) for v in values.split(" ")]
 		return " ".join(transformed)
 
 	def include(self, obj):
