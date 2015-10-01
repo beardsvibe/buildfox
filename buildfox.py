@@ -797,11 +797,31 @@ class Engine:
 		else:
 			return regex_or_value == value
 
+	def eval_assign_op(self, value, prev_value, op):
+		if op == "+=":
+			return prev_value + value
+		elif op == "-=":
+			if value in prev_value:
+				return prev_value.replace(value, "")
+			else:
+				return prev_value.replace(value.strip(), "")
+		else:
+			return value
+
 	def write_assigns(self, assigns):
+		local_scope = {}
 		for assign in assigns:
 			name = self.eval(assign[0])
 			value = self.eval(assign[1])
+			op = assign[2]
+
+			if name in local_scope:
+				value = self.eval_assign_op(value, local_scope.get(name), op)
+			else:
+				value = self.eval_assign_op(value, self.variables.get(name, ""), op)
+
 			self.output.append("  %s = %s" % (name, value))
+			local_scope[name] = value
 
 	def comment(self, comment):
 		self.output.append("#" + comment)
@@ -813,6 +833,18 @@ class Engine:
 		for assign in assigns:
 			name = assign[0]
 			value = assign[1]
+			op = assign[2]
+			# only = is supported because += and -= is not native ninja feature
+			# and rule nested variables are evaluated in ninja
+			# so there is no way to implement this in current setup
+			if op != "=":
+				raise ValueError("only \"=\" is supported in rule nested variables, "\
+								 "got invalid assign operation '%s' at rule '%s' (%s:%i)" % (
+					op,
+					self.current_line,
+					self.filename,
+					self.current_line_i,
+				))
 			vars[name] = value
 			if name != "expand":
 				self.output.append("  %s = %s" % (name, value))
@@ -937,11 +969,14 @@ class Engine:
 
 	def assign(self, obj):
 		name = self.eval(obj[0])
-		value = obj[1]
+		value = obj[1] # TODO do we need eval here ?
+		op = obj[2]
 
 		optional_transformer = self.transformers.get(name)
 		if optional_transformer:
 			value = self.eval_transform(optional_transformer, value)
+
+		value = self.eval_assign_op(value, self.variables.get(name), op)
 
 		self.variables[name] = value
 		self.output.append("%s = %s" % (name, value))
