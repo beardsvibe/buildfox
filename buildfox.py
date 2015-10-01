@@ -3,6 +3,7 @@
 # The MIT License (MIT)
 #
 # Copyright (c) 2015 Dmytro Ivanov
+#                    Denys Mentiei
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -77,12 +78,15 @@ filter toolset:msvc
 		cxxflags = /Ox
 		ldflags =
 		libflags =
+
+	transformer defines: /D${param}
+	transformer includes: /I${param}
 """
 
 # ----------------------------------------------------------- constants
 
 keywords = ["rule", "build", "default", "pool", "include", "subninja",
-	"subfox", "filter", "auto", "print"]
+	"subfox", "filter", "auto", "print", "transformer"]
 
 # parser regexes
 re_newline_escaped = re.compile("\$+$")
@@ -97,6 +101,7 @@ re_capture_group_ref = re.compile(r"(?<!\\)\\(\d)") # match regex capture group 
 re_variable = re.compile("\$\${([a-zA-Z0-9_.-]+)}|\$\$([a-zA-Z0-9_-]+)")
 re_non_escaped_char = re.compile(r"(?<!\\)\\(.)") # looking for not escaped \ with char
 re_alphanumeric = re.compile(r"\W+")
+re_subst = re.compile(r"(?<!\$)\$\{param\}")
 
 # ----------------------------------------------------------- args
 
@@ -192,6 +197,10 @@ class Parser:
 		elif self.command == "print":
 			obj = self.read_print()
 			self.engine.print(obj)
+
+		elif self.command == "transformer":
+			obj = self.read_transformer()
+			self.engine.transform(obj)
 
 		else:
 			obj = self.read_assign()
@@ -326,6 +335,15 @@ class Parser:
 			inputs.append(self.read_path())
 		self.read_eol()
 		return (self.from_esc(targets), rule, self.from_esc(inputs))
+
+	def read_transformer(self):
+		self.expect_token()
+
+		name = self.read_identifier()
+		self.expect_token(":")
+		pattern = self.line_stripped = self.line_stripped[1:].strip()
+
+		return (name, pattern)
 
 	def read_print(self):
 		return self.line_stripped.strip()
@@ -510,12 +528,14 @@ class Engine:
 			self.auto_presets = {} # name: (inputs, outputs, assigns)
 			self.rel_path = "" # this should be prepended to all parsed paths
 			self.rules = {} # rule_name: {var_name: var_value}
+			self.transformers = {} # target: pattern
 			self.context = Engine.Context()
 		else:
 			self.variables = copy.copy(parent.variables)
 			self.auto_presets = copy.copy(parent.auto_presets)
 			self.rel_path = parent.rel_path
 			self.rules = copy.copy(parent.rules)
+			self.transformers = copy.copy(parent.transformers)
 			self.context = parent.context
 		self.output = []
 		self.need_eval = False
@@ -902,8 +922,24 @@ class Engine:
 	def assign(self, obj):
 		name = self.eval(obj[0])
 		value = obj[1]
+
+		optional_transformer = self.transformers.get(name)
+		if optional_transformer:
+			value = self.eval_transform(optional_transformer, value)
+
 		self.variables[name] = value
 		self.output.append("%s = %s" % (name, value))
+
+	def transform(self, obj):
+		target = self.eval(obj[0])
+		pattern = obj[1]
+		self.transformers[target] = pattern
+
+	def eval_transform(self, pattern, values):
+		def transform_one(value):
+			return self.from_esc(re_subst.sub(value, pattern))
+		transformed = [transform_one(v) for v in values.split(' ')]
+		return " ".join(transformed)
 
 	def include(self, obj):
 		paths = self.eval_path([obj])
@@ -933,11 +969,18 @@ class Engine:
 		elif type(value) is str:
 			value = value.replace("$", "$$").replace(":", "$:").replace("\n", "$\n").replace(" ", "$ ")
 			# escaping variables
+			# TODO: This one is strange.
 			def repl(matchobj):
 				return "${" + (matchobj.group(1) or matchobj.group(2)) + "}"
 			return re_variable.sub(repl, value)
 		else:
 			return [self.to_esc(str) for str in value]
+
+	# TODO: Code duplication sucks.
+	def from_esc(self, value):
+		def repl(matchobj):
+			return "${%s}" % (matchobj.group(1) or matchobj.group(2))
+		return re_variable.sub(repl, value)
 
 # ----------------------------------------------------------- environment
 

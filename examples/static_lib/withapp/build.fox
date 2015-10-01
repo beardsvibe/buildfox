@@ -2,8 +2,9 @@
 # output folder
 out = build/bin_${variation}
 
-# TODO
-cxxflags = $cxxflags /Itest1 /Itest2
+includes = test1 test2
+
+cxxflags = $cxxflags $includes
 
 # build all
 

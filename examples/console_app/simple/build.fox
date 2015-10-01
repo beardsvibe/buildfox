@@ -1,2 +1,7 @@
+filter variation:release
+	defines = RELEASE
+
+cxxflags = $cxxflags $defines
+
 build *.obj: auto *.cpp *.c
 build app.exe: auto *.obj
