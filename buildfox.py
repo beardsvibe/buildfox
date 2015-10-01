@@ -3,6 +3,7 @@
 # The MIT License (MIT)
 #
 # Copyright (c) 2015 Dmytro Ivanov
+#                    Denys Mentiei
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -936,7 +937,7 @@ class Engine:
 
 	def transform(self, pattern, values):
 		def transform_one(value):
-			return re_subst.sub(value, pattern)
+			return self.from_esc(re_subst.sub(value, pattern))
 		transformed = [transform_one(v) for v in values.split(' ')]
 		return " ".join(transformed)
 
@@ -968,11 +969,18 @@ class Engine:
 		elif type(value) is str:
 			value = value.replace("$", "$$").replace(":", "$:").replace("\n", "$\n").replace(" ", "$ ")
 			# escaping variables
+			# TODO: This one is strange.
 			def repl(matchobj):
 				return "${" + (matchobj.group(1) or matchobj.group(2)) + "}"
 			return re_variable.sub(repl, value)
 		else:
 			return [self.to_esc(str) for str in value]
+
+	# TODO: Code duplication sucks.
+	def from_esc(self, value):
+		def repl(matchobj):
+			return "${%s}" % (matchobj.group(1) or matchobj.group(2))
+		return re_variable.sub(repl, value)
 
 # ----------------------------------------------------------- environment
 
