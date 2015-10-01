@@ -375,10 +375,14 @@ class Parser:
 		# TODO make it nicer
 		self.expect_token(("=", "+=", "-="))
 		if self.line_stripped[0] == "+":
-			self.line_stripped = self.line_stripped[2:].strip()
+			# don't strip whitespace here
+			# because we want to preserve it so we can process it correctly
+			self.line_stripped = self.line_stripped[2:]
 			return "+="
 		elif self.line_stripped[0] == "-":
-			self.line_stripped = self.line_stripped[2:].strip()
+			# don't strip whitespace here
+			# because we want to preserve it so we can process it correctly
+			self.line_stripped = self.line_stripped[2:]
 			return "-="
 		else:
 			self.line_stripped = self.line_stripped[1:].strip()
