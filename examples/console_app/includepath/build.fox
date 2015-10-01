@@ -2,8 +2,10 @@
 # output folder
 out = build/bin_${variation}
 
-# TODO
-cxxflags = $cxxflags /Itest1 /Itest2
+includes = test1 test2
+
+# TODO: Make appending more appealing.
+cxxflags = $cxxflags $includes
 
 # build all
 build $out/*.obj: auto *.cpp test1/*.c test2/*.cpp

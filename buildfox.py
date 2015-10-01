@@ -77,6 +77,9 @@ filter toolset:msvc
 		cxxflags = /Ox
 		ldflags =
 		libflags =
+
+	transformer defines: /D${param}
+	transformer includes: /I${param}
 """
 
 # ----------------------------------------------------------- constants
