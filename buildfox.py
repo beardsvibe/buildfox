@@ -399,7 +399,7 @@ class Parser:
 		if name:
 			if (not self.line_stripped) or (not self.line_stripped.startswith(name)):
 				raise ValueError("expected token '%s' in '%s' (%s:%i)" % (
-					name,
+					str(name),
 					self.line_stripped,
 					self.filename,
 					self.line_num
