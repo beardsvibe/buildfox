@@ -5,7 +5,11 @@
 
 int main()
 {
-	printf("hello world !\n");
+	#if defined(RELEASE)
+		printf("hello real world !\n");
+	#else
+		printf("hello dev world !\n");
+	#endif
 	test1();
 	test2();
 	test3();

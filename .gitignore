@@ -2,3 +2,4 @@ build/
 examples/**/*.ninja
 examples/**/*.ninja_deps
 examples/**/*.ninja_log
+*.obj
