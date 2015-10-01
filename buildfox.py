@@ -969,7 +969,7 @@ class Engine:
 
 	def assign(self, obj):
 		name = self.eval(obj[0])
-		value = obj[1] # TODO do we need eval here ?
+		value = self.eval(obj[1])
 		op = obj[2]
 
 		optional_transformer = self.transformers.get(name)
