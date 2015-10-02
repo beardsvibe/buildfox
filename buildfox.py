@@ -840,9 +840,6 @@ class Engine:
 		self.rules[rule_name] = vars
 
 	def build(self, obj, assigns):
-		from pprint import pprint
-		pprint(obj)
-
 		inputs_explicit, targets_explicit = self.eval_path(self.from_esc(obj[3]), self.from_esc(obj[0]))
 		targets_implicit = self.eval_path(self.from_esc(obj[1]))
 		rule_name = self.eval(obj[2])
