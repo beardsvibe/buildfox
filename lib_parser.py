@@ -408,3 +408,7 @@ class Parser:
 		self.whitespace = self.whitespace.replace("\t", "    ")
 		self.whitespace = len(self.whitespace)
 		return True
+
+def parse(engine, filename, text = None):
+	parser = Parser(engine, filename, text)
+	parser.parse()

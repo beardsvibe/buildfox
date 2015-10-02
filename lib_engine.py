@@ -4,8 +4,7 @@ import os
 import re
 import copy
 import collections
-
-from lib_parser import Parser
+from lib_parser import parse
 
 # engine regexes
 re_var = re.compile("\${([a-zA-Z0-9_.-]+)}|\$([a-zA-Z0-9_-]+)")
@@ -50,15 +49,13 @@ class Engine:
 		self.filename = filename
 		self.rel_path = self.rel_dir(filename)
 		self.output.append("# generated with love by buildfox from %s" % filename)
-		parser = Parser(self, filename)
-		parser.parse()
+		parse(self, filename)
 
 	# load core definitions
 	def load_core(self, fox_core):
 		self.filename = "fox_core.fox"
 		self.rel_path = ""
-		parser = Parser(self, self.filename, text = fox_core)
-		parser.parse()
+		parse(self, self.filename, text = fox_core)
 
 	# return output text
 	def text(self):
@@ -486,8 +483,7 @@ class Engine:
 		for path in paths:
 			old_rel_path = self.rel_path
 			self.rel_path = self.rel_dir(path)
-			parser = Parser(self, path)
-			parser.parse()
+			parse(self, path)
 			self.rel_path = old_rel_path
 
 	def subninja(self, obj):
