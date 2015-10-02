@@ -6,7 +6,7 @@ import copy
 import argparse
 
 from lib_engine import Engine
-from lib_environment import Environment
+from lib_environment import discover
 
 # ----------------------------------------------------------- fox core definitions
 
@@ -81,8 +81,8 @@ if args.get("workdir"):
 engine = Engine()
 
 if args.get("env"):
-	env = Environment()
-	for name, value in env.vars.items():
+	vars = discover()
+	for name, value in vars.items():
 		engine.assign((name, value, "="))
 
 for var in args.get("variables"):
