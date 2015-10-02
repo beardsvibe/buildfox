@@ -7,3 +7,4 @@ examples/**/*.ninja_log
 *.lib
 *.dll
 *.exe
+__pycache__/
