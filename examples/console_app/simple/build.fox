@@ -1,7 +1,6 @@
-filter variation:release
-	defines = RELEASE
+test = a
+test2 = a
 
-cxxflags = $cxxflags $defines
+rule test
 
-build *.obj: auto *.cpp *.c
-build app.exe: auto *.obj
+build a: test b${test}$ $${test2}

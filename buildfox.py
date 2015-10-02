@@ -255,12 +255,12 @@ class Parser:
 
 		self.read_eol()
 		return (
-			self.from_esc(targets_explicit),
-			self.from_esc(targets_implicit),
+			targets_explicit,
+			targets_implicit,
 			rule,
-			self.from_esc(inputs_explicit),
-			self.from_esc(inputs_implicit),
-			self.from_esc(inputs_order)
+			inputs_explicit,
+			inputs_implicit,
+			inputs_order
 		)
 
 	def read_default(self):
@@ -269,7 +269,7 @@ class Parser:
 		while self.line_stripped:
 			paths.append(self.read_path())
 		self.read_eol()
-		return self.from_esc(paths)
+		return paths
 
 	def read_pool(self):
 		pool = self.read_identifier()
@@ -285,7 +285,7 @@ class Parser:
 	def read_one_path(self):
 		path = self.read_path()
 		self.read_eol()
-		return self.from_esc(path)
+		return path
 
 	def read_filter(self):
 		self.expect_token()
@@ -295,7 +295,7 @@ class Parser:
 			self.expect_token(":")
 			self.line_stripped = self.line_stripped[1:].strip()
 			value = self.read_path()
-			filters.append((name, self.from_esc(value)))
+			filters.append((name, value))
 		self.read_eol()
 		return filters
 
@@ -333,7 +333,7 @@ class Parser:
 		while self.line_stripped:
 			inputs.append(self.read_path())
 		self.read_eol()
-		return (self.from_esc(targets), rule, self.from_esc(inputs))
+		return (targets, rule, inputs)
 
 	def read_transformer(self):
 		self.expect_token()
@@ -516,17 +516,6 @@ class Parser:
 		self.whitespace = self.whitespace.replace("\t", "    ")
 		self.whitespace = len(self.whitespace)
 		return True
-
-	def from_esc(self, value):
-		if value == None:
-			return None
-		elif type(value) is str:
-			if value.startswith("r\""):
-				return value
-			else:
-				return value.replace("$\n", "").replace("$ ", " ").replace("$:", ":").replace("$$", "$")
-		else:
-			return [self.from_esc(str) for str in value]
 
 # ----------------------------------------------------------- fox engine
 
@@ -851,11 +840,11 @@ class Engine:
 		self.rules[rule_name] = vars
 
 	def build(self, obj, assigns):
-		inputs_explicit, targets_explicit = self.eval_path(obj[3], obj[0])
-		targets_implicit = self.eval_path(obj[1])
+		inputs_explicit, targets_explicit = self.eval_path(self.from_esc(obj[3]), self.from_esc(obj[0]))
+		targets_implicit = self.eval_path(self.from_esc(obj[1]))
 		rule_name = self.eval(obj[2])
-		inputs_implicit = self.eval_path(obj[4])
-		inputs_order = self.eval_path(obj[5])
+		inputs_implicit = self.eval_path(self.from_esc(obj[4]))
+		inputs_order = self.eval_path(self.from_esc(obj[5]))
 
 		self.add_generated_files(targets_explicit)
 
@@ -941,7 +930,7 @@ class Engine:
 				))
 
 	def default(self, obj, assigns):
-		paths = self.eval_path(obj)
+		paths = self.eval_path(self.from_esc(obj))
 		self.output.append("default " + " ".join(self.to_esc(paths)))
 		self.write_assigns(assigns)
 
@@ -953,15 +942,15 @@ class Engine:
 	def filter(self, obj):
 		for filt in obj:
 			name = self.eval(filt[0])
-			value = self.eval(filt[1])
+			value = self.eval(self.from_esc(filt[1]))
 			if not self.eval_filter(name, value):
 				return False
 		return True
 
 	def auto(self, obj, assigns):
-		outputs = [self.eval(output) for output in obj[0]] # this shouldn't be eval_path !
+		outputs = [self.eval(output) for output in self.from_esc(obj[0])] # this shouldn't be eval_path !
 		name = self.eval(obj[1])
-		inputs = [self.eval(input) for input in obj[2]] # this shouldn't be eval_path !
+		inputs = [self.eval(input) for input in self.from_esc(obj[2])] # this shouldn't be eval_path !
 		self.auto_presets[name] = (inputs, outputs, assigns)
 
 	def print(self, obj):
@@ -989,14 +978,14 @@ class Engine:
 	def eval_transform(self, pattern, values):
 		def transform_one(value):
 			if value:
-				return self.from_esc(re_subst.sub(value, pattern))
+				return self.from_esc2(re_subst.sub(value, pattern))
 			else:
 				return ""
 		transformed = [transform_one(v) for v in values.split(" ")]
 		return " ".join(transformed)
 
 	def include(self, obj):
-		paths = self.eval_path([obj])
+		paths = self.eval_path(self.from_esc([obj]))
 		for path in paths:
 			old_rel_path = self.rel_path
 			self.rel_path = self.rel_dir(path)
@@ -1005,7 +994,7 @@ class Engine:
 			self.rel_path = old_rel_path
 
 	def subninja(self, obj):
-		paths = self.eval_path([obj])
+		paths = self.eval_path(self.from_esc([obj]))
 		for path in paths:
 			gen_filename = "__gen_%i_%s.ninja" % (
 				self.context.subninja_num,
@@ -1031,10 +1020,22 @@ class Engine:
 			return [self.to_esc(str) for str in value]
 
 	# TODO: Code duplication sucks.
-	def from_esc(self, value):
+	def from_esc2(self, value):
 		def repl(matchobj):
 			return "${%s}" % (matchobj.group(1) or matchobj.group(2))
 		return re_variable.sub(repl, value)
+
+	def from_esc(self, value):
+		if value == None:
+			return None
+		elif type(value) is str:
+			if value.startswith("r\""):
+				return value
+			else:
+				return value.replace("$\n", "").replace("$ ", " ").replace("$:", ":").replace("$$", "$")
+		else:
+			return [self.from_esc(str) for str in value]
+
 
 # ----------------------------------------------------------- environment
 
