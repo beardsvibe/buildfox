@@ -7,10 +7,9 @@ import collections
 from lib_parser import parse
 from lib_util import rel_dir, wildcard_regex, find_files
 
-# engine regexes
-re_var = re.compile("(?<!\$)(?:\$\$)*\${([a-zA-Z0-9_.-]+)}|(?<!\$)(?:\$\$)*\$([a-zA-Z0-9_-]+)")
-re_variable = re.compile("\$\${([a-zA-Z0-9_.-]+)}|\$\$([a-zA-Z0-9_-]+)")
-re_alphanumeric = re.compile(r"\W+")
+# match and capture variable and escaping pairs of $$ before variable name
+re_var = re.compile("(?<!\$)((?:\$\$)*)\$({)?([a-zA-Z0-9_.-]+)(?(2)})")
+re_alphanumeric = re.compile(r"\W+") # match valid parts of filename
 re_subst = re.compile(r"(?<!\$)(?:\$\$)*\$\{param\}")
 re_non_escaped_space = re.compile(r"(?<!\$)(?:\$\$)* +")
 
@@ -71,28 +70,24 @@ class Engine:
 		if text == None:
 			return None
 		elif type(text) is str:
+			raw = text.startswith("r\"")
+
 			# first remove escaped sequences
-			if not text.startswith("r\""):
+			if not raw:
 				text = text.replace("$\n", "").replace("$ ", " ").replace("$:", ":")
 
-			def repl(matchobj):
-				name = matchobj.group(1) or matchobj.group(2)
-				if (name in self.variables) and (name not in self.visited_vars):
-					self.need_eval = True
-					self.visited_vars.add(name)
-					return self.variables.get(name)
-				else:
-					return "${" + name + "}"
-
 			# then do variable substitution
-			self.need_eval = len(text) > 0
-			self.visited_vars = set()
-			while self.need_eval:
-				self.need_eval = False
-				text = re_var.sub(repl, text)
+			def repl(matchobj):
+				prefix = matchobj.group(1)
+				name = matchobj.group(3)
+				return prefix + self.variables.get(name, "${" + name + "}")
+			text = re_var.sub(repl, text)
 
-			# and finally fix escaped variables
-			return text.replace("$$", "$")
+			# and finally fix escaped $ but escaped variables
+			if not raw:
+				text = text.replace("$$", "$")
+
+			return text
 		else:
 			return [self.eval(str) for str in text]
 
@@ -359,6 +354,7 @@ class Engine:
 
 		self.variables[name] = value
 		self.output.append("%s = %s" % (name, value))
+		self.output.append("%s = %s" % (name, self.to_esc(value)))
 
 	def on_transform(self, obj):
 		target = self.eval(obj[0])
@@ -390,12 +386,28 @@ class Engine:
 		if value == None:
 			return None
 		elif type(value) is str:
-			value = value.replace("$", "$$").replace(":", "$:").replace("\n", "$\n").replace(" ", "$ ")
+			#value = value.replace("$", "$$")
+
+			from pprint import pprint
+			#pprint(value)
+			def repl(matchobj):
+				pprint(matchobj)
+				text_at = value[matchobj.span()[0]:]
+				print(text_at)
+				if re_var.match(text_at):
+					return "$"
+				else:
+					return "$$" * (matchobj.span()[1] - matchobj.span()[0])
+			value = re.sub("\$+", repl, value)
+			#re_var
+
+			#value = value.replace(":", "$:").replace("\n", "$\n").replace(" ", "$ ")
 			# escaping variables
 			# TODO: This one is strange.
-			def repl(matchobj):
-				return "${" + (matchobj.group(1) or matchobj.group(2)) + "}"
-			return re_variable.sub(repl, value)
+			#def repl(matchobj):
+			#	return "${" + (matchobj.group(1) or matchobj.group(2)) + "}"
+			#return re_variable.sub(repl, value)
+			return value
 		else:
 			return [self.to_esc(str) for str in value]
 
