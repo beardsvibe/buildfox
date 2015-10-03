@@ -89,7 +89,7 @@ class Engine:
 
 	# input can be string or list of strings
 	# outputs are always lists
-	def eval_path(self, inputs, outputs = None, rel_path = ""):
+	def eval_path(self, inputs, outputs = None, rel_path = "", generated = None):
 		if inputs:
 			result = []
 			matched = []
@@ -123,7 +123,7 @@ class Engine:
 						fs_files = set(os.listdir(list_folder))
 					else:
 						fs_files = set()
-					generated_files = self.context.generated.get(list_folder, set())
+					generated_files = generated.get(list_folder, set())
 					for file in fs_files.union(generated_files):
 						name = base_folder + separator + file
 						match = re_regex.match(name)
@@ -278,11 +278,11 @@ class Engine:
 		self.rules[rule_name] = vars
 
 	def build(self, obj, assigns):
-		inputs_explicit, targets_explicit = self.eval_path(self.eval(self.from_esc(obj[3])), self.eval(self.from_esc(obj[0])), rel_path = self.rel_path)
-		targets_implicit = self.eval_path(self.eval(self.from_esc(obj[1])), rel_path = self.rel_path)
+		inputs_explicit, targets_explicit = self.eval_path(self.eval(self.from_esc(obj[3])), self.eval(self.from_esc(obj[0])), rel_path = self.rel_path, generated = self.context.generated)
+		targets_implicit = self.eval_path(self.eval(self.from_esc(obj[1])), rel_path = self.rel_path, generated = self.context.generated)
 		rule_name = self.eval(obj[2])
-		inputs_implicit = self.eval_path(self.eval(self.from_esc(obj[4])), rel_path = self.rel_path)
-		inputs_order = self.eval_path(self.eval(self.from_esc(obj[5])), rel_path = self.rel_path)
+		inputs_implicit = self.eval_path(self.eval(self.from_esc(obj[4])), rel_path = self.rel_path, generated = self.context.generated)
+		inputs_order = self.eval_path(self.eval(self.from_esc(obj[5])), rel_path = self.rel_path, generated = self.context.generated)
 
 		self.add_generated_files(targets_explicit)
 
@@ -368,7 +368,7 @@ class Engine:
 				))
 
 	def default(self, obj, assigns):
-		paths = self.eval_path(self.eval(self.from_esc(obj)), rel_path = self.rel_path)
+		paths = self.eval_path(self.eval(self.from_esc(obj)), rel_path = self.rel_path, generated = self.context.generated)
 		self.output.append("default " + " ".join(self.to_esc(paths)))
 		self.write_assigns(assigns)
 
@@ -423,7 +423,7 @@ class Engine:
 		return " ".join(transformed)
 
 	def include(self, obj):
-		paths = self.eval_path(self.eval(self.from_esc([obj])), rel_path = self.rel_path)
+		paths = self.eval_path(self.eval(self.from_esc([obj])), rel_path = self.rel_path, generated = self.context.generated)
 		for path in paths:
 			old_rel_path = self.rel_path
 			self.rel_path = rel_dir(path)
@@ -431,7 +431,7 @@ class Engine:
 			self.rel_path = old_rel_path
 
 	def subninja(self, obj):
-		paths = self.eval_path(self.eval(self.from_esc([obj])), rel_path = self.rel_path)
+		paths = self.eval_path(self.eval(self.from_esc([obj])), rel_path = self.rel_path, generated = self.context.generated)
 		for path in paths:
 			gen_filename = "__gen_%i_%s.ninja" % (
 				self.context.subninja_num,
