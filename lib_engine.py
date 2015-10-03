@@ -89,7 +89,7 @@ class Engine:
 
 	# input can be string or list of strings
 	# outputs are always lists
-	def eval_path(self, inputs, outputs = None):
+	def eval_path(self, inputs, outputs = None, rel_path = ""):
 		if inputs:
 			result = []
 			matched = []
@@ -106,13 +106,13 @@ class Engine:
 						base_folder = re_non_escaped_char.sub(replace_non_esc, base_folder)
 						separator = "\\" if base_folder.rfind("\\") > base_folder.rfind("/") else "/"
 						base_folder = os.path.dirname(base_folder)
-						list_folder = self.rel_path + base_folder
+						list_folder = rel_path + base_folder
 						
 					else:
 						separator = ""
 						base_folder = ""
-						if len(self.rel_path):
-							list_folder = self.rel_path[:-1] # strip last /
+						if len(rel_path):
+							list_folder = rel_path[:-1] # strip last /
 						else:
 							list_folder = "."
 
@@ -128,10 +128,10 @@ class Engine:
 						name = base_folder + separator + file
 						match = re_regex.match(name)
 						if match:
-							result.append(self.rel_path + name)
+							result.append(rel_path + name)
 							matched.append(match.groups())
 				else:
-					result.append(self.rel_path + input)
+					result.append(rel_path + input)
 			inputs = result
 
 		if outputs:
@@ -149,9 +149,9 @@ class Engine:
 							else:
 								return ""
 						file = re_capture_group_ref.sub(replace_group, regex)
-						result.append(self.rel_path + file)
+						result.append(rel_path + file)
 				else:
-					result.append(self.rel_path + output)
+					result.append(rel_path + output)
 
 			# normalize results
 			result = [os.path.normpath(file).replace("\\", "/") for file in result]
@@ -278,11 +278,11 @@ class Engine:
 		self.rules[rule_name] = vars
 
 	def build(self, obj, assigns):
-		inputs_explicit, targets_explicit = self.eval_path(self.eval(self.from_esc(obj[3])), self.eval(self.from_esc(obj[0])))
-		targets_implicit = self.eval_path(self.eval(self.from_esc(obj[1])))
+		inputs_explicit, targets_explicit = self.eval_path(self.eval(self.from_esc(obj[3])), self.eval(self.from_esc(obj[0])), rel_path = self.rel_path)
+		targets_implicit = self.eval_path(self.eval(self.from_esc(obj[1])), rel_path = self.rel_path)
 		rule_name = self.eval(obj[2])
-		inputs_implicit = self.eval_path(self.eval(self.from_esc(obj[4])))
-		inputs_order = self.eval_path(self.eval(self.from_esc(obj[5])))
+		inputs_implicit = self.eval_path(self.eval(self.from_esc(obj[4])), rel_path = self.rel_path)
+		inputs_order = self.eval_path(self.eval(self.from_esc(obj[5])), rel_path = self.rel_path)
 
 		self.add_generated_files(targets_explicit)
 
@@ -368,7 +368,7 @@ class Engine:
 				))
 
 	def default(self, obj, assigns):
-		paths = self.eval_path(self.eval(self.from_esc(obj)))
+		paths = self.eval_path(self.eval(self.from_esc(obj)), rel_path = self.rel_path)
 		self.output.append("default " + " ".join(self.to_esc(paths)))
 		self.write_assigns(assigns)
 
@@ -423,7 +423,7 @@ class Engine:
 		return " ".join(transformed)
 
 	def include(self, obj):
-		paths = self.eval_path(self.eval(self.from_esc([obj])))
+		paths = self.eval_path(self.eval(self.from_esc([obj])), rel_path = self.rel_path)
 		for path in paths:
 			old_rel_path = self.rel_path
 			self.rel_path = rel_dir(path)
@@ -431,7 +431,7 @@ class Engine:
 			self.rel_path = old_rel_path
 
 	def subninja(self, obj):
-		paths = self.eval_path(self.eval(self.from_esc([obj])))
+		paths = self.eval_path(self.eval(self.from_esc([obj])), rel_path = self.rel_path)
 		for path in paths:
 			gen_filename = "__gen_%i_%s.ninja" % (
 				self.context.subninja_num,
