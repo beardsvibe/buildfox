@@ -155,6 +155,16 @@ class Engine:
 		else:
 			return value
 
+
+	def eval_transform(self, pattern, values):
+		def transform_one(value):
+			if value:
+				return self.from_esc2(re_subst.sub(value, pattern))
+			else:
+				return ""
+		transformed = [transform_one(v) for v in values.split(" ")]
+		return " ".join(transformed)
+
 	def write_assigns(self, assigns):
 		local_scope = {}
 		for assign in assigns:
@@ -170,10 +180,10 @@ class Engine:
 			self.output.append("  %s = %s" % (name, value))
 			local_scope[name] = value
 
-	def comment(self, comment):
+	def on_comment(self, comment):
 		self.output.append("#" + comment)
 
-	def rule(self, obj, assigns):
+	def on_rule(self, obj, assigns):
 		rule_name = self.eval(obj)
 		self.output.append("rule " + rule_name)
 		vars = {}
@@ -197,7 +207,7 @@ class Engine:
 				self.output.append("  %s = %s" % (name, value))
 		self.rules[rule_name] = vars
 
-	def build(self, obj, assigns):
+	def on_build(self, obj, assigns):
 		inputs_explicit, targets_explicit = find_files(self.eval(self.from_esc(obj[3])), self.eval(self.from_esc(obj[0])), rel_path = self.rel_path, generated = self.context.generated)
 		targets_implicit = find_files(self.eval(self.from_esc(obj[1])), rel_path = self.rel_path, generated = self.context.generated)
 		rule_name = self.eval(obj[2])
@@ -287,12 +297,12 @@ class Engine:
 					" ".join(self.to_esc(targets_explicit)),
 				))
 
-	def default(self, obj, assigns):
+	def on_default(self, obj, assigns):
 		paths = find_files(self.eval(self.from_esc(obj)), rel_path = self.rel_path, generated = self.context.generated)
 		self.output.append("default " + " ".join(self.to_esc(paths)))
 		self.write_assigns(assigns)
 
-	def pool(self, obj, assigns):
+	def on_pool(self, obj, assigns):
 		name = self.eval(obj)
 		self.output.append("pool " + name)
 		self.write_assigns(assigns)
@@ -305,16 +315,16 @@ class Engine:
 				return False
 		return True
 
-	def auto(self, obj, assigns):
+	def on_auto(self, obj, assigns):
 		outputs = [self.eval(output) for output in self.from_esc(obj[0])] # this shouldn't be find_files !
 		name = self.eval(obj[1])
 		inputs = [self.eval(input) for input in self.from_esc(obj[2])] # this shouldn't be find_files !
 		self.auto_presets[name] = (inputs, outputs, assigns)
 
-	def print(self, obj):
+	def on_print(self, obj):
 		print(self.eval(obj))
 
-	def assign(self, obj):
+	def on_assign(self, obj):
 		name = self.eval(obj[0])
 		value = self.eval(obj[1])
 		op = obj[2]
@@ -328,21 +338,12 @@ class Engine:
 		self.variables[name] = value
 		self.output.append("%s = %s" % (name, value))
 
-	def transform(self, obj):
+	def on_transform(self, obj):
 		target = self.eval(obj[0])
 		pattern = obj[1]
 		self.transformers[target] = pattern
 
-	def eval_transform(self, pattern, values):
-		def transform_one(value):
-			if value:
-				return self.from_esc2(re_subst.sub(value, pattern))
-			else:
-				return ""
-		transformed = [transform_one(v) for v in values.split(" ")]
-		return " ".join(transformed)
-
-	def include(self, obj):
+	def on_include(self, obj):
 		paths = find_files(self.eval(self.from_esc([obj])), rel_path = self.rel_path, generated = self.context.generated)
 		for path in paths:
 			old_rel_path = self.rel_path
@@ -350,7 +351,7 @@ class Engine:
 			parse(self, path)
 			self.rel_path = old_rel_path
 
-	def subninja(self, obj):
+	def on_subninja(self, obj):
 		paths = find_files(self.eval(self.from_esc([obj])), rel_path = self.rel_path, generated = self.context.generated)
 		for path in paths:
 			gen_filename = "__gen_%i_%s.ninja" % (

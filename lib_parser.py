@@ -44,36 +44,36 @@ class Parser:
 
 		if len(self.comments):
 			for comment in self.comments:
-				self.engine.comment(comment)
+				self.engine.on_comment(comment)
 			self.comments = []
 
 		if self.command == "rule":
 			obj = self.read_rule()
 			assigns = self.read_nested_assigns()
-			self.engine.rule(obj, assigns)
+			self.engine.on_rule(obj, assigns)
 
 		elif self.command == "build":
 			obj = self.read_build()
 			assigns = self.read_nested_assigns()
-			self.engine.build(obj, assigns)
+			self.engine.on_build(obj, assigns)
 
 		elif self.command == "default":
 			obj = self.read_default()
 			assigns = self.read_nested_assigns()
-			self.engine.default(obj, assigns)
+			self.engine.on_default(obj, assigns)
 
 		elif self.command == "pool":
 			obj = self.read_pool()
 			assigns = self.read_nested_assigns()
-			self.engine.pool(obj, assigns)
+			self.engine.on_pool(obj, assigns)
 
 		elif self.command == "include":
 			obj = self.read_include()
-			self.engine.include(obj)
+			self.engine.on_include(obj)
 
 		elif self.command == "subninja" or self.command == "subfox":
 			obj = self.read_subninja()
-			self.engine.subninja(obj)
+			self.engine.on_subninja(obj)
 
 		elif self.command == "filter":
 			obj = self.read_filter()
@@ -83,19 +83,19 @@ class Parser:
 		elif self.command == "auto":
 			obj = self.read_auto()
 			assigns = self.read_nested_assigns()
-			self.engine.auto(obj, assigns)
+			self.engine.on_auto(obj, assigns)
 
 		elif self.command == "print":
 			obj = self.read_print()
-			self.engine.print(obj)
+			self.engine.on_print(obj)
 
 		elif self.command == "transformer":
 			obj = self.read_transformer()
-			self.engine.transform(obj)
+			self.engine.on_transform(obj)
 
 		else:
 			obj = self.read_assign()
-			self.engine.assign(obj)
+			self.engine.on_assign(obj)
 
 	def read_rule(self):
 		rule = self.read_identifier()

@@ -83,13 +83,13 @@ engine = Engine()
 if args.get("env"):
 	vars = discover()
 	for name in sorted(vars.keys()):
-		engine.assign((name, vars.get(name), "="))
+		engine.on_assign((name, vars.get(name), "="))
 
 for var in args.get("variables"):
 	parts = var.split("=")
 	if len(parts) == 2:
 		name, value = parts[0], parts[1]
-		engine.assign((name, value, "="))
+		engine.on_assign((name, value, "="))
 	else:
 		raise SyntaxError("unknown argument '%s'. you should use name=value syntax to setup a variable" % var)
 
