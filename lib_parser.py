@@ -7,7 +7,7 @@ keywords = ["rule", "build", "default", "pool", "include", "subninja",
 
 # parser regexes
 re_newline_escaped = re.compile("\$+$")
-re_comment = re.compile("(?<!\$)\#(.*)$") # looking for not escaped #
+re_comment = re.compile("(?<!\$)(?:\$\$)*\#(.*)$") # looking for not escaped #
 re_identifier = re.compile("[a-zA-Z0-9\${}_.-]+")
 re_path = re.compile(r"(r\"(?:\\\"|.)*?\")|((\$\||\$ |\$:|[^ :|\n])+)")
 
