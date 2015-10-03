@@ -170,10 +170,21 @@ class Engine:
 		else:
 			return value
 
-	def eval_transform(self, pattern, values):
+			
+	# TODO: Code duplication sucks.
+	def from_esc2(self, value):
+		def repl(matchobj):
+			return "${%s}" % (matchobj.group(1) or matchobj.group(2))
+		return re_variable.sub(repl, value)
+
+	def eval_transform(self, name, values):
+		optional_transformer = self.transformers.get(name)
+		if not optional_transformer:
+			return values
+
 		def transform_one(value):
 			if value:
-				return self.from_esc2(re_subst.sub(value, pattern))
+				return self.from_esc2(re_subst.sub(value, optional_transformer))
 			else:
 				return ""
 		transformed = [transform_one(v) for v in values.split(" ")]
@@ -186,6 +197,7 @@ class Engine:
 			value = self.eval(assign[1])
 			op = assign[2]
 
+			value = self.eval_transform(name, value)
 			if name in local_scope:
 				value = self.eval_assign_op(value, local_scope.get(name), op)
 			else:
@@ -202,9 +214,12 @@ class Engine:
 		self.output.append("rule " + rule_name)
 		vars = {}
 		for assign in assigns:
-			name = assign[0]
+			name = self.eval(assign[0])
 			value = assign[1]
 			op = assign[2]
+
+			# TODO do we need eval_transform here ?
+
 			# only = is supported because += and -= are not native ninja features
 			# and rule nested variables are evaluated in ninja
 			# so there is no way to implement this in current setup
@@ -343,10 +358,7 @@ class Engine:
 		value = self.eval(obj[1])
 		op = obj[2]
 
-		optional_transformer = self.transformers.get(name)
-		if optional_transformer:
-			value = self.eval_transform(optional_transformer, value)
-
+		value = self.eval_transform(name, value)
 		value = self.eval_assign_op(value, self.variables.get(name), op)
 
 		self.variables[name] = value
