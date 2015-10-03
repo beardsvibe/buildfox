@@ -47,15 +47,16 @@ filter toolset:msvc
 	auto *.dll: link_dll r".*\.(obj|lib)$"
 	auto *.lib: lib r".*\.(obj|lib)$"
 
+	cxxflags =
+	ldflags =
+	libflags =
+	defines =
+	includes =
+
 	filter variation:debug
 		cxxflags = /O1
-		ldflags =
-		libflags =
-
 	filter variation:release
 		cxxflags = /Ox
-		ldflags =
-		libflags =
 
 	transformer defines: /D${param}
 	transformer includes: /I${param}
