@@ -5,14 +5,11 @@ import re
 import copy
 import collections
 from lib_parser import parse
-from lib_util import rel_dir, wildcard_regex
+from lib_util import rel_dir, wildcard_regex, find_files
 
 # engine regexes
 re_var = re.compile("\${([a-zA-Z0-9_.-]+)}|\$([a-zA-Z0-9_-]+)")
-re_folder_part = re.compile(r"(?:[^\r\n(\[\"\\]|\\.)+") # match folder part in filename regex
-re_capture_group_ref = re.compile(r"(?<!\\)\\(\d)") # match regex capture group reference
 re_variable = re.compile("\$\${([a-zA-Z0-9_.-]+)}|\$\$([a-zA-Z0-9_-]+)")
-re_non_escaped_char = re.compile(r"(?<!\\)\\(.)") # looking for not escaped \ with char
 re_alphanumeric = re.compile(r"\W+")
 re_subst = re.compile(r"(?<!\$)\$\{param\}")
 
@@ -86,83 +83,6 @@ class Engine:
 			return text
 		else:
 			return [self.eval(str) for str in text]
-
-	# input can be string or list of strings
-	# outputs are always lists
-	def eval_path(self, inputs, outputs = None, rel_path = "", generated = None):
-		if inputs:
-			result = []
-			matched = []
-			for input in inputs:
-				regex = wildcard_regex(input)
-				if regex:
-					# find the folder where to look for files
-					base_folder = re_folder_part.match(regex)
-					if base_folder:
-						base_folder = base_folder.group()
-						# rename regex back to readable form
-						def replace_non_esc(match_group):
-							return match_group.group(1)
-						base_folder = re_non_escaped_char.sub(replace_non_esc, base_folder)
-						separator = "\\" if base_folder.rfind("\\") > base_folder.rfind("/") else "/"
-						base_folder = os.path.dirname(base_folder)
-						list_folder = rel_path + base_folder
-						
-					else:
-						separator = ""
-						base_folder = ""
-						if len(rel_path):
-							list_folder = rel_path[:-1] # strip last /
-						else:
-							list_folder = "."
-
-					# look for files
-					list_folder = os.path.normpath(list_folder).replace("\\", "/")
-					re_regex = re.compile(regex)
-					if os.path.isdir(list_folder):
-						fs_files = set(os.listdir(list_folder))
-					else:
-						fs_files = set()
-					generated_files = generated.get(list_folder, set())
-					for file in fs_files.union(generated_files):
-						name = base_folder + separator + file
-						match = re_regex.match(name)
-						if match:
-							result.append(rel_path + name)
-							matched.append(match.groups())
-				else:
-					result.append(rel_path + input)
-			inputs = result
-
-		if outputs:
-			result = []
-			for output in outputs:
-				# we want \number instead of capture groups
-				regex = wildcard_regex(output, True)
-				if regex:
-					for match in matched:
-						# replace \number with data
-						def replace_group(matchobj):
-							index = int(matchobj.group(1)) - 1
-							if index >= 0 and index < len(match):
-								return match[index]
-							else:
-								return ""
-						file = re_capture_group_ref.sub(replace_group, regex)
-						result.append(rel_path + file)
-				else:
-					result.append(rel_path + output)
-
-			# normalize results
-			result = [os.path.normpath(file).replace("\\", "/") for file in result]
-
-		# normalize inputs
-		inputs = [os.path.normpath(file).replace("\\", "/") for file in inputs]
-
-		if outputs:
-			return inputs, result
-		else:
-			return inputs
 
 	def add_generated_files(self, files):
 		for file in files:
@@ -278,11 +198,11 @@ class Engine:
 		self.rules[rule_name] = vars
 
 	def build(self, obj, assigns):
-		inputs_explicit, targets_explicit = self.eval_path(self.eval(self.from_esc(obj[3])), self.eval(self.from_esc(obj[0])), rel_path = self.rel_path, generated = self.context.generated)
-		targets_implicit = self.eval_path(self.eval(self.from_esc(obj[1])), rel_path = self.rel_path, generated = self.context.generated)
+		inputs_explicit, targets_explicit = find_files(self.eval(self.from_esc(obj[3])), self.eval(self.from_esc(obj[0])), rel_path = self.rel_path, generated = self.context.generated)
+		targets_implicit = find_files(self.eval(self.from_esc(obj[1])), rel_path = self.rel_path, generated = self.context.generated)
 		rule_name = self.eval(obj[2])
-		inputs_implicit = self.eval_path(self.eval(self.from_esc(obj[4])), rel_path = self.rel_path, generated = self.context.generated)
-		inputs_order = self.eval_path(self.eval(self.from_esc(obj[5])), rel_path = self.rel_path, generated = self.context.generated)
+		inputs_implicit = find_files(self.eval(self.from_esc(obj[4])), rel_path = self.rel_path, generated = self.context.generated)
+		inputs_order = find_files(self.eval(self.from_esc(obj[5])), rel_path = self.rel_path, generated = self.context.generated)
 
 		self.add_generated_files(targets_explicit)
 
@@ -368,7 +288,7 @@ class Engine:
 				))
 
 	def default(self, obj, assigns):
-		paths = self.eval_path(self.eval(self.from_esc(obj)), rel_path = self.rel_path, generated = self.context.generated)
+		paths = find_files(self.eval(self.from_esc(obj)), rel_path = self.rel_path, generated = self.context.generated)
 		self.output.append("default " + " ".join(self.to_esc(paths)))
 		self.write_assigns(assigns)
 
@@ -386,9 +306,9 @@ class Engine:
 		return True
 
 	def auto(self, obj, assigns):
-		outputs = [self.eval(output) for output in self.from_esc(obj[0])] # this shouldn't be eval_path !
+		outputs = [self.eval(output) for output in self.from_esc(obj[0])] # this shouldn't be find_files !
 		name = self.eval(obj[1])
-		inputs = [self.eval(input) for input in self.from_esc(obj[2])] # this shouldn't be eval_path !
+		inputs = [self.eval(input) for input in self.from_esc(obj[2])] # this shouldn't be find_files !
 		self.auto_presets[name] = (inputs, outputs, assigns)
 
 	def print(self, obj):
@@ -423,7 +343,7 @@ class Engine:
 		return " ".join(transformed)
 
 	def include(self, obj):
-		paths = self.eval_path(self.eval(self.from_esc([obj])), rel_path = self.rel_path, generated = self.context.generated)
+		paths = find_files(self.eval(self.from_esc([obj])), rel_path = self.rel_path, generated = self.context.generated)
 		for path in paths:
 			old_rel_path = self.rel_path
 			self.rel_path = rel_dir(path)
@@ -431,7 +351,7 @@ class Engine:
 			self.rel_path = old_rel_path
 
 	def subninja(self, obj):
-		paths = self.eval_path(self.eval(self.from_esc([obj])), rel_path = self.rel_path, generated = self.context.generated)
+		paths = find_files(self.eval(self.from_esc([obj])), rel_path = self.rel_path, generated = self.context.generated)
 		for path in paths:
 			gen_filename = "__gen_%i_%s.ninja" % (
 				self.context.subninja_num,

@@ -3,6 +3,10 @@
 import os
 import re
 
+re_folder_part = re.compile(r"(?:[^\r\n(\[\"\\]|\\.)+") # match folder part in filename regex
+re_non_escaped_char = re.compile(r"(?<!\\)\\(.)") # looking for not escaped \ with char
+re_capture_group_ref = re.compile(r"(?<!\\)\\(\d)") # match regex capture group reference
+
 # return relative path to current work dir
 def rel_dir(filename):
 	path = os.path.relpath(os.path.dirname(os.path.abspath(filename)), os.getcwd()).replace("\\", "/") + "/"
@@ -64,4 +68,79 @@ def wildcard_regex(filename, replace_groups = False):
 	else:
 		return None
 
+# input can be string or list of strings
+# outputs are always lists
+def find_files(inputs, outputs = None, rel_path = "", generated = None):
+	if inputs:
+		result = []
+		matched = []
+		for input in inputs:
+			regex = wildcard_regex(input)
+			if regex:
+				# find the folder where to look for files
+				base_folder = re_folder_part.match(regex)
+				if base_folder:
+					base_folder = base_folder.group()
+					# rename regex back to readable form
+					def replace_non_esc(match_group):
+						return match_group.group(1)
+					base_folder = re_non_escaped_char.sub(replace_non_esc, base_folder)
+					separator = "\\" if base_folder.rfind("\\") > base_folder.rfind("/") else "/"
+					base_folder = os.path.dirname(base_folder)
+					list_folder = rel_path + base_folder
+					
+				else:
+					separator = ""
+					base_folder = ""
+					if len(rel_path):
+						list_folder = rel_path[:-1] # strip last /
+					else:
+						list_folder = "."
 
+				# look for files
+				list_folder = os.path.normpath(list_folder).replace("\\", "/")
+				re_regex = re.compile(regex)
+				if os.path.isdir(list_folder):
+					fs_files = set(os.listdir(list_folder))
+				else:
+					fs_files = set()
+				generated_files = generated.get(list_folder, set())
+				for file in fs_files.union(generated_files):
+					name = base_folder + separator + file
+					match = re_regex.match(name)
+					if match:
+						result.append(rel_path + name)
+						matched.append(match.groups())
+			else:
+				result.append(rel_path + input)
+		inputs = result
+
+	if outputs:
+		result = []
+		for output in outputs:
+			# we want \number instead of capture groups
+			regex = wildcard_regex(output, True)
+			if regex:
+				for match in matched:
+					# replace \number with data
+					def replace_group(matchobj):
+						index = int(matchobj.group(1)) - 1
+						if index >= 0 and index < len(match):
+							return match[index]
+						else:
+							return ""
+					file = re_capture_group_ref.sub(replace_group, regex)
+					result.append(rel_path + file)
+			else:
+				result.append(rel_path + output)
+
+		# normalize results
+		result = [os.path.normpath(file).replace("\\", "/") for file in result]
+
+	# normalize inputs
+	inputs = [os.path.normpath(file).replace("\\", "/") for file in inputs]
+
+	if outputs:
+		return inputs, result
+	else:
+		return inputs
