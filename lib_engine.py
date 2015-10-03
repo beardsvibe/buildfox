@@ -80,7 +80,11 @@ class Engine:
 			def repl(matchobj):
 				prefix = matchobj.group(1)
 				name = matchobj.group(3)
-				return prefix + self.variables.get(name, "${" + name + "}")
+				if matchobj.group(2):
+					default = "${%s}" % name
+				else:
+					default = "$%s" % name
+				return prefix + self.variables.get(name, default)
 			text = re_var.sub(repl, text)
 
 			# and finally fix escaped $ but escaped variables
@@ -195,7 +199,7 @@ class Engine:
 			else:
 				value = self.eval_assign_op(value, self.variables.get(name, ""), op)
 
-			self.output.append("  %s = %s" % (name, value))
+			self.output.append("  %s = %s" % (name, self.to_esc(value, simple = True)))
 			local_scope[name] = value
 
 	def on_comment(self, comment):
@@ -207,10 +211,11 @@ class Engine:
 		vars = {}
 		for assign in assigns:
 			name = self.eval(assign[0])
+			# do not evaluate value here and also do not do any from_esc / to_esc here
+			# just pass value as raw string to output
+			# TODO but do we need eval_transform here ?
 			value = assign[1]
 			op = assign[2]
-
-			# TODO do we need eval_transform here ?
 
 			# only = is supported because += and -= are not native ninja features
 			# and rule nested variables are evaluated in ninja
@@ -353,8 +358,7 @@ class Engine:
 		value = self.eval_assign_op(value, self.variables.get(name), op)
 
 		self.variables[name] = value
-		self.output.append("%s = %s" % (name, value))
-		self.output.append("%s = %s" % (name, self.to_esc(value)))
+		self.output.append("%s = %s" % (name, self.to_esc(value, simple = True)))
 
 	def on_transform(self, obj):
 		target = self.eval(obj[0])
@@ -382,31 +386,13 @@ class Engine:
 			engine.save(gen_filename)
 			self.output.append("subninja " + self.to_esc(gen_filename))
 
-	def to_esc(self, value):
+	def to_esc(self, value, simple = False):
 		if value == None:
 			return None
 		elif type(value) is str:
-			#value = value.replace("$", "$$")
-
-			from pprint import pprint
-			#pprint(value)
-			def repl(matchobj):
-				pprint(matchobj)
-				text_at = value[matchobj.span()[0]:]
-				print(text_at)
-				if re_var.match(text_at):
-					return "$"
-				else:
-					return "$$" * (matchobj.span()[1] - matchobj.span()[0])
-			value = re.sub("\$+", repl, value)
-			#re_var
-
-			#value = value.replace(":", "$:").replace("\n", "$\n").replace(" ", "$ ")
-			# escaping variables
-			# TODO: This one is strange.
-			#def repl(matchobj):
-			#	return "${" + (matchobj.group(1) or matchobj.group(2)) + "}"
-			#return re_variable.sub(repl, value)
+			value = value.replace("$", "$$")
+			if not simple:
+				value = value.replace(":", "$:").replace("\n", "$\n").replace(" ", "$ ")
 			return value
 		else:
 			return [self.to_esc(str) for str in value]
