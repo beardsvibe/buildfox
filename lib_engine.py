@@ -67,6 +67,7 @@ class Engine:
 		if text == None:
 			return None
 		elif type(text) is str:
+			text = self.from_esc(text)
 			def repl(matchobj):
 				name = matchobj.group(1) or matchobj.group(2)
 				if (name in self.variables) and (name not in self.visited_vars):
@@ -155,7 +156,6 @@ class Engine:
 		else:
 			return value
 
-
 	def eval_transform(self, pattern, values):
 		def transform_one(value):
 			if value:
@@ -208,11 +208,11 @@ class Engine:
 		self.rules[rule_name] = vars
 
 	def on_build(self, obj, assigns):
-		inputs_explicit, targets_explicit = find_files(self.eval(self.from_esc(obj[3])), self.eval(self.from_esc(obj[0])), rel_path = self.rel_path, generated = self.context.generated)
-		targets_implicit = find_files(self.eval(self.from_esc(obj[1])), rel_path = self.rel_path, generated = self.context.generated)
+		inputs_explicit, targets_explicit = find_files(self.eval(obj[3]), self.eval(obj[0]), rel_path = self.rel_path, generated = self.context.generated)
+		targets_implicit = find_files(self.eval(obj[1]), rel_path = self.rel_path, generated = self.context.generated)
 		rule_name = self.eval(obj[2])
-		inputs_implicit = find_files(self.eval(self.from_esc(obj[4])), rel_path = self.rel_path, generated = self.context.generated)
-		inputs_order = find_files(self.eval(self.from_esc(obj[5])), rel_path = self.rel_path, generated = self.context.generated)
+		inputs_implicit = find_files(self.eval(obj[4]), rel_path = self.rel_path, generated = self.context.generated)
+		inputs_order = find_files(self.eval(obj[5]), rel_path = self.rel_path, generated = self.context.generated)
 
 		self.add_generated_files(targets_explicit)
 
@@ -298,7 +298,7 @@ class Engine:
 				))
 
 	def on_default(self, obj, assigns):
-		paths = find_files(self.eval(self.from_esc(obj)), rel_path = self.rel_path, generated = self.context.generated)
+		paths = find_files(self.eval(obj), rel_path = self.rel_path, generated = self.context.generated)
 		self.output.append("default " + " ".join(self.to_esc(paths)))
 		self.write_assigns(assigns)
 
@@ -310,15 +310,15 @@ class Engine:
 	def filter(self, obj):
 		for filt in obj:
 			name = self.eval(filt[0])
-			value = self.eval(self.from_esc(filt[1]))
+			value = self.eval(filt[1])
 			if not self.eval_filter(name, value):
 				return False
 		return True
 
 	def on_auto(self, obj, assigns):
-		outputs = [self.eval(output) for output in self.from_esc(obj[0])] # this shouldn't be find_files !
+		outputs = self.eval(obj[0]) # this shouldn't be find_files !
 		name = self.eval(obj[1])
-		inputs = [self.eval(input) for input in self.from_esc(obj[2])] # this shouldn't be find_files !
+		inputs = self.eval(obj[2]) # this shouldn't be find_files !
 		self.auto_presets[name] = (inputs, outputs, assigns)
 
 	def on_print(self, obj):
@@ -344,7 +344,7 @@ class Engine:
 		self.transformers[target] = pattern
 
 	def on_include(self, obj):
-		paths = find_files(self.eval(self.from_esc([obj])), rel_path = self.rel_path, generated = self.context.generated)
+		paths = find_files(self.eval([obj]), rel_path = self.rel_path, generated = self.context.generated)
 		for path in paths:
 			old_rel_path = self.rel_path
 			self.rel_path = rel_dir(path)
@@ -352,7 +352,7 @@ class Engine:
 			self.rel_path = old_rel_path
 
 	def on_subninja(self, obj):
-		paths = find_files(self.eval(self.from_esc([obj])), rel_path = self.rel_path, generated = self.context.generated)
+		paths = find_files(self.eval([obj]), rel_path = self.rel_path, generated = self.context.generated)
 		for path in paths:
 			gen_filename = "__gen_%i_%s.ninja" % (
 				self.context.subninja_num,
