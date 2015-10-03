@@ -8,7 +8,7 @@ from lib_parser import parse
 from lib_util import rel_dir, wildcard_regex, find_files
 
 # engine regexes
-re_var = re.compile("\${([a-zA-Z0-9_.-]+)}|\$([a-zA-Z0-9_-]+)")
+re_var = re.compile("(?<!\$)\${([a-zA-Z0-9_.-]+)}|\$([a-zA-Z0-9_-]+)")
 re_variable = re.compile("\$\${([a-zA-Z0-9_.-]+)}|\$\$([a-zA-Z0-9_-]+)")
 re_alphanumeric = re.compile(r"\W+")
 re_subst = re.compile(r"(?<!\$)\$\{param\}")
@@ -67,7 +67,10 @@ class Engine:
 		if text == None:
 			return None
 		elif type(text) is str:
-			text = self.from_esc(text)
+			# first remove escaped sequences
+			if not text.startswith("r\""):
+				text = text.replace("$\n", "").replace("$ ", " ").replace("$:", ":")
+
 			def repl(matchobj):
 				name = matchobj.group(1) or matchobj.group(2)
 				if (name in self.variables) and (name not in self.visited_vars):
@@ -76,12 +79,16 @@ class Engine:
 					return self.variables.get(name)
 				else:
 					return "${" + name + "}"
+
+			# then do variable substitution
 			self.need_eval = len(text) > 0
 			self.visited_vars = set()
 			while self.need_eval:
 				self.need_eval = False
 				text = re_var.sub(repl, text)
-			return text
+
+			# and finally fix escaped variables
+			return text.replace("$$", "$")
 		else:
 			return [self.eval(str) for str in text]
 
@@ -383,21 +390,4 @@ class Engine:
 			return re_variable.sub(repl, value)
 		else:
 			return [self.to_esc(str) for str in value]
-
-	# TODO: Code duplication sucks.
-	def from_esc2(self, value):
-		def repl(matchobj):
-			return "${%s}" % (matchobj.group(1) or matchobj.group(2))
-		return re_variable.sub(repl, value)
-
-	def from_esc(self, value):
-		if value == None:
-			return None
-		elif type(value) is str:
-			if value.startswith("r\""):
-				return value
-			else:
-				return value.replace("$\n", "").replace("$ ", " ").replace("$:", ":").replace("$$", "$")
-		else:
-			return [self.from_esc(str) for str in value]
 
