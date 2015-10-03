@@ -61,8 +61,11 @@ class Engine:
 		return "\n".join(self.output) + "\n"
 
 	def save(self, filename):
-		with open(filename, "w") as f:
-			f.write(self.text())
+		if filename:
+			with open(filename, "w") as f:
+				f.write(self.text())
+		else:
+			print(self.text())
 
 	def eval(self, text):
 		if text == None:
