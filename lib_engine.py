@@ -85,6 +85,13 @@ class Engine:
 		else:
 			return [self.eval(str) for str in text]
 
+	# evaluate and find files
+	def eval_find_files(self, input, output = None):
+		return find_files(self.eval(input),
+						  self.eval(output),
+						  rel_path = self.rel_path,
+						  generated = self.context.generated)
+
 	def add_generated_files(self, files):
 		for file in files:
 			dir = os.path.dirname(file)
@@ -208,11 +215,11 @@ class Engine:
 		self.rules[rule_name] = vars
 
 	def on_build(self, obj, assigns):
-		inputs_explicit, targets_explicit = find_files(self.eval(obj[3]), self.eval(obj[0]), rel_path = self.rel_path, generated = self.context.generated)
-		targets_implicit = find_files(self.eval(obj[1]), rel_path = self.rel_path, generated = self.context.generated)
+		inputs_explicit, targets_explicit = self.eval_find_files(obj[3], obj[0])
+		targets_implicit = self.eval_find_files(obj[1])
 		rule_name = self.eval(obj[2])
-		inputs_implicit = find_files(self.eval(obj[4]), rel_path = self.rel_path, generated = self.context.generated)
-		inputs_order = find_files(self.eval(obj[5]), rel_path = self.rel_path, generated = self.context.generated)
+		inputs_implicit = self.eval_find_files(obj[4])
+		inputs_order = self.eval_find_files(obj[5])
 
 		self.add_generated_files(targets_explicit)
 
@@ -298,7 +305,7 @@ class Engine:
 				))
 
 	def on_default(self, obj, assigns):
-		paths = find_files(self.eval(obj), rel_path = self.rel_path, generated = self.context.generated)
+		paths = self.eval_find_files(obj)
 		self.output.append("default " + " ".join(self.to_esc(paths)))
 		self.write_assigns(assigns)
 
@@ -344,7 +351,7 @@ class Engine:
 		self.transformers[target] = pattern
 
 	def on_include(self, obj):
-		paths = find_files(self.eval([obj]), rel_path = self.rel_path, generated = self.context.generated)
+		paths = self.eval_find_files([obj])
 		for path in paths:
 			old_rel_path = self.rel_path
 			self.rel_path = rel_dir(path)
@@ -352,7 +359,7 @@ class Engine:
 			self.rel_path = old_rel_path
 
 	def on_subninja(self, obj):
-		paths = find_files(self.eval([obj]), rel_path = self.rel_path, generated = self.context.generated)
+		paths = self.eval_find_files([obj])
 		for path in paths:
 			gen_filename = "__gen_%i_%s.ninja" % (
 				self.context.subninja_num,
