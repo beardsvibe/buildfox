@@ -8,10 +8,11 @@ from lib_parser import parse
 from lib_util import rel_dir, wildcard_regex, find_files
 
 # engine regexes
-re_var = re.compile("(?<!\$)\${([a-zA-Z0-9_.-]+)}|\$([a-zA-Z0-9_-]+)")
+re_var = re.compile("(?<!\$)(?:\$\$)*\${([a-zA-Z0-9_.-]+)}|(?<!\$)(?:\$\$)*\$([a-zA-Z0-9_-]+)")
 re_variable = re.compile("\$\${([a-zA-Z0-9_.-]+)}|\$\$([a-zA-Z0-9_-]+)")
 re_alphanumeric = re.compile(r"\W+")
-re_subst = re.compile(r"(?<!\$)\$\{param\}")
+re_subst = re.compile(r"(?<!\$)(?:\$\$)*\$\{param\}")
+re_non_escaped_space = re.compile(r"(?<!\$)(?:\$\$)* +")
 
 class Engine:
 	class Context:
@@ -171,26 +172,26 @@ class Engine:
 			return value
 
 	def eval_transform(self, name, values):
-		optional_transformer = self.transformers.get(name)
-		if not optional_transformer:
-			return values
+		transformer = self.transformers.get(name)
+		if not transformer:
+			return self.eval(values)
 
 		def transform_one(value):
 			if not value:
 				return ""
-			return self.eval(re_subst.sub(value, optional_transformer))
+			value = re_subst.sub(value, transformer)
+			return self.eval(value)
 
-		transformed = [transform_one(v) for v in values.split(" ")]
+		transformed = [transform_one(v) for v in re_non_escaped_space.split(values)]
 		return " ".join(transformed)
 
 	def write_assigns(self, assigns):
 		local_scope = {}
 		for assign in assigns:
 			name = self.eval(assign[0])
-			value = self.eval(assign[1])
+			value = self.eval_transform(name, assign[1])
 			op = assign[2]
 
-			value = self.eval_transform(name, value)
 			if name in local_scope:
 				value = self.eval_assign_op(value, local_scope.get(name), op)
 			else:
@@ -348,10 +349,9 @@ class Engine:
 
 	def on_assign(self, obj):
 		name = self.eval(obj[0])
-		value = self.eval(obj[1])
+		value = self.eval_transform(name, obj[1])
 		op = obj[2]
 
-		value = self.eval_transform(name, value)
 		value = self.eval_assign_op(value, self.variables.get(name), op)
 
 		self.variables[name] = value
