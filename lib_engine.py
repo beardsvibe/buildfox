@@ -396,4 +396,3 @@ class Engine:
 			return value
 		else:
 			return [self.to_esc(str) for str in value]
-
