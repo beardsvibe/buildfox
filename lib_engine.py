@@ -170,23 +170,16 @@ class Engine:
 		else:
 			return value
 
-			
-	# TODO: Code duplication sucks.
-	def from_esc2(self, value):
-		def repl(matchobj):
-			return "${%s}" % (matchobj.group(1) or matchobj.group(2))
-		return re_variable.sub(repl, value)
-
 	def eval_transform(self, name, values):
 		optional_transformer = self.transformers.get(name)
 		if not optional_transformer:
 			return values
 
 		def transform_one(value):
-			if value:
-				return self.from_esc2(re_subst.sub(value, optional_transformer))
-			else:
+			if not value:
 				return ""
+			return self.eval(re_subst.sub(value, optional_transformer))
+
 		transformed = [transform_one(v) for v in values.split(" ")]
 		return " ".join(transformed)
 
@@ -366,7 +359,7 @@ class Engine:
 
 	def on_transform(self, obj):
 		target = self.eval(obj[0])
-		pattern = obj[1]
+		pattern = obj[1] # do not eval it here
 		self.transformers[target] = pattern
 
 	def on_include(self, obj):
