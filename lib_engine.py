@@ -94,7 +94,6 @@ class Engine:
 			result = []
 			matched = []
 			for input in inputs:
-				input = self.eval(input)
 				regex = wildcard_regex(input)
 				if regex:
 					# find the folder where to look for files
@@ -138,7 +137,6 @@ class Engine:
 		if outputs:
 			result = []
 			for output in outputs:
-				output = self.eval(output)
 				# we want \number instead of capture groups
 				regex = wildcard_regex(output, True)
 				if regex:
@@ -280,11 +278,11 @@ class Engine:
 		self.rules[rule_name] = vars
 
 	def build(self, obj, assigns):
-		inputs_explicit, targets_explicit = self.eval_path(self.from_esc(obj[3]), self.from_esc(obj[0]))
-		targets_implicit = self.eval_path(self.from_esc(obj[1]))
+		inputs_explicit, targets_explicit = self.eval_path(self.eval(self.from_esc(obj[3])), self.eval(self.from_esc(obj[0])))
+		targets_implicit = self.eval_path(self.eval(self.from_esc(obj[1])))
 		rule_name = self.eval(obj[2])
-		inputs_implicit = self.eval_path(self.from_esc(obj[4]))
-		inputs_order = self.eval_path(self.from_esc(obj[5]))
+		inputs_implicit = self.eval_path(self.eval(self.from_esc(obj[4])))
+		inputs_order = self.eval_path(self.eval(self.from_esc(obj[5])))
 
 		self.add_generated_files(targets_explicit)
 
@@ -370,7 +368,7 @@ class Engine:
 				))
 
 	def default(self, obj, assigns):
-		paths = self.eval_path(self.from_esc(obj))
+		paths = self.eval_path(self.eval(self.from_esc(obj)))
 		self.output.append("default " + " ".join(self.to_esc(paths)))
 		self.write_assigns(assigns)
 
@@ -425,7 +423,7 @@ class Engine:
 		return " ".join(transformed)
 
 	def include(self, obj):
-		paths = self.eval_path(self.from_esc([obj]))
+		paths = self.eval_path(self.eval(self.from_esc([obj])))
 		for path in paths:
 			old_rel_path = self.rel_path
 			self.rel_path = rel_dir(path)
@@ -433,7 +431,7 @@ class Engine:
 			self.rel_path = old_rel_path
 
 	def subninja(self, obj):
-		paths = self.eval_path(self.from_esc([obj]))
+		paths = self.eval_path(self.eval(self.from_esc([obj])))
 		for path in paths:
 			gen_filename = "__gen_%i_%s.ninja" % (
 				self.context.subninja_num,
