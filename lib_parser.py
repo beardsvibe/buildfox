@@ -368,6 +368,7 @@ class Parser:
 				self.line += self.lines[self.line_i]
 				self.line_i += 1
 				newline_escaped = re_newline_escaped.search(self.line)
+				# TODO replace with proper regex !
 				if newline_escaped:
 					l, r = newline_escaped.span()
 					# in some cases we can have $$, $$$$, etc in the end
