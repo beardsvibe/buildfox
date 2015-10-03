@@ -10,6 +10,7 @@ from deepdiff import DeepDiff # pip install deepdiff
 
 sys.path.append("..")
 from lib_parser import parse
+from lib_engine import Engine
 
 class EngineMock:
 	def __init__(self):
@@ -92,7 +93,7 @@ class EngineMock:
 		})
 
 any_failed = False
-for test_filename in glob.glob("parser/*.in"):
+for test_filename in glob.glob("suite/*.in"):
 	print("---------------------------------------- testing %s" % test_filename)
 	try:
 		with open(os.path.splitext(test_filename)[0] + ".json", "r") as f:
@@ -104,11 +105,23 @@ for test_filename in glob.glob("parser/*.in"):
 			print("results are differ from reference : ")
 			pprint(diff)
 			any_failed = True
+
+		with open(os.path.splitext(test_filename)[0] + ".ninja", "r") as f:
+			reference = f.read()
+		engine = Engine()
+		engine.load(test_filename, logo = False)
+		diff = DeepDiff(reference, engine.text())
+		if diff:
+			print("results are differ from reference : ")
+			pprint(diff)
+			any_failed = True
 	except:
 		err = sys.exc_info()[0]
 		print("exception error : %s" % err)
 		traceback.print_exc()
 		any_failed = True
+
+# TODO clean up temporary ninja files in current working dir
 
 if any_failed:
 	print("one or more tests failed")
