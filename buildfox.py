@@ -82,8 +82,8 @@ engine = Engine()
 
 if args.get("env"):
 	vars = discover()
-	for name, value in vars.items():
-		engine.assign((name, value, "="))
+	for name in sorted(vars.keys()):
+		engine.assign((name, vars.get(name), "="))
 
 for var in args.get("variables"):
 	parts = var.split("=")
