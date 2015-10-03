@@ -5,6 +5,7 @@ import re
 import copy
 import collections
 from lib_parser import parse
+from lib_util import rel_dir, wildcard_regex
 
 # engine regexes
 re_var = re.compile("\${([a-zA-Z0-9_.-]+)}|\$([a-zA-Z0-9_-]+)")
@@ -47,7 +48,7 @@ class Engine:
 	# load manifest
 	def load(self, filename):
 		self.filename = filename
-		self.rel_path = self.rel_dir(filename)
+		self.rel_path = rel_dir(filename)
 		self.output.append("# generated with love by buildfox from %s" % filename)
 		parse(self, filename)
 
@@ -65,13 +66,6 @@ class Engine:
 		with open(filename, "w") as f:
 			f.write(self.text())
 
-	# return relative path to current work dir
-	def rel_dir(self, filename):
-		path = os.path.relpath(os.path.dirname(os.path.abspath(filename)), os.getcwd()).replace("\\", "/") + "/"
-		if path == "./":
-			path = ""
-		return path
-
 	def eval(self, text):
 		def repl(matchobj):
 			name = matchobj.group(1) or matchobj.group(2)
@@ -88,59 +82,6 @@ class Engine:
 			text = re_var.sub(repl, text)
 		return text
 
-	# return regex value in filename is regex or wildcard
-	def wildcard_regex(self, filename, output = False):
-		if filename.startswith("r\""):
-			return filename[2:-1] # strip r" and "
-		elif "*" in filename or "?" in filename or "[" in filename:
-			# based on fnmatch.translate with each wildcard is a capture group
-			i, n = 0, len(filename)
-			groups = 1
-			res = ""
-			while i < n:
-				c = filename[i]
-				i = i + 1
-				if c == "*":
-					if output:
-						res = res + "\\" + str(groups)
-						groups += 1
-					else:
-						res = res + "(.*)"
-				elif c == "?":
-					if output:
-						res = res + "\\" + str(groups)
-						groups += 1
-					else:
-						res = res + "(.)"
-				elif output:
-					res = res + c
-				elif c == "[":
-					j = i
-					if j < n and filename[j] == "!":
-						j = j + 1
-					if j < n and filename[j] == "]":
-						j = j + 1
-					while j < n and filename[j] != "]":
-						j = j + 1
-					if j >= n:
-						res = res + "\\["
-					else:
-						stuff = filename[i:j].replace("\\", "\\\\")
-						i = j + 1
-						if stuff[0] == "!":
-							stuff = "^" + stuff[1:]
-						elif stuff[0] == "^":
-							stuff = "\\" + stuff
-						res = "%s([%s])" % (res, stuff)
-				else:
-					res = res + re.escape(c)
-			if output:
-				return res
-			else:
-				return res + "\Z(?ms)"
-		else:
-			return None
-
 	# input can be string or list of strings
 	# outputs are always lists
 	def eval_path(self, inputs, outputs = None):
@@ -149,7 +90,7 @@ class Engine:
 			matched = []
 			for input in inputs:
 				input = self.eval(input)
-				regex = self.wildcard_regex(input)
+				regex = wildcard_regex(input)
 				if regex:
 					# find the folder where to look for files
 					base_folder = re_folder_part.match(regex)
@@ -194,7 +135,7 @@ class Engine:
 			for output in outputs:
 				output = self.eval(output)
 				# we want \number instead of capture groups
-				regex = self.wildcard_regex(output, True)
+				regex = wildcard_regex(output, True)
 				if regex:
 					for match in matched:
 						# replace \number with data
@@ -240,7 +181,7 @@ class Engine:
 		for rule_name, auto in self.auto_presets.items(): # name: (inputs, outputs, assigns)
 			# check if all inputs match required auto inputs
 			for auto_input in auto[0]:
-				regex = self.wildcard_regex(auto_input)
+				regex = wildcard_regex(auto_input)
 				if regex:
 					re_regex = re.compile(regex)
 					match = all(re_regex.match(input) for input in inputs)
@@ -252,7 +193,7 @@ class Engine:
 				continue
 			# check if all outputs match required auto outputs
 			for auto_output in auto[1]:
-				regex = self.wildcard_regex(auto_output)
+				regex = wildcard_regex(auto_output)
 				if regex:
 					re_regex = re.compile(regex)
 					match = all(re_regex.match(output) for output in outputs)
@@ -274,7 +215,7 @@ class Engine:
 
 	def eval_filter(self, name, regex_or_value):
 		value = self.variables.get(name, "")
-		regex = self.wildcard_regex(regex_or_value)
+		regex = wildcard_regex(regex_or_value)
 		if regex:
 			return re.match(regex, value)
 		else:
@@ -482,7 +423,7 @@ class Engine:
 		paths = self.eval_path(self.from_esc([obj]))
 		for path in paths:
 			old_rel_path = self.rel_path
-			self.rel_path = self.rel_dir(path)
+			self.rel_path = rel_dir(path)
 			parse(self, path)
 			self.rel_path = old_rel_path
 
