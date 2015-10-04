@@ -1,6 +1,9 @@
 a = 1
+
 b = 1 $$a $$1 $$$$a $$$$1 $$$$$$a $$$$$$1 $$$$$$$$a
 b = 1 $${a} $$1 $$$${a} $$$$1 $$$$$${a} $$$$$$1 $$$$$$$${a}
+
 b = $$not_set $$not_set $$$$not_set $$$$not_set $$$$$$not_set $$$$$$not_set $$$$$$$$not_set $$$$$$$$not_set
 b = $${not_set} $${not_set} $$$${not_set} $$$${not_set} $$$$$${not_set} $$$$$${not_set} $$$$$$$${not_set} $$$$$$$${not_set}
+
 c = very : wow so $$ doge 	escaped $$$$	there $$$$

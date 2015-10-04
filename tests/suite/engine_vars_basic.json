@@ -6,6 +6,9 @@
 		"assign": ["b", "$a", "="]
 	},
 	{
+		"empty_lines": 1
+	},
+	{
 		"assign": ["a", "1", "="]
 	},
 	{
@@ -15,10 +18,16 @@
 		"assign": ["c", "$a $b", "="]
 	},
 	{
+		"empty_lines": 1
+	},
+	{
 		"assign": ["a", "1 $not_set", "="]
 	},
 	{
 		"assign": ["b", "$a $a $a $a", "="]
+	},
+	{
+		"empty_lines": 1
 	},
 	{
 		"assign": ["a", "1 $a", "="]
