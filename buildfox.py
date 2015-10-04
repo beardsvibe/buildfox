@@ -19,19 +19,19 @@ ninja_required_version = 1.6
 filter toolset:msvc
 	# msvc support
 	rule cxx
-		command = cl $cxxflags /nologo /showIncludes -c $in /Fo$out
+		command = cl $cxxflags $defines $includes $disable_warnings /nologo /showIncludes -c $in /Fo$out
 		description = cxx $in
 		deps = msvc
 		expand = true
 
 	rule link
-		command = cl /nologo @$out.rsp /link $ldflags /out:$out
+		command = cl /nologo @$out.rsp /link $ldflags $libdirs $ignore_default_libs /out:$out
 		description = link $out
 		rspfile = $out.rsp
 		rspfile_content = $in
 
 	rule link_dll
-		command = cl /nologo @$out.rsp /link /DLL $ldflags /out:$out
+		command = cl /nologo @$out.rsp /link /DLL $ldflags $libdirs $ignore_default_libs /out:$out
 		description = link $out
 		rspfile = $out.rsp
 		rspfile_content = $in
@@ -47,19 +47,84 @@ filter toolset:msvc
 	auto *.dll: link_dll r".*\.(obj|lib)$"
 	auto *.lib: lib r".*\.(obj|lib)$"
 
+	# MSVC flags
+	# more info here https://msdn.microsoft.com/en-us/library/19z1t1wy.aspx
+
+	# optimizations
+	cxx_omit_frame_pointer = /Oy
+	cxx_disable_optimizations = /Od
+	cxx_full_optimizations = /Ox
+	cxx_size_optimizations = /O1
+	cxx_speed_optimizations = /O2
+
+	# code generation
+	cxx_exceptions = /EHsc
+	cxx_no_exceptions = /EHsc- # TODO not sure about this one
+	cxx_seh_exceptions = /EHa
+	cxx_whole_program_optimizations = /GL
+	cxx_rtti = /GR
+	cxx_no_rtti = /GR-
+	cxx_clr = /clr
+	cxx_clr_pure = /clr:pure
+	cxx_clr_safe = /clr:safe
+	cxx_multithread_compilation = /MP
+	cxx_mimimal_rebuild = /Gm
+	cxx_no_mimimal_rebuild = /Gm-
+	cxx_floatpoint_fast = /fp:fast
+	cxx_floatpoint_strict = /fp:strict
+	cxx_cdecl = /Gd
+	cxx_fastcall = /Gr
+	cxx_stdcall = /Gz
+	cxx_vectorcall = /Gv
+	cxx_avx = /arch:AVX
+	cxx_avx2 = /arch:AVX2
+	cxx_sse = /arch:SSE
+	cxx_sse2 = /arch:SSE2
+
+	# language
+	cxx_symbols = /Z7
+	cxx_omit_default_lib = /Zl
+
+	# linking
+	cxx_runtime_static_debug = /MTd
+	cxx_runtime_dynamic_debug = /MDd
+	cxx_runtime_static_release = /MT
+	cxx_runtime_dynamic_release = /MD
+
+	# miscellaneous
+	cxx_fatal_warnings = /WX
+	cxx_extra_warnings = /W4
+	cxx_no_warnings = /W0
+
+	# linker flags
+	ld_no_incremental_link = /INCREMENTAL:NO
+	ld_no_manifest = /MANIFEST:NO
+	ld_ignore_default_libs = /NODEFAULTLIB
+	ld_symbols = /DEBUG
+	ld_shared_lib = /DLL
+
+	# transformers
+	defines =
+	includes =
+	disable_warnings =
+	libdirs =
+	ignore_default_libs =
+	transformer defines: /D${param}
+	transformer includes: /I${param}
+	transformer disable_warnings: /wd${param}
+	transformer libdirs: /LIBPATH:${param}
+	transformer ignore_default_libs: /NODEFAULTLIB:${param}
+
+	# main flags
 	cxxflags =
 	ldflags =
 	libflags =
-	defines =
-	includes =
-
 	filter variation:debug
-		cxxflags = /O1
+		cxxflags = $cxx_disable_optimizations $cxx_symbols
+		ldflags = $ld_symbols
 	filter variation:release
-		cxxflags = /Ox
-
-	transformer defines: /D${param}
-	transformer includes: /I${param}
+		cxxflags = $cxx_speed_optimizations
+		ldflags =
 """
 
 # ----------------------------------------------------------- main app
