@@ -42,10 +42,10 @@ filter toolset:msvc
 		rspfile = $out.rsp
 		rspfile_content = $in
 
-	auto *.obj: cxx r".*\.(cpp|cxx|c)$"
-	auto *.exe: link r".*\.(obj|lib)$"
-	auto *.dll: link_dll r".*\.(obj|lib)$"
-	auto *.lib: lib r".*\.(obj|lib)$"
+	auto r"(?i).*\.obj": cxx r"(?i).*\.(cpp|cxx|cc|c\+\+|c)$"
+	auto r"(?i).*\.exe": link r"(?i).*\.(obj|lib)$"
+	auto r"(?i).*\.dll": link_dll r"(?i).*\.(obj|lib)$"
+	auto r"(?i).*\.lib": lib r"(?i).*\.(obj|lib)$"
 
 	# MSVC flags
 	# more info here https://msdn.microsoft.com/en-us/library/19z1t1wy.aspx
