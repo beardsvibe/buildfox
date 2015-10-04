@@ -9,8 +9,10 @@ def discover():
 
 	if shutil.which("cl") and shutil.which("link") and shutil.which("lib"):
 		vars["toolset_msvc"] = "true"
+
 	if shutil.which("clang"):
 		vars["toolset_clang"] = "true"
+
 	if shutil.which("gcc") and shutil.which("g++"):
 		vars["toolset_gcc"] = "true"
 
