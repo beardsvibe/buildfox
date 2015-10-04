@@ -21,6 +21,6 @@ def check(required_version):
 	if not required_major or not required_minor:
 		raise ValueError("Specified required version (%s) has incorrect format." % required_version)
 	if MAJOR > required_major:
-		print("WARNING: buildfox executable major version (%s) is greater than 'buildfox_required_version' (%s).\nVersions may be incompatible." % (VERSION, required_version))
+		print("WARNING: BuildFox executable major version (%s) is greater than 'buildfox_required_version' (%s).\nVersions may be incompatible." % (VERSION, required_version))
 	elif (required_major == MAJOR and required_minor > MINOR) or required_major > MAJOR:
-		raise RuntimeError("buildfox version (%s) is incompatible with the version required (%s)." % (VERSION, required_version))
+		raise RuntimeError("BuildFox version (%s) is incompatible with the version required (%s)." % (VERSION, required_version))
