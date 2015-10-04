@@ -55,7 +55,7 @@ class EngineMock:
 
 	def filter(self, obj):
 		self.output.append({
-			"filter": obj
+			"filter": [list(t) for t in obj]
 		})
 
 	def on_auto(self, obj, assigns):
