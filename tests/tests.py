@@ -1,7 +1,5 @@
 #!/usr/bin/python3
 
-# BuildFox test suite
-
 import os
 import sys
 import json
@@ -133,7 +131,7 @@ def run_test(test_filename, print_json = False, print_ninja = False):
 		return True
 	except:
 		err = sys.exc_info()[0]
-		print("exception error : %s" % err)
+		print("Exception error: %s" % err)
 		traceback.print_exc()
 		return False
 
