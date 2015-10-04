@@ -1,4 +1,7 @@
 defines = DLL_EXPORT
 
-build *.obj: auto *.cpp
-build app.dll | app.lib: auto *.obj
+build obj(*): auto *.cpp
+
+# TODO
+filter toolset:msvc
+	build app.dll | lib(app): auto obj(*)
