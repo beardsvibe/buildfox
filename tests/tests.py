@@ -101,7 +101,7 @@ def run_test(test_filename, print_json = False, print_ninja = False):
 		parse(engine, test_filename)
 		if print_json:
 			print("------------ json")
-			pprint(engine.output)
+			print(json.dumps(engine.output, sort_keys = True, indent = "\t"))
 			print("------------ json end")
 		diff = DeepDiff(reference, engine.output)
 		if diff:

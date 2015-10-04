@@ -1,0 +1,11 @@
+a = 1
+
+b = $a $$a $$$a $$$$a $$$$$a $$$$$$a $$$$$$$a $$$$$$$$a
+b = ${a} $${a} $$${a} $$$${a} $$$$${a} $$$$$${a} $$$$$$${a} $$$$$$$${a}
+
+b = $not_set $$not_set $$$not_set $$$$not_set $$$$$not_set $$$$$$not_set $$$$$$$not_set $$$$$$$$not_set
+b = ${not_set} $${not_set} $$${not_set} $$$${not_set} $$$$${not_set} $$$$$${not_set} $$$$$$${not_set} $$$$$$$${not_set}
+
+c = very $: wow$ so $$ doge $
+	escaped $$$$$
+	there $$$$
