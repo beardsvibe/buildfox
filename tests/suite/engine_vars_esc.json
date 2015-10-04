@@ -3,6 +3,9 @@
 		"assign": ["a", "1", "="]
 	},
 	{
+		"empty_lines": 1
+	},
+	{
 		"assign": [
 			"b",
 			"$a $$a $$$a $$$$a $$$$$a $$$$$$a $$$$$$$a $$$$$$$$a",
@@ -17,6 +20,9 @@
 		]
 	},
 	{
+		"empty_lines": 1
+	},
+	{
 		"assign": [
 			"b",
 			"$not_set $$not_set $$$not_set $$$$not_set $$$$$not_set $$$$$$not_set $$$$$$$not_set $$$$$$$$not_set",
@@ -29,6 +35,9 @@
 			"${not_set} $${not_set} $$${not_set} $$$${not_set} $$$$${not_set} $$$$$${not_set} $$$$$$${not_set} $$$$$$$${not_set}",
 			"="
 		]
+	},
+	{
+		"empty_lines": 1
 	},
 	{
 		"assign": [

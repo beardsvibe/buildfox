@@ -1,5 +1,6 @@
 # test comment
 
+
 a = 1 # test inline comment
 b = some text $
 with escaped newline
