@@ -143,12 +143,18 @@ argsparser.add_argument("--json", action = "store_true",
 	help = "print json output from parser", default = False, dest = "json")
 argsparser.add_argument("--ninja", action = "store_true",
 	help = "print ninja output from engine", default = False, dest = "ninja")
+argsparser.add_argument("--fail-fast", action = "store_true",
+	help = "abort after first failure", default = False, dest = "failfast")
 args = vars(argsparser.parse_args())
 
 # TODO clean up temporary ninja files in current working dir
 
-results = [run_test(test_filename.replace("\\", "/"), args.get("json"), args.get("ninja"))
-	for test_filename in glob.glob(args.get("in"))]
+results = []
+for test_filename in glob.glob(args.get("in")):
+	result = run_test(test_filename.replace("\\", "/"), args.get("json"), args.get("ninja"))
+	results.append(result)
+	if args.get("failfast") and not result:
+		break
 
 if not all(results):
 	print("one or more tests failed")
