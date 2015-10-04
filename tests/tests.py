@@ -93,7 +93,7 @@ class EngineMock:
 		})
 
 any_failed = False
-for test_filename in glob.glob("suite/*.in"):
+for test_filename in glob.glob("suite/*.fox"):
 	print("---------------------------------------- testing %s" % test_filename)
 	try:
 		with open(os.path.splitext(test_filename)[0] + ".json", "r") as f:
