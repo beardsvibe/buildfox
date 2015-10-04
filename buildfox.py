@@ -144,7 +144,32 @@ filter toolset:clang
 	auto r"(?i).*\.o": cxx r"(?i).*\.(cpp|cxx|cc|c\+\+)$"
 
 	# Clang flags
+	# more info here http://clang.llvm.org/docs/CommandGuide/clang.html
 	# TODO:
+
+	# optimizations
+	cxx_omit_frame_pointer = -fomit-frame-pointer
+	cxx_disable_optimizations = -O0
+	cxx_full_optimizations = -O3
+	cxx_size_optimizations = -Os
+	cxx_speed_optimizations = -Ofast
+
+	# code generation
+	cxx_exceptions = -fexceptions
+	cxx_no_exceptions = -fno-exceptions
+	cxx_whole_program_optimizations = -O4
+	cxx_rtti = -frtti
+	cxx_no_rtti = -fno-rtti
+	cxx_floatpoint_fast = -funsafe-math-optimizations
+	cxx_avx = -mavx
+	cxx_avx2 = -mavx2
+	cxx_sse = -msse
+	cxx_sse2 = -msse2
+
+	# miscellaneous
+	cxx_fatal_warnings = -Werror
+	cxx_extra_warnings = -Wall -Wextra
+	cxx_no_warnings = -w
 
 	# transformers
 	defines =
