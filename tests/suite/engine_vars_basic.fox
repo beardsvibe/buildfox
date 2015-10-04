@@ -1,0 +1,12 @@
+a = 1
+b = $a
+
+a = 1
+b = 2
+c = $a $b
+
+a = 1 $not_set
+b = $a $a $a $a
+
+a = 1 $a
+b = $a $a $a
