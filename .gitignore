@@ -10,3 +10,5 @@ build/
 *.exe
 *.pdb
 *.ilk
+*.d
+*.o

@@ -127,6 +127,39 @@ filter toolset:msvc
 	filter variation:release
 		cxxflags = $cxx_speed_optimizations
 		ldflags =
+
+filter toolset:clang
+	# clang suport
+	rule cxx
+		command = clang++ -c $in -o $out -MMD $cxxflags $defines $includedirs
+		description = cxx $in
+		depfile = $out.d
+		deps = gcc
+		expand = true
+
+	rule link
+		command = clang++ $in -o $out $ldflags $libdirs
+		description = link $out
+
+	auto r"(?i).*\.o": cxx r"(?i).*\.(cpp|cxx|cc|c\+\+)$"
+
+	# Clang flags
+	# TODO:
+
+	# transformers
+	defines =
+	includedirs =
+	libdirs =
+	transformer defines: -D${param}
+	transformer includedirs: -I${param}
+	transformer libdirs: -L${param}
+
+	# main flags
+	cxxflags =
+	ldflags = 
+	filter variation:debug
+		cxxflags = -g
+		ldflags = -g
 """
 
 # main app -----------------------------------------------------------
