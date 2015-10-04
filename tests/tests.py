@@ -1,4 +1,4 @@
-# Parser test suite
+# BuildFox test suite
 
 import os
 import sys
