@@ -324,10 +324,9 @@ class Engine:
 					" ".join(self.to_esc(targets_explicit)),
 				))
 
-	def on_default(self, obj, assigns):
+	def on_default(self, obj):
 		paths = self.eval_find_files(obj)
 		self.output.append("default " + " ".join(self.to_esc(paths)))
-		self.write_assigns(assigns)
 
 	def on_pool(self, obj, assigns):
 		name = self.eval(obj)
@@ -397,4 +396,3 @@ class Engine:
 			return value
 		else:
 			return [self.to_esc(str) for str in value]
-

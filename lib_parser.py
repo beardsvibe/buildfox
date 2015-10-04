@@ -59,8 +59,7 @@ class Parser:
 
 		elif self.command == "default":
 			obj = self.read_default()
-			assigns = self.read_nested_assigns()
-			self.engine.on_default(obj, assigns)
+			self.engine.on_default(obj)
 
 		elif self.command == "pool":
 			obj = self.read_pool()
