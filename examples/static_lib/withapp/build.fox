@@ -2,9 +2,7 @@
 # output folder
 out = build/bin_${variation}
 
-includes = test1 test2
-
-cxxflags = $cxxflags $includes
+includedirs = test1 test2
 
 # build all
 

@@ -19,7 +19,7 @@ ninja_required_version = 1.6
 filter toolset:msvc
 	# msvc support
 	rule cxx
-		command = cl $cxxflags $defines $includes $disable_warnings /nologo /showIncludes -c $in /Fo$out
+		command = cl $cxxflags $defines $includedirs $disable_warnings /nologo /showIncludes -c $in /Fo$out
 		description = cxx $in
 		deps = msvc
 		expand = true
@@ -105,12 +105,12 @@ filter toolset:msvc
 
 	# transformers
 	defines =
-	includes =
+	includedirs =
 	disable_warnings =
 	libdirs =
 	ignore_default_libs =
 	transformer defines: /D${param}
-	transformer includes: /I${param}
+	transformer includedirs: /I${param}
 	transformer disable_warnings: /wd${param}
 	transformer libdirs: /LIBPATH:${param}
 	transformer ignore_default_libs: /NODEFAULTLIB:${param}

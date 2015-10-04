@@ -1,5 +1,4 @@
 defines = DLL_EXPORT
-cxxflags = $cxxflags $defines
 
 build *.obj: auto *.cpp
 build app.dll | app.lib: auto *.obj
