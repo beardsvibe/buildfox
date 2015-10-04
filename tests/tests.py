@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 # BuildFox test suite
 
 import os
@@ -98,19 +100,19 @@ class EngineMock:
 		})
 
 def run_test(test_filename, print_json = False, print_ninja = False):
-	print("---------------------------------------- testing %s" % test_filename)
+	print("-> Testing %s" % test_filename)
 	try:
 		with open(os.path.splitext(test_filename)[0] + ".json", "r") as f:
 			reference = json.loads(f.read())
 		engine = EngineMock()
 		parse(engine, test_filename)
 		if print_json:
-			print("------------ json")
+			print("--- JSON ---------------------")
 			print(json.dumps(engine.output, sort_keys = True, indent = "\t"))
-			print("------------ json end")
+			print("--- JSON END -----------------")
 		diff = DeepDiff(reference, engine.output)
 		if diff:
-			print("results are differ from reference : ")
+			print("Results differ from reference:")
 			pprint(diff)
 			return False
 
@@ -119,12 +121,12 @@ def run_test(test_filename, print_json = False, print_ninja = False):
 		engine = Engine()
 		engine.load(test_filename, logo = False)
 		if print_ninja:
-			print("------------ ninja")
+			print("--- NINJA --------------------")
 			print(engine.text())
-			print("------------ ninja end")
+			print("--- NINJA END ----------------")
 		diff = DeepDiff(reference, engine.text())
 		if diff:
-			print("results are differ from reference : ")
+			print("Results differ from reference:")
 			pprint(diff)
 			return False
 
@@ -136,15 +138,14 @@ def run_test(test_filename, print_json = False, print_ninja = False):
 		return False
 
 argsparser = argparse.ArgumentParser(description = "buildfox test suite")
-argsparser.add_argument("-i", "--in", help = "test inputs", default = "suite/*.fox")
+argsparser.add_argument("-i", "--in", help = "Test inputs", default = "suite/*.fox")
 argsparser.add_argument("--dry", action = "store_true",
-	help = "ignore tests failures", default = False, dest = "dry")
+	help = "Ignore tests failures", default = False, dest = "dry")
 argsparser.add_argument("--json", action = "store_true",
-	help = "print json output from parser", default = False, dest = "json")
-argsparser.add_argument("--ninja", action = "store_true",
-	help = "print ninja output from engine", default = False, dest = "ninja")
+	help = "Print json output from parser", default = False, dest = "json")
+argsparser.add_argument("--ninja", action = "store_true", help = "Print ninja output from engine", default = False, dest = "ninja")
 argsparser.add_argument("--fail-fast", action = "store_true",
-	help = "abort after first failure", default = False, dest = "failfast")
+	help = "Abort after first failure", default = False, dest = "failfast")
 args = vars(argsparser.parse_args())
 
 # TODO clean up temporary ninja files in current working dir
@@ -157,8 +158,8 @@ for test_filename in glob.glob(args.get("in")):
 		break
 
 if not all(results):
-	print("one or more tests failed")
+	print("One or more tests failed")
 	if not args.get("dry"):
 		sys.exit(1)
 else:
-	print("all tests done")
+	print("All tests done.")
