@@ -20,6 +20,11 @@ class EngineMock:
 	def fix_assigns(self, assign):
 		return [list(t) for t in assign]
 
+	def on_empty_lines(self, lines):
+		self.output.append({
+			"empty_lines": lines
+		})
+
 	def on_comment(self, comment):
 		self.output.append({
 			"comment": comment
