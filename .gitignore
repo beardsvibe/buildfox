@@ -10,3 +10,4 @@ build/
 *.exe
 *.pdb
 *.ilk
+*.coverage
