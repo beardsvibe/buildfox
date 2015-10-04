@@ -5,15 +5,13 @@ import re
 import copy
 import collections
 from lib_parser import parse
+from lib_util import rel_dir, wildcard_regex, find_files
 
-# engine regexes
-re_var = re.compile("\${([a-zA-Z0-9_.-]+)}|\$([a-zA-Z0-9_-]+)")
-re_folder_part = re.compile(r"(?:[^\r\n(\[\"\\]|\\.)+") # match folder part in filename regex
-re_capture_group_ref = re.compile(r"(?<!\\)\\(\d)") # match regex capture group reference
-re_variable = re.compile("\$\${([a-zA-Z0-9_.-]+)}|\$\$([a-zA-Z0-9_-]+)")
-re_non_escaped_char = re.compile(r"(?<!\\)\\(.)") # looking for not escaped \ with char
-re_alphanumeric = re.compile(r"\W+")
-re_subst = re.compile(r"(?<!\$)\$\{param\}")
+# match and capture variable and escaping pairs of $$ before variable name
+re_var = re.compile("(?<!\$)((?:\$\$)*)\$({)?([a-zA-Z0-9_.-]+)(?(2)})")
+re_alphanumeric = re.compile(r"\W+") # match valid parts of filename
+re_subst = re.compile(r"(?<!\$)(?:\$\$)*\$\{param\}")
+re_non_escaped_space = re.compile(r"(?<!\$)(?:\$\$)* +")
 
 class Engine:
 	class Context:
@@ -47,7 +45,7 @@ class Engine:
 	# load manifest
 	def load(self, filename):
 		self.filename = filename
-		self.rel_path = self.rel_dir(filename)
+		self.rel_path = rel_dir(filename)
 		self.output.append("# generated with love by buildfox from %s" % filename)
 		parse(self, filename)
 
@@ -62,163 +60,47 @@ class Engine:
 		return "\n".join(self.output) + "\n"
 
 	def save(self, filename):
-		with open(filename, "w") as f:
-			f.write(self.text())
-
-	# return relative path to current work dir
-	def rel_dir(self, filename):
-		path = os.path.relpath(os.path.dirname(os.path.abspath(filename)), os.getcwd()).replace("\\", "/") + "/"
-		if path == "./":
-			path = ""
-		return path
+		if filename:
+			with open(filename, "w") as f:
+				f.write(self.text())
+		else:
+			print(self.text())
 
 	def eval(self, text):
-		def repl(matchobj):
-			name = matchobj.group(1) or matchobj.group(2)
-			if (name in self.variables) and (name not in self.visited_vars):
-				self.need_eval = True
-				self.visited_vars.add(name)
-				return self.variables.get(name)
-			else:
-				return "${" + name + "}"
-		self.need_eval = len(text) > 0
-		self.visited_vars = set()
-		while self.need_eval:
-			self.need_eval = False
-			text = re_var.sub(repl, text)
-		return text
-
-	# return regex value in filename is regex or wildcard
-	def wildcard_regex(self, filename, output = False):
-		if filename.startswith("r\""):
-			return filename[2:-1] # strip r" and "
-		elif "*" in filename or "?" in filename or "[" in filename:
-			# based on fnmatch.translate with each wildcard is a capture group
-			i, n = 0, len(filename)
-			groups = 1
-			res = ""
-			while i < n:
-				c = filename[i]
-				i = i + 1
-				if c == "*":
-					if output:
-						res = res + "\\" + str(groups)
-						groups += 1
-					else:
-						res = res + "(.*)"
-				elif c == "?":
-					if output:
-						res = res + "\\" + str(groups)
-						groups += 1
-					else:
-						res = res + "(.)"
-				elif output:
-					res = res + c
-				elif c == "[":
-					j = i
-					if j < n and filename[j] == "!":
-						j = j + 1
-					if j < n and filename[j] == "]":
-						j = j + 1
-					while j < n and filename[j] != "]":
-						j = j + 1
-					if j >= n:
-						res = res + "\\["
-					else:
-						stuff = filename[i:j].replace("\\", "\\\\")
-						i = j + 1
-						if stuff[0] == "!":
-							stuff = "^" + stuff[1:]
-						elif stuff[0] == "^":
-							stuff = "\\" + stuff
-						res = "%s([%s])" % (res, stuff)
-				else:
-					res = res + re.escape(c)
-			if output:
-				return res
-			else:
-				return res + "\Z(?ms)"
-		else:
+		if text == None:
 			return None
+		elif type(text) is str:
+			raw = text.startswith("r\"")
 
-	# input can be string or list of strings
-	# outputs are always lists
-	def eval_path(self, inputs, outputs = None):
-		if inputs:
-			result = []
-			matched = []
-			for input in inputs:
-				input = self.eval(input)
-				regex = self.wildcard_regex(input)
-				if regex:
-					# find the folder where to look for files
-					base_folder = re_folder_part.match(regex)
-					if base_folder:
-						base_folder = base_folder.group()
-						# rename regex back to readable form
-						def replace_non_esc(match_group):
-							return match_group.group(1)
-						base_folder = re_non_escaped_char.sub(replace_non_esc, base_folder)
-						separator = "\\" if base_folder.rfind("\\") > base_folder.rfind("/") else "/"
-						base_folder = os.path.dirname(base_folder)
-						list_folder = self.rel_path + base_folder
-						
-					else:
-						separator = ""
-						base_folder = ""
-						if len(self.rel_path):
-							list_folder = self.rel_path[:-1] # strip last /
-						else:
-							list_folder = "."
+			# first remove escaped sequences
+			if not raw:
+				text = text.replace("$\n", "").replace("$ ", " ").replace("$:", ":")
 
-					# look for files
-					list_folder = os.path.normpath(list_folder).replace("\\", "/")
-					re_regex = re.compile(regex)
-					if os.path.isdir(list_folder):
-						fs_files = set(os.listdir(list_folder))
-					else:
-						fs_files = set()
-					generated_files = self.context.generated.get(list_folder, set())
-					for file in fs_files.union(generated_files):
-						name = base_folder + separator + file
-						match = re_regex.match(name)
-						if match:
-							result.append(self.rel_path + name)
-							matched.append(match.groups())
+			# then do variable substitution
+			def repl(matchobj):
+				prefix = matchobj.group(1)
+				name = matchobj.group(3)
+				if matchobj.group(2):
+					default = "${%s}" % name
 				else:
-					result.append(self.rel_path + input)
-			inputs = result
+					default = "$%s" % name
+				return prefix + self.variables.get(name, default)
+			text = re_var.sub(repl, text)
 
-		if outputs:
-			result = []
-			for output in outputs:
-				output = self.eval(output)
-				# we want \number instead of capture groups
-				regex = self.wildcard_regex(output, True)
-				if regex:
-					for match in matched:
-						# replace \number with data
-						def replace_group(matchobj):
-							index = int(matchobj.group(1)) - 1
-							if index >= 0 and index < len(match):
-								return match[index]
-							else:
-								return ""
-						file = re_capture_group_ref.sub(replace_group, regex)
-						result.append(self.rel_path + file)
-				else:
-					result.append(self.rel_path + output)
+			# and finally fix escaped $ but escaped variables
+			if not raw:
+				text = text.replace("$$", "$")
 
-			# normalize results
-			result = [os.path.normpath(file).replace("\\", "/") for file in result]
-
-		# normalize inputs
-		inputs = [os.path.normpath(file).replace("\\", "/") for file in inputs]
-
-		if outputs:
-			return inputs, result
+			return text
 		else:
-			return inputs
+			return [self.eval(str) for str in text]
+
+	# evaluate and find files
+	def eval_find_files(self, input, output = None):
+		return find_files(self.eval(input),
+						  self.eval(output),
+						  rel_path = self.rel_path,
+						  generated = self.context.generated)
 
 	def add_generated_files(self, files):
 		for file in files:
@@ -240,7 +122,7 @@ class Engine:
 		for rule_name, auto in self.auto_presets.items(): # name: (inputs, outputs, assigns)
 			# check if all inputs match required auto inputs
 			for auto_input in auto[0]:
-				regex = self.wildcard_regex(auto_input)
+				regex = wildcard_regex(auto_input)
 				if regex:
 					re_regex = re.compile(regex)
 					match = all(re_regex.match(input) for input in inputs)
@@ -252,7 +134,7 @@ class Engine:
 				continue
 			# check if all outputs match required auto outputs
 			for auto_output in auto[1]:
-				regex = self.wildcard_regex(auto_output)
+				regex = wildcard_regex(auto_output)
 				if regex:
 					re_regex = re.compile(regex)
 					match = all(re_regex.match(output) for output in outputs)
@@ -274,7 +156,7 @@ class Engine:
 
 	def eval_filter(self, name, regex_or_value):
 		value = self.variables.get(name, "")
-		regex = self.wildcard_regex(regex_or_value)
+		regex = wildcard_regex(regex_or_value)
 		if regex:
 			return re.match(regex, value)
 		else:
@@ -291,11 +173,25 @@ class Engine:
 		else:
 			return value
 
+	def eval_transform(self, name, values):
+		transformer = self.transformers.get(name)
+		if not transformer:
+			return self.eval(values)
+
+		def transform_one(value):
+			if not value:
+				return ""
+			value = re_subst.sub(value, transformer)
+			return self.eval(value)
+
+		transformed = [transform_one(v) for v in re_non_escaped_space.split(values)]
+		return " ".join(transformed)
+
 	def write_assigns(self, assigns):
 		local_scope = {}
 		for assign in assigns:
 			name = self.eval(assign[0])
-			value = self.eval(assign[1])
+			value = self.eval_transform(name, assign[1])
 			op = assign[2]
 
 			if name in local_scope:
@@ -303,20 +199,24 @@ class Engine:
 			else:
 				value = self.eval_assign_op(value, self.variables.get(name, ""), op)
 
-			self.output.append("  %s = %s" % (name, value))
+			self.output.append("  %s = %s" % (name, self.to_esc(value, simple = True)))
 			local_scope[name] = value
 
-	def comment(self, comment):
+	def on_comment(self, comment):
 		self.output.append("#" + comment)
 
-	def rule(self, obj, assigns):
+	def on_rule(self, obj, assigns):
 		rule_name = self.eval(obj)
 		self.output.append("rule " + rule_name)
 		vars = {}
 		for assign in assigns:
-			name = assign[0]
+			name = self.eval(assign[0])
+			# do not evaluate value here and also do not do any from_esc / to_esc here
+			# just pass value as raw string to output
+			# TODO but do we need eval_transform here ?
 			value = assign[1]
 			op = assign[2]
+
 			# only = is supported because += and -= are not native ninja features
 			# and rule nested variables are evaluated in ninja
 			# so there is no way to implement this in current setup
@@ -333,12 +233,12 @@ class Engine:
 				self.output.append("  %s = %s" % (name, value))
 		self.rules[rule_name] = vars
 
-	def build(self, obj, assigns):
-		inputs_explicit, targets_explicit = self.eval_path(self.from_esc(obj[3]), self.from_esc(obj[0]))
-		targets_implicit = self.eval_path(self.from_esc(obj[1]))
+	def on_build(self, obj, assigns):
+		inputs_explicit, targets_explicit = self.eval_find_files(obj[3], obj[0])
+		targets_implicit = self.eval_find_files(obj[1])
 		rule_name = self.eval(obj[2])
-		inputs_implicit = self.eval_path(self.from_esc(obj[4]))
-		inputs_order = self.eval_path(self.from_esc(obj[5]))
+		inputs_implicit = self.eval_find_files(obj[4])
+		inputs_order = self.eval_find_files(obj[5])
 
 		self.add_generated_files(targets_explicit)
 
@@ -423,12 +323,11 @@ class Engine:
 					" ".join(self.to_esc(targets_explicit)),
 				))
 
-	def default(self, obj, assigns):
-		paths = self.eval_path(self.from_esc(obj))
+	def on_default(self, obj):
+		paths = self.eval_find_files(obj)
 		self.output.append("default " + " ".join(self.to_esc(paths)))
-		self.write_assigns(assigns)
 
-	def pool(self, obj, assigns):
+	def on_pool(self, obj, assigns):
 		name = self.eval(obj)
 		self.output.append("pool " + name)
 		self.write_assigns(assigns)
@@ -436,58 +335,45 @@ class Engine:
 	def filter(self, obj):
 		for filt in obj:
 			name = self.eval(filt[0])
-			value = self.eval(self.from_esc(filt[1]))
+			value = self.eval(filt[1])
 			if not self.eval_filter(name, value):
 				return False
 		return True
 
-	def auto(self, obj, assigns):
-		outputs = [self.eval(output) for output in self.from_esc(obj[0])] # this shouldn't be eval_path !
+	def on_auto(self, obj, assigns):
+		outputs = self.eval(obj[0]) # this shouldn't be find_files !
 		name = self.eval(obj[1])
-		inputs = [self.eval(input) for input in self.from_esc(obj[2])] # this shouldn't be eval_path !
+		inputs = self.eval(obj[2]) # this shouldn't be find_files !
 		self.auto_presets[name] = (inputs, outputs, assigns)
 
-	def print(self, obj):
+	def on_print(self, obj):
 		print(self.eval(obj))
 
-	def assign(self, obj):
+	def on_assign(self, obj):
 		name = self.eval(obj[0])
-		value = self.eval(obj[1])
+		value = self.eval_transform(name, obj[1])
 		op = obj[2]
-
-		optional_transformer = self.transformers.get(name)
-		if optional_transformer:
-			value = self.eval_transform(optional_transformer, value)
 
 		value = self.eval_assign_op(value, self.variables.get(name), op)
 
 		self.variables[name] = value
-		self.output.append("%s = %s" % (name, value))
+		self.output.append("%s = %s" % (name, self.to_esc(value, simple = True)))
 
-	def transform(self, obj):
+	def on_transform(self, obj):
 		target = self.eval(obj[0])
-		pattern = obj[1]
+		pattern = obj[1] # do not eval it here
 		self.transformers[target] = pattern
 
-	def eval_transform(self, pattern, values):
-		def transform_one(value):
-			if value:
-				return self.from_esc2(re_subst.sub(value, pattern))
-			else:
-				return ""
-		transformed = [transform_one(v) for v in values.split(" ")]
-		return " ".join(transformed)
-
-	def include(self, obj):
-		paths = self.eval_path(self.from_esc([obj]))
+	def on_include(self, obj):
+		paths = self.eval_find_files([obj])
 		for path in paths:
 			old_rel_path = self.rel_path
-			self.rel_path = self.rel_dir(path)
+			self.rel_path = rel_dir(path)
 			parse(self, path)
 			self.rel_path = old_rel_path
 
-	def subninja(self, obj):
-		paths = self.eval_path(self.from_esc([obj]))
+	def on_subninja(self, obj):
+		paths = self.eval_find_files([obj])
 		for path in paths:
 			gen_filename = "__gen_%i_%s.ninja" % (
 				self.context.subninja_num,
@@ -499,33 +385,13 @@ class Engine:
 			engine.save(gen_filename)
 			self.output.append("subninja " + self.to_esc(gen_filename))
 
-	def to_esc(self, value):
+	def to_esc(self, value, simple = False):
 		if value == None:
 			return None
 		elif type(value) is str:
-			value = value.replace("$", "$$").replace(":", "$:").replace("\n", "$\n").replace(" ", "$ ")
-			# escaping variables
-			# TODO: This one is strange.
-			def repl(matchobj):
-				return "${" + (matchobj.group(1) or matchobj.group(2)) + "}"
-			return re_variable.sub(repl, value)
+			value = value.replace("$", "$$")
+			if not simple:
+				value = value.replace(":", "$:").replace("\n", "$\n").replace(" ", "$ ")
+			return value
 		else:
 			return [self.to_esc(str) for str in value]
-
-	# TODO: Code duplication sucks.
-	def from_esc2(self, value):
-		def repl(matchobj):
-			return "${%s}" % (matchobj.group(1) or matchobj.group(2))
-		return re_variable.sub(repl, value)
-
-	def from_esc(self, value):
-		if value == None:
-			return None
-		elif type(value) is str:
-			if value.startswith("r\""):
-				return value
-			else:
-				return value.replace("$\n", "").replace("$ ", " ").replace("$:", ":").replace("$$", "$")
-		else:
-			return [self.from_esc(str) for str in value]
-

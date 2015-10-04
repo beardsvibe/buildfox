@@ -47,15 +47,16 @@ filter toolset:msvc
 	auto *.dll: link_dll r".*\.(obj|lib)$"
 	auto *.lib: lib r".*\.(obj|lib)$"
 
+	cxxflags =
+	ldflags =
+	libflags =
+	defines =
+	includes =
+
 	filter variation:debug
 		cxxflags = /O1
-		ldflags =
-		libflags =
-
 	filter variation:release
 		cxxflags = /Ox
-		ldflags =
-		libflags =
 
 	transformer defines: /D${param}
 	transformer includes: /I${param}
@@ -83,13 +84,13 @@ engine = Engine()
 if args.get("env"):
 	vars = discover()
 	for name in sorted(vars.keys()):
-		engine.assign((name, vars.get(name), "="))
+		engine.on_assign((name, vars.get(name), "="))
 
 for var in args.get("variables"):
 	parts = var.split("=")
 	if len(parts) == 2:
 		name, value = parts[0], parts[1]
-		engine.assign((name, value, "="))
+		engine.on_assign((name, value, "="))
 	else:
 		raise SyntaxError("unknown argument '%s'. you should use name=value syntax to setup a variable" % var)
 
