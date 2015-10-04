@@ -42,10 +42,9 @@ class EngineMock:
 			"assigns": self.fix_assigns(assigns)
 		})
 
-	def on_default(self, obj, assigns):
+	def on_default(self, obj):
 		self.output.append({
-			"default": obj,
-			"assigns": self.fix_assigns(assigns)
+			"default": obj
 		})
 
 	def on_pool(self, obj, assigns):
