@@ -1,20 +1,15 @@
 
-# output folder
 out = build/bin_${variation}
-
 includedirs = test1 test2
 
 # build all
-
-defines = TEST
-
 build $out/test1/obj(*): auto test1/*.cpp
 	defines += DLL_EXPORT
-build $out/test1.dll | $out/lib(test1): auto $out/test1/obj(*)
+build $out/shlib(test1) | $out/lib(test1): auto $out/test1/obj(*)
 
 build $out/test2/obj(*): auto test2/*.cpp
 	defines += DLL_EXPORT2
-build $out/test2.dll | $out/lib(test2): auto $out/test2/obj(*)
+build $out/shlib(test2) | $out/lib(test2): auto $out/test2/obj(*)
 
 build $out/obj(*): auto *.cpp
 build $out/app(app): auto $out/obj(*) $out/lib(*)
