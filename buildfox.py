@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+# BuildFox ninja generator
+
 import os
 import re
 import copy
