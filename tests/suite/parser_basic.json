@@ -1,5 +1,8 @@
 [
 	{
+		"empty_lines": 2
+	},
+	{
 		"comment": " test comment"
 	},
 	{
@@ -12,8 +15,14 @@
 		"assign": ["b", "some text with escaped newline", "="]
 	},
 	{
+		"empty_lines": 1
+	},
+	{
 		"rule": "rule_name",
 		"assigns": [["nested_rule", "value", "="]]
+	},
+	{
+		"empty_lines": 1
 	},
 	{
 		"build": "rule_name",
@@ -25,11 +34,20 @@
 		"assigns": [["nested_build", "value", "="]]
 	},
 	{
+		"empty_lines": 1
+	},
+	{
 		"default": ["default_path"]
+	},
+	{
+		"empty_lines": 1
 	},
 	{
 		"pool": "pool_name",
 		"assigns": [["nested_pool", "value", "="]]
+	},
+	{
+		"empty_lines": 1
 	},
 	{
 		"filter": [["a", "1"]]
@@ -38,13 +56,22 @@
 		"filter": [["a", "2"]]
 	},
 	{
+		"empty_lines": 1
+	},
+	{
 		"auto": "rule_name",
 		"outputs": ["output"],
 		"inputs": ["input"],
 		"assigns": [["nested_auto", "value", "="]]
 	},
 	{
+		"empty_lines": 1
+	},
+	{
 		"print": "print_test"
+	},
+	{
+		"empty_lines": 1
 	},
 	{
 		"transform": "var_name",
