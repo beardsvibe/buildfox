@@ -52,6 +52,13 @@ filter toolset:msvc
 	auto r"(?i).*\.dll": link_dll r"(?i).*\.(obj|lib)$"
 	auto r"(?i).*\.lib": lib r"(?i).*\.(obj|lib)$"
 
+	# extensions transformers
+	transformer app: ${param}.exe
+	transformer obj: ${param}.obj
+	transformer lib: ${param}.lib
+	# dll is not included because shared libs have different logical behavior on different platforms
+	# TODO fix dll support ?
+
 	# MSVC flags
 	# more info here https://msdn.microsoft.com/en-us/library/19z1t1wy.aspx
 

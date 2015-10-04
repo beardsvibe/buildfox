@@ -13,6 +13,7 @@ re_var = re.compile("(?<!\$)((?:\$\$)*)\$({)?([a-zA-Z0-9_.-]+)(?(2)})")
 re_alphanumeric = re.compile(r"\W+") # match valid parts of filename
 re_subst = re.compile(r"(?<!\$)(?:\$\$)*\$\{param\}")
 re_non_escaped_space = re.compile(r"(?<!\$)(?:\$\$)* +")
+re_path_transform = re.compile(r"(?<!\$)((?:\$\$)*)([a-zA-Z0-9_.-]+)\((.*?)(?<!\$)(?:\$\$)*\)")
 
 class Engine:
 	class Context:
@@ -99,8 +100,8 @@ class Engine:
 
 	# evaluate and find files
 	def eval_find_files(self, input, output = None):
-		return find_files(self.eval(input),
-						  self.eval(output),
+		return find_files(self.eval_path_transform(input),
+						  self.eval_path_transform(output),
 						  rel_path = self.rel_path,
 						  generated = self.context.generated)
 
@@ -175,16 +176,31 @@ class Engine:
 		else:
 			return value
 
-	def eval_transform(self, name, values):
+	def eval_path_transform(self, value):
+		if value == None:
+			return None
+		elif type(value) is str:
+			def path_transform(matchobj):
+				prefix = matchobj.group(1)
+				name = matchobj.group(2)
+				value = matchobj.group(3)
+				return prefix + self.eval_transform(name, value, eval = False)
+			value = re_path_transform.sub(path_transform, value)
+			return self.eval(value)
+		else:
+			return [self.eval_path_transform(str) for str in value]
+
+	def eval_transform(self, name, values, eval = True):
 		transformer = self.transformers.get(name)
 		if not transformer:
-			return self.eval(values)
+			return self.eval(values) if eval else value
 
 		def transform_one(value):
 			if not value:
 				return ""
 			value = re_subst.sub(value, transformer)
-			return self.eval(value)
+			# TODO not sure what effects eval = False give here
+			return self.eval(value) if eval else value
 
 		transformed = [transform_one(v) for v in re_non_escaped_space.split(values)]
 		return " ".join(transformed)
