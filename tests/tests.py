@@ -115,7 +115,7 @@ def run_test(test_filename, print_json = False, print_ninja = False):
 		engine.load(test_filename, logo = False)
 		if print_ninja:
 			print("------------ ninja")
-			pprint(engine.text())
+			print(engine.text())
 			print("------------ ninja end")
 		diff = DeepDiff(reference, engine.text())
 		if diff:
