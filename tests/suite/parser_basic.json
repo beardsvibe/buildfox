@@ -1,0 +1,53 @@
+[
+	{
+		"comment": " test comment"
+	},
+	{
+		"comment": " test inline comment"
+	},
+	{
+		"assign": ["a", "1", "="]
+	},
+	{
+		"assign": ["b", "some text with escaped newline", "="]
+	},
+	{
+		"rule": "rule_name",
+		"assigns": [["nested_rule", "value", "="]]
+	},
+	{
+		"build": "rule_name",
+		"targets_explicit": ["output"],
+		"targets_implicit": [],
+		"inputs_explicit": ["input"],
+		"inputs_implicit": [],
+		"inputs_order": [],
+		"assigns": [["nested_build", "value", "="]]
+	},
+	{
+		"default": ["default_path"]
+	},
+	{
+		"pool": "pool_name",
+		"assigns": [["nested_pool", "value", "="]]
+	},
+	{
+		"filter": [["a", "1"]]
+	},
+	{
+		"filter": [["a", "2"]]
+	},
+	{
+		"auto": "rule_name",
+		"outputs": ["output"],
+		"inputs": ["input"],
+		"assigns": [["nested_auto", "value", "="]]
+	},
+	{
+		"print": "print_test"
+	},
+	{
+		"transform": "var_name",
+		"pattern": "transformer_test"
+	}
+]
