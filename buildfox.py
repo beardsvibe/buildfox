@@ -20,26 +20,29 @@ ninja_required_version = 1.6
 
 filter toolset:msvc
 	# msvc support
+	cxx_binary = cl
+	lib_binary = lib
+
 	rule cxx
-		command = $toolset_msvc_cl $cxxflags $defines $includedirs $disable_warnings /nologo /showIncludes -c $in /Fo$out
+		command = $cxx_binary $cxxflags $defines $includedirs $disable_warnings /nologo /showIncludes -c $in /Fo$out
 		description = cxx $in
 		deps = msvc
 		expand = true
 
 	rule link
-		command = $toolset_msvc_cl /nologo @$out.rsp /link $ldflags $libdirs $ignore_default_libs /out:$out
+		command = $cxx_binary /nologo @$out.rsp /link $ldflags $libdirs $ignore_default_libs /out:$out
 		description = link $out
 		rspfile = $out.rsp
 		rspfile_content = $in
 
 	rule link_dll
-		command = $toolset_msvc_cl /nologo @$out.rsp /link /DLL $ldflags $libdirs $ignore_default_libs /out:$out
+		command = $cxx_binary /nologo @$out.rsp /link /DLL $ldflags $libdirs $ignore_default_libs /out:$out
 		description = link $out
 		rspfile = $out.rsp
 		rspfile_content = $in
 
 	rule lib
-		command = $toolset_msvc_lib $libflags @$out.rsp /nologo -OUT:$out
+		command = $lib_binary $libflags @$out.rsp /nologo -OUT:$out
 		description = lib $out
 		rspfile = $out.rsp
 		rspfile_content = $in
