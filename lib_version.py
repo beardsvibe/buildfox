@@ -2,7 +2,7 @@
 
 import re
 
-MAJOR = 1
+MAJOR = 0
 MINOR = 0
 VERSION = "%d.%d" % (MAJOR, MINOR)
 
