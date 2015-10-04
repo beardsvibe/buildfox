@@ -1,0 +1,40 @@
+[
+	{
+		"assign": ["a", "1", "="]
+	},
+	{
+		"assign": [
+			"b",
+			"$a $$a $$$a $$$$a $$$$$a $$$$$$a $$$$$$$a $$$$$$$$a",
+			"="
+		]
+	},
+	{
+		"assign": [
+			"b",
+			"${a} $${a} $$${a} $$$${a} $$$$${a} $$$$$${a} $$$$$$${a} $$$$$$$${a}",
+			"="
+		]
+	},
+	{
+		"assign": [
+			"b",
+			"$not_set $$not_set $$$not_set $$$$not_set $$$$$not_set $$$$$$not_set $$$$$$$not_set $$$$$$$$not_set",
+			"="
+		]
+	},
+	{
+		"assign": [
+			"b",
+			"${not_set} $${not_set} $$${not_set} $$$${not_set} $$$$${not_set} $$$$$${not_set} $$$$$$${not_set} $$$$$$$${not_set}",
+			"="
+		]
+	},
+	{
+		"assign": [
+			"c",
+			"very $: wow$ so $$ doge \tescaped $$$$\tthere $$$$",
+			"="
+		]
+	}
+]

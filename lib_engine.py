@@ -43,10 +43,11 @@ class Engine:
 		self.current_line_i = 0
 
 	# load manifest
-	def load(self, filename):
+	def load(self, filename, logo = True):
 		self.filename = filename
 		self.rel_path = rel_dir(filename)
-		self.output.append("# generated with love by buildfox from %s" % filename)
+		if logo:
+			self.output.append("# generated with love by buildfox from %s" % filename)
 		parse(self, filename)
 
 	# load core definitions

@@ -1,0 +1,28 @@
+# test comment
+
+a = 1 # test inline comment
+b = some text $
+with escaped newline
+
+rule rule_name
+	nested_rule = value
+
+build output: rule_name input
+	nested_build = value
+
+default default_path
+
+pool pool_name
+	nested_pool = value
+
+filter a:1
+	nested_filter = value1
+filter a:2
+	nested_filter = value2
+
+auto output: rule_name input
+	nested_auto = value
+
+print print_test
+
+transformer var_name: transformer_test

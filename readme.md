@@ -1,4 +1,4 @@
-# BuildFox
+# BuildFox [![Build Status](https://travis-ci.org/beardsvibe/buildfox.svg?branch=travis_ci)](https://travis-ci.org/beardsvibe/buildfox)
 
 Minimalistic ninja generator
 
