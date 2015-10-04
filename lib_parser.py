@@ -43,8 +43,9 @@ class Parser:
 		self.engine.current_line = self.line
 		self.engine.current_line_i = self.line_num
 
-		self.engine.on_empty_lines(self.empty_lines)
-		self.empty_lines = 0
+		if self.empty_lines:
+			self.engine.on_empty_lines(self.empty_lines)
+			self.empty_lines = 0
 
 		if len(self.comments):
 			for comment in self.comments:
