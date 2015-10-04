@@ -1,10 +1,12 @@
+__pycache__/
 build/
-examples/**/*.ninja
-examples/**/*.ninja_deps
-examples/**/*.ninja_log
+*.ninja
+*.ninja_deps
+*.ninja_log
 *.obj
 *.exp
 *.lib
 *.dll
 *.exe
-__pycache__/
+*.pdb
+*.ilk
