@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 # BuildFox ninja generator
 
 import os
@@ -8,7 +10,7 @@ import argparse
 from lib_engine import Engine
 from lib_environment import discover
 
-# ----------------------------------------------------------- fox core definitions
+# core definitions -----------------------------------------------------------
 
 fox_core = r"""
 # buildfox core configuration
@@ -127,7 +129,7 @@ filter toolset:msvc
 		ldflags =
 """
 
-# ----------------------------------------------------------- main app
+# main app -----------------------------------------------------------
 
 argsparser = argparse.ArgumentParser(description = "buildfox ninja generator")
 argsparser.add_argument("-i", "--in", help = "input file", default = "build.fox")

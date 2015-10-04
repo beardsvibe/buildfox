@@ -6,6 +6,7 @@ import copy
 import collections
 from lib_parser import parse
 from lib_util import rel_dir, wildcard_regex, find_files
+import lib_version
 
 # match and capture variable and escaping pairs of $$ before variable name
 re_var = re.compile("(?<!\$)((?:\$\$)*)\$({)?([a-zA-Z0-9_.-]+)(?(2)})")
@@ -359,6 +360,10 @@ class Engine:
 		op = obj[2]
 
 		value = self.eval_assign_op(value, self.variables.get(name), op)
+
+		if name == "buildfox_required_version":
+			# Checking the version immediately to fail fast.
+			lib_version.check(value)
 
 		self.variables[name] = value
 		self.output.append("%s = %s" % (name, self.to_esc(value, simple = True)))
