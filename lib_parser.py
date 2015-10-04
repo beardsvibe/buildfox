@@ -17,6 +17,7 @@ class Parser:
 		self.filename = filename
 		self.whitespace_nested = None
 		self.comments = []
+		self.empty_lines = 0
 		if text:
 			self.lines = text.splitlines()
 		else:
@@ -41,6 +42,9 @@ class Parser:
 
 		self.engine.current_line = self.line
 		self.engine.current_line_i = self.line_num
+
+		self.engine.on_empty_lines(self.empty_lines)
+		self.empty_lines = 0
 
 		if len(self.comments):
 			for comment in self.comments:
@@ -332,6 +336,7 @@ class Parser:
 		start_i = self.line_i
 		ws_ref = self.whitespace
 		comments_len = len(self.comments)
+		empty_lines = self.empty_lines
 		if not self.next_line():
 			self.whitespace_nested = None
 			return False
@@ -342,6 +347,7 @@ class Parser:
 			else:
 				self.line_i = start_i
 				self.comments = self.comments[:comments_len]
+				self.empty_lines = empty_lines
 				return False
 		else:
 			if self.whitespace == self.whitespace_nested:
@@ -350,6 +356,7 @@ class Parser:
 				self.line_i = start_i
 				self.whitespace_nested = None
 				self.comments = self.comments[:comments_len]
+				self.empty_lines = empty_lines
 				return False
 
 	def next_line(self, preserve_comments = True):
@@ -383,6 +390,8 @@ class Parser:
 
 			# skip empty lines
 			if not self.line_stripped:
+				if preserve_comments:
+					self.empty_lines += 1
 				continue
 
 			# fast strip comment

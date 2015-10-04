@@ -203,6 +203,9 @@ class Engine:
 			self.output.append("  %s = %s" % (name, self.to_esc(value, simple = True)))
 			local_scope[name] = value
 
+	def on_empty_lines(self, lines):
+		self.output.extend([""] * lines)
+
 	def on_comment(self, comment):
 		self.output.append("#" + comment)
 
