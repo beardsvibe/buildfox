@@ -8,5 +8,6 @@ install:
 script:
   - cd tests
   - coverage run --source=.. --omit=tests.py tests.py
+  - coverage combine
 after_success:
   coveralls
