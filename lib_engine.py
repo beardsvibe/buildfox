@@ -193,7 +193,7 @@ class Engine:
 	def eval_transform(self, name, values, eval = True):
 		transformer = self.transformers.get(name)
 		if not transformer:
-			return self.eval(values) if eval else value
+			return self.eval(values) if eval else values
 
 		def transform_one(value):
 			if not value:
