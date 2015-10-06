@@ -176,8 +176,9 @@ def build_examples(args):
 	for fox_file in find_files("../examples", "*.fox"):
 		fox_file = fox_file.replace("\\", "/")
 		print("-> Testing %s" % fox_file)
-		result = not subprocess.call([sys.executable, "../buildfox.py", "-i", fox_file])
-		#result = not subprocess.call(["coverage", "run", "--source=..", "--parallel-mode", "../buildfox.py", "-i", fox_file])
+		# TODO test with all toolsets here
+		result = not subprocess.call(["coverage", "run", "--source=..", "--parallel-mode",
+			"../buildfox.py", "-i", fox_file, "toolset_msvc=true", "toolset=msvc"])
 		results.append(result)
 		if args.get("failfast") and not result:
 			break
