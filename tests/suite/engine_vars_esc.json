@@ -45,5 +45,15 @@
 			"very $: wow$ so $$ doge \tescaped $$$$\tthere $$$$",
 			"="
 		]
+	},
+	{
+		"empty_lines": 1
+	},
+	{
+		"assign": [
+			"d",
+			"test$($$)$$$)",
+			"="
+		]
 	}
 ]

@@ -7,3 +7,5 @@ b = $$not_set $$not_set $$$$not_set $$$$not_set $$$$$$not_set $$$$$$not_set $$$$
 b = $${not_set} $${not_set} $$$${not_set} $$$${not_set} $$$$$${not_set} $$$$$${not_set} $$$$$$$${not_set} $$$$$$$${not_set}
 
 c = very : wow so $$ doge 	escaped $$$$	there $$$$
+
+d = test($$)$$)
