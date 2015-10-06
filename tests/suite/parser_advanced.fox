@@ -1,0 +1,18 @@
+
+a = 1
+a += 2
+a -= 2
+
+
+
+rule fail_nested
+
+b = 2
+b += 2
+b -= 2
+
+include parser_advanced_2.txt
+subninja parser_advanced_3.txt
+
+
+rule fail_nested_eol

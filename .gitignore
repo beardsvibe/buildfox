@@ -11,3 +11,4 @@ build/
 *.pdb
 *.ilk
 *.coverage
+tests/htmlcov/
