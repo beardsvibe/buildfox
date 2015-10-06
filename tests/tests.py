@@ -100,19 +100,23 @@ class EngineMock:
 def run_test(test_filename, print_json = False, print_ninja = False):
 	print("-> Testing %s" % test_filename)
 	try:
-		with open(os.path.splitext(test_filename)[0] + ".json", "r") as f:
-			reference = json.loads(f.read())
-		engine = EngineMock()
-		parse(engine, test_filename)
-		if print_json:
-			print("--- JSON ---------------------")
-			print(json.dumps(engine.output, sort_keys = True, indent = "\t"))
-			print("--- JSON END -----------------")
-		diff = DeepDiff(reference, engine.output)
-		if diff:
-			print("Results differ from reference:")
-			pprint(diff)
-			return False
+		json_filename = os.path.splitext(test_filename)[0] + ".json"
+		json_exists = os.path.isfile(json_filename)
+		if json_exists or print_json:
+			engine = EngineMock()
+			parse(engine, test_filename)
+			if print_json:
+				print("--- JSON ---------------------")
+				print(json.dumps(engine.output, sort_keys = True, indent = "\t"))
+				print("--- JSON END -----------------")
+			if json_exists:
+				with open(json_filename, "r") as f:
+					reference = json.loads(f.read())
+				diff = DeepDiff(reference, engine.output)
+				if diff:
+					print("Results differ from reference:")
+					pprint(diff)
+					return False
 
 		with open(os.path.splitext(test_filename)[0] + ".ninja", "r") as f:
 			reference = f.read()
