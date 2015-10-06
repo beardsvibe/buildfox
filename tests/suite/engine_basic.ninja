@@ -1,0 +1,22 @@
+
+buildfox_required_version = 0.1
+
+rule cxx
+rule cxx2
+rule link
+rule link_dll
+rule lib
+
+
+
+build suite/obj1/test1.obj suite/obj1/test2.obj suite/obj1/test3.obj suite/obj3/test1.obj suite/obj3/test2.obj suite/obj3/test3.obj: cxx suite/src/test_1a.cpp suite/src/test_2a.cpp suite/src/test_3b.cpp
+build suite/obj2/test1.obj suite/obj2/test2.obj suite/obj2/test3.obj suite/obj4/test1.obj suite/obj4/test2.obj suite/obj4/test3.obj: cxx suite/src/test_1a2.cpp suite/src/test_2a2.cpp suite/src/test_3c2.cpp
+build suite/obj5/test1.obj suite/obj5/test2.obj suite/obj5/test3.obj suite/obj7/test1.obj suite/obj7/test2.obj suite/obj7/test3.obj: cxx suite/src/test_1a.cpp suite/src/test_2a.cpp suite/src/test_3b.cpp | suite/src/test_1a2.cpp suite/src/test_2a2.cpp suite/src/test_3c2.cpp || suite/src/test_1a2.cpp suite/src/test_2a2.cpp suite/src/test_3c2.cpp
+build suite/obj6/test1.obj suite/obj6/test2.obj suite/obj6/test3.obj suite/obj8/test1atest0test1test2test3test4test5test6.obj suite/obj8/test2atest0test1test2test3test4test5test6.obj suite/obj8/test3ctest0test1test2test3test4test5test6.obj: cxx suite/src/test_1a2.cpp suite/src/test_2a2.cpp suite/src/test_3c2.cpp
+build suite/obj9/test1.obj: cxx2 suite/src/test_1a2.cpp
+build suite/obj9/test2.obj: cxx2 suite/src/test_2a2.cpp
+build suite/obj9/test3.obj: cxx2 suite/src/test_3c2.cpp
+build suite/app.exe: link suite/obj1/test1.obj suite/obj1/test2.obj suite/obj1/test3.obj
+build suite/lib1.lib: lib suite/obj1/test1.obj suite/obj1/test2.obj suite/obj1/test3.obj
+build suite/lib2.dll: link_dll suite/obj1/test1.obj suite/obj1/test2.obj suite/obj1/test3.obj
+build suite/lib2.lib: phony suite/lib2.dll
