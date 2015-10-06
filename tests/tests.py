@@ -118,18 +118,26 @@ def run_test(test_filename, print_json = False, print_ninja = False):
 					pprint(diff)
 					return False
 
-		with open(os.path.splitext(test_filename)[0] + ".ninja", "r") as f:
-			reference = f.read()
-		engine = Engine()
-		engine.load(test_filename, logo = False)
-		if print_ninja:
-			print("--- NINJA --------------------")
-			print(engine.text())
-			print("--- NINJA END ----------------")
-		diff = DeepDiff(reference, engine.text())
-		if diff:
-			print("Results differ from reference:")
-			pprint(diff)
+		ninja_filename = os.path.splitext(test_filename)[0] + ".ninja"
+		ninja_exists = os.path.isfile(ninja_filename)
+		if ninja_exists or print_ninja:
+			engine = Engine()
+			engine.load(test_filename, logo = False)
+			if print_ninja:
+				print("--- NINJA --------------------")
+				print(engine.text())
+				print("--- NINJA END ----------------")
+			if ninja_exists:
+				with open(os.path.splitext(test_filename)[0] + ".ninja", "r") as f:
+					reference = f.read()
+				diff = DeepDiff(reference, engine.text())
+				if diff:
+					print("Results differ from reference:")
+					pprint(diff)
+					return False
+
+		if not (json_exists or print_json or ninja_exists or print_ninja):
+			print("json and ninja files are not present")
 			return False
 
 		return True
