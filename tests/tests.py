@@ -174,9 +174,10 @@ def find_files(directory, pattern):
 def build_examples(args):
 	results = []
 	for fox_file in find_files("../examples", "*.fox"):
+		fox_file = fox_file.replace("\\", "/")
 		print("-> Testing %s" % fox_file)
-		#result = not subprocess.call([sys.executable, "../buildfox.py", "-i", fox_file])
-		result = not subprocess.call(["coverage", "run", "--source=..", "--parallel-mode", "../buildfox.py", "-i", fox_file])
+		result = not subprocess.call([sys.executable, "../buildfox.py", "-i", fox_file])
+		#result = not subprocess.call(["coverage", "run", "--source=..", "--parallel-mode", "../buildfox.py", "-i", fox_file])
 		results.append(result)
 		if args.get("failfast") and not result:
 			break
