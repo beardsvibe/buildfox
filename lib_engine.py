@@ -14,6 +14,7 @@ re_alphanumeric = re.compile(r"\W+") # match valid parts of filename
 re_subst = re.compile(r"(?<!\$)(?:\$\$)*\$\{param\}")
 re_non_escaped_space = re.compile(r"(?<!\$)(?:\$\$)* +")
 re_path_transform = re.compile(r"(?<!\$)((?:\$\$)*)([a-zA-Z0-9_.-]+)\((.*?)(?<!\$)(?:\$\$)*\)")
+re_base_escaped = re.compile(r"\$([\| :()])")
 
 class Engine:
 	class Context:
@@ -77,7 +78,9 @@ class Engine:
 
 			# first remove escaped sequences
 			if not raw:
-				text = text.replace("$\n", "").replace("$ ", " ").replace("$:", ":")
+				def repl_escaped(matchobj):
+					return matchobj.group(1)
+				text = re_base_escaped.sub(repl_escaped, text)
 
 			# then do variable substitution
 			def repl(matchobj):
