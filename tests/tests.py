@@ -4,8 +4,10 @@ import os
 import sys
 import json
 import glob
+import fnmatch
 import argparse
 import traceback
+import subprocess
 from pprint import pprint
 from deepdiff import DeepDiff # pip install deepdiff
 
@@ -147,6 +149,45 @@ def run_test(test_filename, print_json = False, print_ninja = False):
 		traceback.print_exc()
 		return False
 
+def run_suite(args):
+	results = []
+	for test_filename in glob.glob(args.get("in")):
+		result = run_test(test_filename.replace("\\", "/"), args.get("json"), args.get("ninja"))
+		results.append(result)
+		if args.get("failfast") and not result:
+			break
+
+	if not all(results):
+		print("One or more tests from test suite failed")
+		if not args.get("dry"):
+			sys.exit(1)
+	else:
+		print("All suite tests are done.")
+
+def find_files(directory, pattern):
+	for root, dirs, files in os.walk(directory):
+		for basename in files:
+			if fnmatch.fnmatch(basename, pattern):
+				filename = os.path.join(root, basename)
+				yield filename
+
+def build_examples(args):
+	results = []
+	for fox_file in find_files("../examples", "*.fox"):
+		print("-> Testing %s" % fox_file)
+		#result = not subprocess.call([sys.executable, "../buildfox.py", "-i", fox_file])
+		result = not subprocess.call(["coverage", "run", "--source=..", "--parallel-mode", "../buildfox.py", "-i", fox_file])
+		results.append(result)
+		if args.get("failfast") and not result:
+			break
+
+	if not all(results):
+		print("One or more tests from examples failed")
+		if not args.get("dry"):
+			sys.exit(1)
+	else:
+		print("All examples tests are done.")
+
 argsparser = argparse.ArgumentParser(description = "buildfox test suite")
 argsparser.add_argument("-i", "--in", help = "Test inputs", default = "suite/*.fox")
 argsparser.add_argument("--dry", action = "store_true",
@@ -156,20 +197,16 @@ argsparser.add_argument("--json", action = "store_true",
 argsparser.add_argument("--ninja", action = "store_true", help = "Print ninja output from engine", default = False, dest = "ninja")
 argsparser.add_argument("--fail-fast", action = "store_true",
 	help = "Abort after first failure", default = False, dest = "failfast")
+argsparser.add_argument("--no-suite", action = "store_false",
+	help = "Do not run test suite", default = True, dest = "suite")
+argsparser.add_argument("--no-examples", action = "store_false",
+	help = "Do not build examples", default = True, dest = "examples")
 args = vars(argsparser.parse_args())
 
 # TODO clean up temporary ninja files in current working dir
 
-results = []
-for test_filename in glob.glob(args.get("in")):
-	result = run_test(test_filename.replace("\\", "/"), args.get("json"), args.get("ninja"))
-	results.append(result)
-	if args.get("failfast") and not result:
-		break
+if args.get("suite"):
+	run_suite(args)
 
-if not all(results):
-	print("One or more tests failed")
-	if not args.get("dry"):
-		sys.exit(1)
-else:
-	print("All tests done.")
+if args.get("examples"):
+	build_examples(args)
