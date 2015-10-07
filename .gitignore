@@ -13,3 +13,4 @@ build/
 *.coverage
 tests/htmlcov/
 *.pyc
+tests/.coverage*
