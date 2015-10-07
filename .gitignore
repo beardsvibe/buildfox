@@ -12,3 +12,4 @@ build/
 *.ilk
 *.coverage
 tests/htmlcov/
+*.pyc
