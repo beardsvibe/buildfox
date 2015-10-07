@@ -7,7 +7,7 @@ def discover():
 		"variation": "debug"
 	}
 
-	if which("cl.exe") and which("link.exe") and which("lib.exe"):
+	if which("cl") and which("link") and which("lib"):
 		vars["toolset_msvc"] = "true"
 
 	if which("clang"):
