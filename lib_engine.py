@@ -2,11 +2,17 @@
 
 import os
 import re
+import sys
 import copy
 import collections
 from lib_parser import parse
 from lib_util import rel_dir, wildcard_regex, find_files
 import lib_version
+
+if sys.version_info[0] < 3:
+	string_types = basestring
+else:
+	string_types = str
 
 # match and capture variable and escaping pairs of $$ before variable name
 re_var = re.compile("(?<!\$)((?:\$\$)*)\$({)?([a-zA-Z0-9_.-]+)(?(2)})")
@@ -73,7 +79,7 @@ class Engine:
 	def eval(self, text):
 		if text == None:
 			return None
-		elif type(text) is str:
+		elif isinstance(text, string_types):
 			raw = text.startswith("r\"")
 
 			# first remove escaped sequences
@@ -182,7 +188,7 @@ class Engine:
 	def eval_path_transform(self, value):
 		if value == None:
 			return None
-		elif type(value) is str:
+		elif isinstance(value, string_types):
 			def path_transform(matchobj):
 				prefix = matchobj.group(1)
 				name = matchobj.group(2)
@@ -416,7 +422,7 @@ class Engine:
 	def to_esc(self, value, simple = False):
 		if value == None:
 			return None
-		elif type(value) is str:
+		elif isinstance(value, string_types):
 			value = value.replace("$", "$$")
 			if not simple:
 				value = value.replace(":", "$:").replace("\n", "$\n").replace(" ", "$ ")
