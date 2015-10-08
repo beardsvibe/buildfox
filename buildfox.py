@@ -33,19 +33,19 @@ filter toolset:msvc
 		command = $cxx /nologo @$out.rsp /link $ldflags $libdirs $ignore_default_libs /out:$out
 		description = link $out
 		rspfile = $out.rsp
-		rspfile_content = $in
+		rspfile_content = $in $libs
 
 	rule link_dll
 		command = $cxx /nologo @$out.rsp /link /DLL $ldflags $libdirs $ignore_default_libs /out:$out
 		description = link $out
 		rspfile = $out.rsp
-		rspfile_content = $in
+		rspfile_content = $in $libs
 
 	rule lib
 		command = $lib $libflags @$out.rsp /nologo -OUT:$out
 		description = lib $out
 		rspfile = $out.rsp
-		rspfile_content = $in
+		rspfile_content = $in $libs
 
 	auto r"(?i).*\.obj": cxx r"(?i).*\.(cpp|cxx|cc|c\+\+|c)$"
 	auto r"(?i).*\.exe": link r"(?i).*\.(obj|lib)$"
@@ -131,6 +131,8 @@ filter toolset:msvc
 	cxxflags =
 	ldflags =
 	libflags =
+	libs =
+	transformer libs: ${param}.lib
 	filter variation:debug
 		cxxflags += $cxx_disable_optimizations $cxx_symbols
 		ldflags += $ld_symbols

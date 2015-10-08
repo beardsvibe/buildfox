@@ -1,6 +1,7 @@
 __pycache__/
 build/
 *.ninja
+!tests/suite/*.ninja
 *.ninja_deps
 *.ninja_log
 *.obj
