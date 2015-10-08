@@ -160,7 +160,6 @@ filter toolset:clang
 	rule lib
 		command = ar rcs $out $in
 		description = ar $in
-		expand = true
 
 	rule link
 		command = $cxx $ldflags $libdirs $in -o $out $libs
@@ -169,7 +168,6 @@ filter toolset:clang
 	rule link_so
 		command = $cxx -shared -fPIC $ldflags $libdirs -o $out $in $libs
 		description = cxx $in
-		expand = true
 
 	auto r"(?i).*\.o": cxx r"(?i).*\.(cpp|cxx|cc|c\+\+)$"
 	auto r"(?i).*\.o": cc r"(?i).*\.(c)$"
