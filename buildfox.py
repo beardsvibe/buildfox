@@ -139,6 +139,13 @@ filter toolset:msvc
 
 filter toolset:clang
 	# clang suport
+	rule cc
+		command = clang -c $in -o $out -MMD $cxxflags $defines $includedirs
+		description = cc $in
+		depfile = $out.d
+		deps = gcc
+		expand = true
+
 	rule cxx
 		command = clang++ -c $in -o $out -MMD $cxxflags $defines $includedirs
 		description = cxx $in
@@ -151,6 +158,14 @@ filter toolset:clang
 		description = link $out
 
 	auto r"(?i).*\.o": cxx r"(?i).*\.(cpp|cxx|cc|c\+\+)$"
+	auto r"(?i).*\.o": cc r"(?i).*\.(c)$"
+	auto r"^(.*\/)?[^.\/]+$": link r"(?i).*\.(o|a|so)$"
+
+	# extensions transformers
+	transformer app: ${param}
+	transformer obj: ${param}.o
+	transformer lib: lib${param}.a
+	transformer shlib: lib${param}.so
 
 	# Clang flags
 	# more info here http://clang.llvm.org/docs/CommandGuide/clang.html
