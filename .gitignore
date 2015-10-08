@@ -10,6 +10,10 @@ build/
 *.exe
 *.pdb
 *.ilk
+*.d
+*.o
+*.so
+*.a
 *.coverage
 tests/htmlcov/
 *.pyc
