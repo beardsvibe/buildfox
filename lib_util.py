@@ -107,7 +107,10 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 				else:
 					fs_files = set()
 				generated_files = generated.get(list_folder, set())
-				for file in fs_files.union(generated_files):
+				# we must have stable sort here
+				# so output ninja files will be same between runs
+				all_files = sorted(list(fs_files.union(generated_files)))
+				for file in all_files:
 					name = base_folder + separator + file
 					match = re_regex.match(name)
 					if match:
@@ -141,12 +144,6 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 
 	# normalize inputs
 	inputs = [os.path.normpath(file).replace("\\", "/") for file in inputs]
-
-	inputs = sorted(inputs)
-	if outputs:
-		result = sorted(result)
-	#targets_explicit_indx = sorted(range(len(targets_explicit)), key = lambda k: targets_explicit[k])
-	#inputs_explicit_indx = sorted(range(len(inputs_explicit)), key = lambda k: inputs_explicit[k])
 
 	if outputs:
 		return inputs, result
