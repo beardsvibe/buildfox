@@ -1,11 +1,14 @@
 language: python
 python:
+  - "2.7"
   - "3.3"
-  - "3.4"
   - "3.5"
-  - "nightly"
 install:
   - pip install deepdiff
+  - pip install coveralls
 script:
   - cd tests
-  - python tests.py
+  - coverage run --source=.. --omit=tests.py tests.py
+  - coverage combine
+after_success:
+  coveralls

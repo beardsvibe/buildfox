@@ -1,4 +1,4 @@
 defines = DLL_EXPORT
 
-build *.obj: auto *.cpp
-build app.dll | app.lib: auto *.obj
+build obj(*): auto *.cpp
+build shlib(app) | lib(app): auto obj(*)

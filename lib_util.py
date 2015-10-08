@@ -2,6 +2,8 @@
 
 import os
 import re
+import sys
+import shutil
 
 re_folder_part = re.compile(r"(?:[^\r\n(\[\"\\]|\\.)+") # match folder part in filename regex
 re_non_escaped_char = re.compile(r"(?<!\\)\\(.)") # looking for not escaped \ with char
@@ -144,3 +146,45 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 		return inputs, result
 	else:
 		return inputs
+
+# finds the file in path
+def which(cmd, mode = os.F_OK | os.X_OK, path = None):
+	if sys.version_info[0:2] >= (3, 3):
+		return shutil.which(cmd, mode, path)
+	else:
+		def _access_check(fn, mode):
+			return (os.path.exists(fn) and os.access(fn, mode)
+					and not os.path.isdir(fn))
+
+		if os.path.dirname(cmd):
+			if _access_check(cmd, mode):
+				return cmd
+			return None
+
+		if path is None:
+			path = os.environ.get("PATH", os.defpath)
+		if not path:
+			return None
+		path = path.split(os.pathsep)
+
+		if sys.platform == "win32":
+			if not os.curdir in path:
+				path.insert(0, os.curdir)
+			pathext = os.environ.get("PATHEXT", "").split(os.pathsep)
+			if any(cmd.lower().endswith(ext.lower()) for ext in pathext):
+				files = [cmd]
+			else:
+				files = [cmd + ext for ext in pathext]
+		else:
+			files = [cmd]
+
+		seen = set()
+		for dir in path:
+			normdir = os.path.normcase(dir)
+			if not normdir in seen:
+				seen.add(normdir)
+				for thefile in files:
+					name = os.path.join(dir, thefile)
+					if _access_check(name, mode):
+						return name
+		return None

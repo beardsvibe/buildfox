@@ -6,11 +6,11 @@ includedirs = test1 test2
 
 # build all
 
-build $out/test1/*.obj: auto test1/*.c
-build $out/test1.lib: auto $out/test1/*.obj
+build $out/test1/obj(*): auto test1/*.c
+build $out/lib(test1): auto $out/test1/obj(*)
 
-build $out/test2/*.obj: auto test2/*.cpp
-build $out/test2.lib: auto $out/test2/*.obj
+build $out/test2/obj(*): auto test2/*.cpp
+build $out/lib(test2): auto $out/test2/obj(*)
 
-build $out/*.obj: auto *.cpp
-build $out/app.exe: auto $out/*.obj $out/*.lib
+build $out/obj(*): auto *.cpp
+build $out/app(app): auto $out/obj(*) $out/lib(*)

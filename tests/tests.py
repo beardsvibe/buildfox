@@ -4,8 +4,10 @@ import os
 import sys
 import json
 import glob
+import fnmatch
 import argparse
 import traceback
+import subprocess
 from pprint import pprint
 from deepdiff import DeepDiff # pip install deepdiff
 
@@ -100,32 +102,55 @@ class EngineMock:
 def run_test(test_filename, print_json = False, print_ninja = False):
 	print("-> Testing %s" % test_filename)
 	try:
-		with open(os.path.splitext(test_filename)[0] + ".json", "r") as f:
-			reference = json.loads(f.read())
-		engine = EngineMock()
-		parse(engine, test_filename)
-		if print_json:
-			print("--- JSON ---------------------")
-			print(json.dumps(engine.output, sort_keys = True, indent = "\t"))
-			print("--- JSON END -----------------")
-		diff = DeepDiff(reference, engine.output)
-		if diff:
-			print("Results differ from reference:")
-			pprint(diff)
-			return False
+		json_filename = os.path.splitext(test_filename)[0] + ".json"
+		json_exists = os.path.isfile(json_filename)
+		if json_exists or print_json:
+			engine = EngineMock()
+			parse(engine, test_filename)
+			if print_json:
+				print("--- JSON ---------------------")
+				print(json.dumps(engine.output, sort_keys = True, indent = "\t"))
+				print("--- JSON END -----------------")
+			if json_exists:
+				with open(json_filename, "r") as f:
+					reference = json.loads(f.read())
+					if sys.version_info[0] < 3:
+						def byteify(input):
+							if isinstance(input, dict):
+								return {byteify(key): byteify(value) for key,value in input.iteritems()}
+							elif isinstance(input, list):
+								return [byteify(element) for element in input]
+							elif isinstance(input, unicode):
+								return input.encode("utf-8")
+							else:
+								return input
+						reference = byteify(reference)
+				diff = DeepDiff(reference, engine.output)
+				if diff:
+					print("Results differ from reference:")
+					pprint(diff)
+					return False
 
-		with open(os.path.splitext(test_filename)[0] + ".ninja", "r") as f:
-			reference = f.read()
-		engine = Engine()
-		engine.load(test_filename, logo = False)
-		if print_ninja:
-			print("--- NINJA --------------------")
-			print(engine.text())
-			print("--- NINJA END ----------------")
-		diff = DeepDiff(reference, engine.text())
-		if diff:
-			print("Results differ from reference:")
-			pprint(diff)
+		ninja_filename = os.path.splitext(test_filename)[0] + ".ninja"
+		ninja_exists = os.path.isfile(ninja_filename)
+		if ninja_exists or print_ninja:
+			engine = Engine()
+			engine.load(test_filename, logo = False)
+			if print_ninja:
+				print("--- NINJA --------------------")
+				print(engine.text())
+				print("--- NINJA END ----------------")
+			if ninja_exists:
+				with open(os.path.splitext(test_filename)[0] + ".ninja", "r") as f:
+					reference = f.read()
+				diff = DeepDiff(reference, engine.text())
+				if diff:
+					print("Results differ from reference:")
+					pprint(diff)
+					return False
+
+		if not (json_exists or print_json or ninja_exists or print_ninja):
+			print("json and ninja files are not present")
 			return False
 
 		return True
@@ -134,6 +159,47 @@ def run_test(test_filename, print_json = False, print_ninja = False):
 		print("Exception error: %s" % err)
 		traceback.print_exc()
 		return False
+
+def run_suite(args):
+	results = []
+	for test_filename in glob.glob(args.get("in")):
+		result = run_test(test_filename.replace("\\", "/"), args.get("json"), args.get("ninja"))
+		results.append(result)
+		if args.get("failfast") and not result:
+			break
+
+	if not all(results):
+		print("One or more tests from test suite failed")
+		if not args.get("dry"):
+			sys.exit(1)
+	else:
+		print("All suite tests are done.")
+
+def find_files(directory, pattern):
+	for root, dirs, files in os.walk(directory):
+		for basename in files:
+			if fnmatch.fnmatch(basename, pattern):
+				filename = os.path.join(root, basename)
+				yield filename
+
+def build_examples(args):
+	results = []
+	for fox_file in find_files("../examples", "*.fox"):
+		fox_file = fox_file.replace("\\", "/")
+		print("-> Testing %s" % fox_file)
+		# TODO test with all toolsets here
+		result = not subprocess.call(["coverage", "run", "--source=..", "--parallel-mode",
+			"../buildfox.py", "-i", fox_file, "toolset_msvc=true", "toolset=msvc"])
+		results.append(result)
+		if args.get("failfast") and not result:
+			break
+
+	if not all(results):
+		print("One or more tests from examples failed")
+		if not args.get("dry"):
+			sys.exit(1)
+	else:
+		print("All examples tests are done.")
 
 argsparser = argparse.ArgumentParser(description = "buildfox test suite")
 argsparser.add_argument("-i", "--in", help = "Test inputs", default = "suite/*.fox")
@@ -144,20 +210,16 @@ argsparser.add_argument("--json", action = "store_true",
 argsparser.add_argument("--ninja", action = "store_true", help = "Print ninja output from engine", default = False, dest = "ninja")
 argsparser.add_argument("--fail-fast", action = "store_true",
 	help = "Abort after first failure", default = False, dest = "failfast")
+argsparser.add_argument("--no-suite", action = "store_false",
+	help = "Do not run test suite", default = True, dest = "suite")
+argsparser.add_argument("--no-examples", action = "store_false",
+	help = "Do not build examples", default = True, dest = "examples")
 args = vars(argsparser.parse_args())
 
 # TODO clean up temporary ninja files in current working dir
 
-results = []
-for test_filename in glob.glob(args.get("in")):
-	result = run_test(test_filename.replace("\\", "/"), args.get("json"), args.get("ninja"))
-	results.append(result)
-	if args.get("failfast") and not result:
-		break
+if args.get("suite"):
+	run_suite(args)
 
-if not all(results):
-	print("One or more tests failed")
-	if not args.get("dry"):
-		sys.exit(1)
-else:
-	print("All tests done.")
+if args.get("examples"):
+	build_examples(args)

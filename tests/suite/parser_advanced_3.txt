@@ -1,0 +1,13 @@
+
+rule test_adv_2
+
+build test2_1 test2_2 | test2_3 test2_4 : test_adv_2 test2_5 test2_6 | test2_7 test2_8 || test2_9 test2_10
+	nested_var1 = value1
+	nested_var2 = value2
+	nested_var3 = value3
+	nested_var4 = value4
+	nested_var5 = value5
+	nested_var6 = value6
+	nested_var7 = value7
+	nested_var8 = value8
+	nested_var9 = value9

@@ -12,3 +12,7 @@ build/
 *.ilk
 *.d
 *.o
+*.coverage
+tests/htmlcov/
+*.pyc
+tests/.coverage*

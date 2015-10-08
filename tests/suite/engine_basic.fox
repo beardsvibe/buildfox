@@ -1,0 +1,28 @@
+
+buildfox_required_version = 0.1
+
+rule cxx
+rule cxx2
+  expand = true
+rule link
+rule link_dll
+rule lib
+
+auto r"(?i).*\.obj": cxx r"(?i).*\.(cpp|cxx|cc|c\+\+|c)$" 
+auto r"(?i).*\.exe": link r"(?i).*\.(obj|lib)$" 
+auto r"(?i).*\.dll": link_dll r"(?i).*\.(obj|lib)$" 
+auto r"(?i).*\.lib": lib r"(?i).*\.(obj|lib)$" 
+
+transformer app: ${param}.exe 
+transformer obj: ${param}.obj 
+transformer lib: ${param}.lib 
+transformer shlib: ${param}.dll 
+
+build obj(obj1/*?) obj(obj3/*?): auto src/*_?[abc].cpp *.cpp
+build obj(obj2/*?) obj(obj4/*?): auto src/*_?[abc]2.cpp
+build obj(obj5/*?) obj(obj7/*?): auto src/*_?[abc].cpp | src/*_?[abc]2.cpp || src/*_?[abc]2.cpp
+build obj(obj6/*?) obj(obj8/*???????????????): auto src/*_?[abc]2.cpp src/*_???????????[abc]2.cpp
+build obj(obj9/*?): cxx2 src/*_?[abc]2.cpp
+build app(app): auto obj(obj1/*)
+build lib(lib1): auto obj(obj1/*)
+build shlib(lib2) | lib(lib2): auto obj(obj1/*)
