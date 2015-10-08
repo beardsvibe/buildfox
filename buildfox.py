@@ -132,6 +132,7 @@ filter toolset:msvc
 	ldflags =
 	libflags =
 	libs =
+	transformer libs: ${param}.lib
 	filter variation:debug
 		cxxflags += $cxx_disable_optimizations $cxx_symbols
 		ldflags += $ld_symbols
