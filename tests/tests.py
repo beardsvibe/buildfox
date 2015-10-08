@@ -190,7 +190,7 @@ def build_examples(args):
 		def test_with_toolset(name):
 			return not subprocess.call(["coverage", "run", "--source=..", "--parallel-mode",
 				"../buildfox.py", "-i", fox_file, "toolset_%s=true" % name, "toolset=%s" % name])
-		[results.append(test_with_toolset(name)) for name in ["clang", "gcc", "msvc"]]
+		results.extend([test_with_toolset(name) for name in ["clang", "gcc", "msvc"]])
 		if args.get("failfast") and not result:
 			break
 
