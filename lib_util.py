@@ -142,6 +142,12 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 	# normalize inputs
 	inputs = [os.path.normpath(file).replace("\\", "/") for file in inputs]
 
+	inputs = sorted(inputs)
+	if outputs:
+		result = sorted(result)
+	#targets_explicit_indx = sorted(range(len(targets_explicit)), key = lambda k: targets_explicit[k])
+	#inputs_explicit_indx = sorted(range(len(inputs_explicit)), key = lambda k: inputs_explicit[k])
+
 	if outputs:
 		return inputs, result
 	else:
