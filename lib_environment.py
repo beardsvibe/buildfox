@@ -1,19 +1,19 @@
 # BuildFox ninja generator
 
-import shutil
+from lib_util import which
 
 def discover():
 	vars = {
 		"variation": "debug"
 	}
 
-	if shutil.which("cl") and shutil.which("link") and shutil.which("lib"):
+	if which("cl") and which("link") and which("lib"):
 		vars["toolset_msvc"] = "true"
 
-	if shutil.which("clang"):
+	if which("clang"):
 		vars["toolset_clang"] = "true"
 
-	if shutil.which("gcc") and shutil.which("g++"):
+	if which("gcc") and which("g++"):
 		vars["toolset_gcc"] = "true"
 
 	if vars.get("toolset_msvc"):
