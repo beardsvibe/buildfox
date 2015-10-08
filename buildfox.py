@@ -57,6 +57,7 @@ filter toolset:msvc
 	transformer obj: ${param}.obj
 	transformer lib: ${param}.lib
 	transformer shlib: ${param}.dll
+	transformer shlib_dependency: ${param}.lib
 
 	# MSVC flags
 	# more info here https://msdn.microsoft.com/en-us/library/19z1t1wy.aspx
@@ -181,6 +182,7 @@ filter toolset:clang
 	transformer obj: ${param}.o
 	transformer lib: lib${param}.a
 	transformer shlib: lib${param}.so
+	transformer shlib_dependency: lib${param}.so
 
 	# Clang flags
 	# more info here http://clang.llvm.org/docs/CommandGuide/clang.html
