@@ -1,4 +1,3 @@
-
 out = build/bin_${variation}
 includedirs = test1 test2
 
@@ -12,4 +11,4 @@ build $out/test2/obj(*): auto test2/*.cpp
 build $out/shlib(test2) | $out/lib(test2): auto $out/test2/obj(*)
 
 build $out/obj(*): auto *.cpp
-build $out/app(app): auto $out/obj(*) $out/lib(*)
+build $out/app(app): auto $out/obj(*) $out/shlib(*)

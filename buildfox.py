@@ -165,9 +165,15 @@ filter toolset:clang
 		command = $cxx $ldflags $libdirs $in -o $out $libs
 		description = link $out
 
+	rule link_so
+		command = $cxx -shared -fPIC $ldflags $libdirs -o $out $in $libs
+		description = cxx $in
+		expand = true
+
 	auto r"(?i).*\.o": cxx r"(?i).*\.(cpp|cxx|cc|c\+\+)$"
 	auto r"(?i).*\.o": cc r"(?i).*\.(c)$"
 	auto r"^(.*\/)?[^.\/]+$": link r"(?i).*\.(o|a|so)$"
+	auto r"(?i).*\.so": link_so r"(?i).*\.(o|so)$"
 	auto r"(?i).*\.a": lib r"(?i).*\.(o|a)$"
 
 	# extensions transformers
@@ -215,11 +221,13 @@ filter toolset:clang
 	transformer libs: -l${param}
 
 	# main flags
-	cxxflags =
+	# TODO: We shouldn't have it enabled for every object file.
+	# But we need it to build object files of the shared libraries.
+	cxxflags = -fPIC
 	ldflags = 
 	filter variation:debug
-		cxxflags = -g
-		ldflags = -g
+		cxxflags += -g
+		ldflags += -g
 """
 
 # main app -----------------------------------------------------------
