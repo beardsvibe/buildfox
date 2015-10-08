@@ -142,6 +142,12 @@ filter toolset:clang
 	cc = clang
 	cxx = clang++
 
+filter toolset:gcc
+	# gcc support
+	cc = gcc
+	cxx = g++
+
+filter toolset: r"gcc|clang"
 	rule cc
 		command = $cc -c $in -o $out -MMD $cxxflags $defines $includedirs
 		description = cc $in
