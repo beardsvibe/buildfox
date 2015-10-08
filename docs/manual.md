@@ -75,4 +75,46 @@ To now to set target variable you just call ```buildfox target=sharedlib```.
 
 ### BuildFox file reference
 
+#### Print
+
+For debug or other purposes you can use print operator.
+
+	# comment
+	foo = hello
+	bar = bar
+	
+	# variables can be substituted as $name or ${name}
+	print $foo ${bar} !
+
+
+#### Variables
+
+For variables we support set operator, add and remove operators.
+
+	var = foo
+	print $var
+	# prints "foo"
+	
+	var += bar
+	print $var
+	# prints "foo bar"
+	
+	var -= bar
+	print $var
+	# prints "foo"
+
+Please not that in first case var stricly is equal ```foo```, but in second and last case we preserve whitespace so we add ``` bar``` and remove ``` bar```. So we can make as follows :
+
+	var = foo
+	print $var
+	# prints "foo"
+	
+	var +=     bar
+	print $var
+	# prints "foo     bar"
+	
+	var -= bar
+	print $var
+	# prints "foo    "
+
 **TODO**
