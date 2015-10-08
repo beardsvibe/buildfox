@@ -107,7 +107,10 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 				else:
 					fs_files = set()
 				generated_files = generated.get(list_folder, set())
-				for file in fs_files.union(generated_files):
+				# we must have stable sort here
+				# so output ninja files will be same between runs
+				all_files = sorted(list(fs_files.union(generated_files)))
+				for file in all_files:
 					name = base_folder + separator + file
 					match = re_regex.match(name)
 					if match:

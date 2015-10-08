@@ -304,14 +304,7 @@ class Engine:
 					self.current_line_i,
 				))
 
-			targets_explicit_indx = sorted(range(len(targets_explicit)), key = lambda k: targets_explicit[k])
-			inputs_explicit_indx = sorted(range(len(inputs_explicit)), key = lambda k: inputs_explicit[k])
-			targets_implicit = sorted(targets_implicit)
-			inputs_implicit = sorted(inputs_implicit)
-			inputs_order = sorted(inputs_order)
-
-			for target_index in targets_explicit_indx:
-				target = targets_explicit[target_index]
+			for target_index, target in enumerate(targets_explicit):
 				input = inputs_explicit[target_index]
 
 				self.output.append("build %s: %s %s%s%s" % (
@@ -324,19 +317,7 @@ class Engine:
 
 				self.write_assigns(assigns)
 
-			if targets_implicit: # TODO remove this when https://github.com/martine/ninja/pull/989 is merged
-				self.output.append("build %s: phony %s" % (
-					" ".join(self.to_esc(targets_implicit)),
-					" ".join(self.to_esc(sorted(targets_explicit))),
-				))
 		else:
-			# make generated output stable
-			targets_explicit = sorted(targets_explicit)
-			targets_implicit = sorted(targets_implicit)
-			inputs_explicit = sorted(inputs_explicit)
-			inputs_implicit = sorted(inputs_implicit)
-			inputs_order = sorted(inputs_order)
-
 			self.output.append("build %s: %s%s%s%s" % (
 				" ".join(self.to_esc(targets_explicit)),
 				rule_name,
@@ -347,11 +328,11 @@ class Engine:
 
 			self.write_assigns(assigns)
 
-			if targets_implicit: # TODO remove this when https://github.com/martine/ninja/pull/989 is merged
-				self.output.append("build %s: phony %s" % (
-					" ".join(self.to_esc(targets_implicit)),
-					" ".join(self.to_esc(targets_explicit)),
-				))
+		if targets_implicit: # TODO remove this when https://github.com/martine/ninja/pull/989 is merged
+			self.output.append("build %s: phony %s" % (
+				" ".join(self.to_esc(targets_implicit)),
+				" ".join(self.to_esc(targets_explicit)),
+			))
 
 	def on_default(self, obj):
 		paths = self.eval_find_files(obj)
