@@ -12,6 +12,8 @@ build/
 *.ilk
 *.d
 *.o
+*.so
+*.a
 *.coverage
 tests/htmlcov/
 *.pyc
