@@ -132,11 +132,10 @@ filter toolset:msvc
 	ldflags =
 	libflags =
 	filter variation:debug
-		cxxflags = $cxx_disable_optimizations $cxx_symbols
-		ldflags = $ld_symbols
+		cxxflags += $cxx_disable_optimizations $cxx_symbols
+		ldflags += $ld_symbols
 	filter variation:release
-		cxxflags = $cxx_speed_optimizations
-		ldflags =
+		cxxflags += $cxx_speed_optimizations
 
 filter toolset:clang
 	# clang suport
