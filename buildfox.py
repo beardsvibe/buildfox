@@ -139,27 +139,36 @@ filter toolset:msvc
 
 filter toolset:clang
 	# clang suport
+	cc = clang
+	cxx = clang++
+
 	rule cc
-		command = clang -c $in -o $out -MMD $cxxflags $defines $includedirs
+		command = $cc -c $in -o $out -MMD $cxxflags $defines $includedirs
 		description = cc $in
 		depfile = $out.d
 		deps = gcc
 		expand = true
 
 	rule cxx
-		command = clang++ -c $in -o $out -MMD $cxxflags $defines $includedirs
+		command = $cxx -o $out -MMD $cxxflags $defines $includedirs -c $in 
 		description = cxx $in
 		depfile = $out.d
 		deps = gcc
 		expand = true
 
+	rule lib
+		command = ar rcs $out $in
+		description = ar $in
+		expand = true
+
 	rule link
-		command = clang++ $in -o $out $ldflags $libdirs
+		command = $cxx $ldflags $libdirs $in -o $out $libs
 		description = link $out
 
 	auto r"(?i).*\.o": cxx r"(?i).*\.(cpp|cxx|cc|c\+\+)$"
 	auto r"(?i).*\.o": cc r"(?i).*\.(c)$"
 	auto r"^(.*\/)?[^.\/]+$": link r"(?i).*\.(o|a|so)$"
+	auto r"(?i).*\.a": lib r"(?i).*\.(o|a)$"
 
 	# extensions transformers
 	transformer app: ${param}
@@ -199,9 +208,11 @@ filter toolset:clang
 	defines =
 	includedirs =
 	libdirs =
+	libs =
 	transformer defines: -D${param}
 	transformer includedirs: -I${param}
 	transformer libdirs: -L${param}
+	transformer libs: -l${param}
 
 	# main flags
 	cxxflags =
