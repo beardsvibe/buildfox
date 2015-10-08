@@ -1,5 +1,0 @@
-filter variation:release
-	DEFINES = RELEASE
-
-build *.o: auto *.cpp
-build app: link *.o
