@@ -13,6 +13,7 @@ install:
   - wget https://github.com/martine/ninja/releases/download/v1.6.0/ninja-linux.zip
   - unzip ninja-linux.zip
   - chmod +x ninja
+  - PATH=$PWD:$PATH
   - cd ..
 script:
   - cd tests

@@ -184,18 +184,20 @@ def find_files(directory, pattern):
 
 def build_examples(args):
 	results = []
+	compiler = args.get("compiler")
 	for fox_file in find_files("../examples", "*.fox"):
-		fox_file = fox_file.replace("\\", "/")
+		work_dir = os.path.dirname(fox_file).replace("\\", "/")
+		fox_file = os.path.basename(fox_file)
 		print("-> Testing %s" % fox_file)
 
 		def test_with_toolset(name, build):
-			result = not subprocess.call(["coverage", "run", "--source=..", "--parallel-mode", "../buildfox.py",
-				"-i", fox_file, "toolset_%s=true" % name, "toolset=%s" % name])
+			result = not subprocess.call(["coverage", "run", "--source=..", "--parallel-mode",
+				"../buildfox.py", "-i", fox_file, "-w", work_dir, "toolset_%s=true" % name, "toolset=%s" % name])
 			if result and build:
-				return not subprocess.call(["../.bins/ninja"])
+				return not subprocess.call(["ninja", "-C", work_dir])
 			return result
 
-		results.extend([test_with_toolset(name, name == "gcc") for name in ["clang", "gcc", "msvc"]])
+		results.extend([test_with_toolset(name, name == compiler) for name in ["clang", "gcc", "msvc"]])
 		if args.get("failfast") and not all(results):
 			break
 
@@ -208,6 +210,7 @@ def build_examples(args):
 
 argsparser = argparse.ArgumentParser(description = "buildfox test suite")
 argsparser.add_argument("-i", "--in", help = "Test inputs", default = "suite/*.fox")
+argsparser.add_argument("--compiler", help = "Test compiler", default = "gcc")
 argsparser.add_argument("--dry", action = "store_true",
 	help = "Ignore tests failures", default = False, dest = "dry")
 argsparser.add_argument("--json", action = "store_true",
