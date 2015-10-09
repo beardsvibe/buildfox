@@ -189,12 +189,10 @@ def build_examples(args):
 		print("-> Testing %s" % fox_file)
 
 		def test_with_toolset(name, build):
-			bf = ["coverage", "run", "--source=..", "--parallel-mode", "../buildfox.py",
-				"-i", fox_file, "toolset_%s=true" % name, "toolset=%s" % name]
-			ninja = ["../.bins/ninja", "-C", os.path.dirname(fox_file)]
-			result = not subprocess.call(bf)
+			result = not subprocess.call(["coverage", "run", "--source=..", "--parallel-mode", "../buildfox.py",
+				"-i", fox_file, "toolset_%s=true" % name, "toolset=%s" % name])
 			if result and build:
-				return not subprocess.call(ninja)
+				return not subprocess.call(["../.bins/ninja"])
 			return result
 
 		results.extend([test_with_toolset(name, name == "gcc") for name in ["clang", "gcc", "msvc"]])
