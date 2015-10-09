@@ -75,11 +75,17 @@ To now to set target variable you just call ```buildfox target=sharedlib```.
 
 ### BuildFox file reference
 
+#### Comments
+
+Comments can be on empty line or in the end of line.
+
+	# comment
+	a = 1 # another comment
+
 #### Print
 
 For debug or other purposes you can use print operator.
 
-	# comment
 	foo = hello
 	bar = bar
 	
@@ -121,7 +127,7 @@ Variable name also can contain values of other variables
 
 	foo = bar
 	${foo}_value = test
-
+	
 	# will print test
 	print $bar_value
 
@@ -131,16 +137,36 @@ In some cases we need to slightly transform values by appending or prepending so
 
 	transformer test: very ${param}
 	test = doge wow
-
+	
 	# will print very doge very wow
 	# transformer works by splitting input line by spaces
 	# replacing items with template and joining them back with spaces
 	print $test
-
+	
 	transformer img: ${param}.png
 	rule some_rule
-
+	
 	# also transformers are used to modify file names based on environment
 	# note you can only use this form in path
 	build img(name): some_rule some_files
 
+#### Build commands
+
+To build target (outputs) from inputs we use build commands.
+
+	rule example
+		command = cp $in $out
+	
+	# will copy a.txt to b.txt
+	build b.txt: example a.txt
+	
+	rule example2
+		command = cat $in $out $somevar $somevar2
+	somevar = 0
+	
+	# should print "e.txt f.txt a.txt b.txt 1 2"
+	build a.txt b.txt | c.txt d.txt: example2 e.txt f.txt | g.txt h.txt || i.txt j.txt
+		somevar = 1 # you can shadow rule variables from build command
+		somevar2 = 2
+
+**TODO**
