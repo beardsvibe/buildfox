@@ -89,7 +89,7 @@ For debug or other purposes you can use print operator.
 
 #### Variables
 
-For variables we support set operator, add and remove operators.
+For variables we support set, add and remove operators.
 
 	var = foo
 	print $var
@@ -117,4 +117,30 @@ Please not that in first case var stricly is equal ```foo```, but in second and 
 	print $var
 	# prints "foo    "
 
-**TODO**
+Variable name also can contain values of other variables
+
+	foo = bar
+	${foo}_value = test
+
+	# will print test
+	print $bar_value
+
+#### Transformer
+
+In some cases we need to slightly transform values by appending or prepending something depending on environment. For example if we mean static library then it will be prepended with .lib on Windows and .a on Linux.
+
+	transformer test: very ${param}
+	test = doge wow
+
+	# will print very doge very wow
+	# transformer works by splitting input line by spaces
+	# replacing items with template and joining them back with spaces
+	print $test
+
+	transformer img: ${param}.png
+	rule some_rule
+
+	# also transformers are used to modify file names based on environment
+	# note you can only use this form in path
+	build img(name): some_rule some_files
+
