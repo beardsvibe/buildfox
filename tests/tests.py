@@ -187,11 +187,18 @@ def build_examples(args):
 	for fox_file in find_files("../examples", "*.fox"):
 		fox_file = fox_file.replace("\\", "/")
 		print("-> Testing %s" % fox_file)
-		def test_with_toolset(name):
-			return not subprocess.call(["coverage", "run", "--source=..", "--parallel-mode",
-				"../buildfox.py", "-i", fox_file, "toolset_%s=true" % name, "toolset=%s" % name])
-		results.extend([test_with_toolset(name) for name in ["clang", "gcc", "msvc"]])
-		if args.get("failfast") and not result:
+
+		def test_with_toolset(name, build):
+			bf = ["coverage", "run", "--source=..", "--parallel-mode", "../buildfox.py",
+				"-i", fox_file, "toolset_%s=true" % name, "toolset=%s" % name]
+			ninja = ["../.bins/ninja", "-C", os.path.dirname(fox_file)]
+			result = not subprocess.call(bf)
+			if result and build:
+				return not subprocess.call(ninja)
+			return result
+
+		results.extend([test_with_toolset(name, name == "gcc") for name in ["clang", "gcc", "msvc"]])
+		if args.get("failfast") and not all(results):
 			break
 
 	if not all(results):
