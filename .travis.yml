@@ -1,8 +1,8 @@
 language: python
 python:
-  - "2.7"
+  # - "2.7"
   - "3.3"
-  - "3.5"
+  # - "3.5"
 compiler:
   - gcc
 install:
@@ -10,7 +10,7 @@ install:
   - pip install coveralls
   - mkdir -p .bins
   - cd .bins
-  - https://github.com/martine/ninja/releases/download/v1.6.0/ninja-linux.zip
+  - wget https://github.com/martine/ninja/releases/download/v1.6.0/ninja-linux.zip
   - unzip ninja-linux.zip
   - chmod +x ninja
   - ./ninja --help
