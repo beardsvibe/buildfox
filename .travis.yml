@@ -5,6 +5,7 @@ python:
   # - "3.5"
 compiler:
   - gcc
+  - clang
 install:
   - pip install deepdiff
   - pip install coveralls
@@ -17,7 +18,7 @@ install:
   - cd ..
 script:
   - cd tests
-  - coverage run --source=.. --omit=tests.py tests.py
+  - coverage run --source=.. --omit=tests.py tests.py --compiler $CC
   - coverage combine
 after_success:
   coveralls
