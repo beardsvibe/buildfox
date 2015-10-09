@@ -194,6 +194,8 @@ def build_examples(args):
 			result = not subprocess.call(["coverage", "run", "--source=..", "--parallel-mode",
 				"../buildfox.py", "-i", fox_file, "-w", work_dir, "toolset_%s=true" % name, "toolset=%s" % name])
 			if result and build:
+				# just clean workspace, don't care if this fails
+				subprocess.call(["ninja", "-C", work_dir, "-t", "clean"])
 				return not subprocess.call(["ninja", "-C", work_dir])
 			return result
 
