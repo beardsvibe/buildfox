@@ -50,6 +50,7 @@ class Engine:
 		self.filename = ""
 		self.current_line = ""
 		self.current_line_i = 0
+		self.rules_were_added = False
 
 	# load manifest
 	def load(self, filename, logo = True):
@@ -243,6 +244,8 @@ class Engine:
 		self.output.append("#" + comment)
 
 	def on_rule(self, obj, assigns):
+		self.rules_were_added = True
+
 		rule_name = self.eval(obj)
 		self.output.append("rule " + rule_name)
 		vars = {}
@@ -403,9 +406,16 @@ class Engine:
 				re_alphanumeric.sub("", os.path.splitext(os.path.basename(path))[0])
 			)
 			self.context.subninja_num += 1
+
 			engine = Engine(self)
 			engine.load(path)
 			engine.save(gen_filename)
+
+			# we depend on scoped rules so let's enforce 1.6 version if you use rules
+			if engine.rules_were_added:
+				self.on_assign(("ninja_required_version", "1.6", "="))
+
+			self.rules_were_added = self.rules_were_added or engine.rules_were_added
 			self.output.append("subninja " + self.to_esc(gen_filename))
 
 	def to_esc(self, value, simple = False):

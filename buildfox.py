@@ -18,8 +18,10 @@ from lib_selftest import selftest_setup, selftest_wipe
 fox_core = r"""
 # buildfox core configuration
 
-# buildfox relies on scoped rules and they were added in ninja v1.6
-ninja_required_version = 1.6
+# buildfox relies on deps and they were added in ninja v1.3
+# please note, if you will use subfox/subninja commands
+# then requirement will raise up to ninja v1.6 because we depend on scoped rules
+ninja_required_version = 1.3
 
 filter toolset:msvc
 	# msvc support
