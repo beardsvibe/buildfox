@@ -235,4 +235,10 @@ Filter allow us to evaluate scope depending on variable state.
 	filter c: 2
 		print filter on $c
 
+#### Rules
+#### Default
+#### Subfox and include
+#### Pool
+#### Auto
+
 **TODO**
