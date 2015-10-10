@@ -50,10 +50,10 @@ filter toolset:msvc
 		rspfile = $out.rsp
 		rspfile_content = $in $libs
 
-	auto r"(?i).*\.obj": cxx r"(?i).*\.(cpp|cxx|cc|c\+\+|c)$"
-	auto r"(?i).*\.exe": link r"(?i).*\.(obj|lib)$"
-	auto r"(?i).*\.dll": link_dll r"(?i).*\.(obj|lib)$"
-	auto r"(?i).*\.lib": lib r"(?i).*\.(obj|lib)$"
+	auto r"^(?i).*\.obj$": cxx r"^(?i).*\.(cpp|cxx|cc|c\+\+|c)$"
+	auto r"^(?i).*\.exe$": link r"^(?i).*\.(obj|lib)$"
+	auto r"^(?i).*\.dll$": link_dll r"^(?i).*\.(obj|lib)$"
+	auto r"^(?i).*\.lib$": lib r"^(?i).*\.(obj|lib)$"
 
 	# extensions transformers
 	transformer app: ${param}.exe
@@ -179,11 +179,11 @@ filter toolset: r"gcc|clang"
 		command = $cxx -shared -fPIC $ldflags $libdirs -o $out $in $libs
 		description = cxx $in
 
-	auto r"(?i).*\.o": cxx r"(?i).*\.(cpp|cxx|cc|c\+\+)$"
-	auto r"(?i).*\.o": cc r"(?i).*\.(c)$"
-	auto r"^(.*\/)?[^.\/]+$": link r"(?i).*\.(o|a|so)$"
-	auto r"(?i).*\.so": link_so r"(?i).*\.(o|so)$"
-	auto r"(?i).*\.a": lib r"(?i).*\.(o|a)$"
+	auto r"^(?i).*\.o$": cxx r"^(?i).*\.(cpp|cxx|cc|c\+\+)$"
+	auto r"^(?i).*\.o$": cc r"^(?i).*\.(c)$"
+	auto r"^(.*\/)?[^.\/]+$": link r"^(?i).*\.(o|a|so)$"
+	auto r"^(?i).*\.so$": link_so r"^(?i).*\.(o|so)$"
+	auto r"^(?i).*\.a$": lib r"^(?i).*\.(o|a)$"
 
 	# extensions transformers
 	transformer app: ${param}
