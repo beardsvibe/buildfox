@@ -163,7 +163,7 @@ def run_test(test_filename, print_json = False, print_ninja = False):
 def run_suite(args):
 	results = []
 	for test_filename in glob.glob(args.get("in")):
-		result = run_test(test_filename.replace("\\", "/"), args.get("json"), args.get("ninja"))
+		result = run_test(test_filename.replace("\\", "/"), args.get("json"), args.get("show_ninja"))
 		results.append(result)
 		if args.get("failfast") and not result:
 			break
@@ -184,19 +184,18 @@ def find_files(directory, pattern):
 
 def build_examples(args):
 	results = []
+	ninja = args.get("ninja")
 	compiler = args.get("compiler")
-	for fox_file in find_files("../examples", "*.fox"):
-		work_dir = os.path.dirname(fox_file).replace("\\", "/")
-		fox_file = os.path.basename(fox_file)
+	for fox_file in find_files("../examples", "build.fox"):
 		print("-> Testing %s" % fox_file)
 
 		def test_with_toolset(name, build):
 			result = not subprocess.call(["coverage", "run", "--source=..", "--parallel-mode",
-				"../buildfox.py", "-i", fox_file, "-w", work_dir, "toolset_%s=true" % name, "toolset=%s" % name])
+				"../buildfox.py", "-i", fox_file, "toolset_%s=true" % name, "toolset=%s" % name])
 			if result and build:
 				# just clean workspace, don't care if this fails
-				subprocess.call(["ninja", "-C", work_dir, "-t", "clean"])
-				return not subprocess.call(["ninja", "-C", work_dir])
+				subprocess.call([ninja, "-t", "clean"])
+				return not subprocess.call([ninja])
 			return result
 
 		results.extend([test_with_toolset(name, name == compiler) for name in ["clang", "gcc", "msvc"]])
@@ -213,11 +212,12 @@ def build_examples(args):
 argsparser = argparse.ArgumentParser(description = "buildfox test suite")
 argsparser.add_argument("-i", "--in", help = "Test inputs", default = "suite/*.fox")
 argsparser.add_argument("--compiler", help = "Test compiler", default = "gcc")
+argsparser.add_argument("--ninja", help = "Ninja executable", default = "gcc")
 argsparser.add_argument("--dry", action = "store_true",
 	help = "Ignore tests failures", default = False, dest = "dry")
 argsparser.add_argument("--json", action = "store_true",
 	help = "Print json output from parser", default = False, dest = "json")
-argsparser.add_argument("--ninja", action = "store_true", help = "Print ninja output from engine", default = False, dest = "ninja")
+argsparser.add_argument("--show-ninja", action = "store_true", help = "Print ninja output from engine", default = False, dest = "show_ninja")
 argsparser.add_argument("--fail-fast", action = "store_true",
 	help = "Abort after first failure", default = False, dest = "failfast")
 argsparser.add_argument("--no-suite", action = "store_false",

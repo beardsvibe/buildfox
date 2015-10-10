@@ -4,19 +4,24 @@
 
 import os
 import re
+import sys
 import copy
 import argparse
+import subprocess
 
 from lib_engine import Engine
 from lib_environment import discover
+from lib_selftest import selftest_setup, selftest_wipe
 
 # core definitions -----------------------------------------------------------
 
 fox_core = r"""
 # buildfox core configuration
 
-# buildfox relies on scoped rules and they were added in ninja v1.6
-ninja_required_version = 1.6
+# buildfox relies on deps and they were added in ninja v1.3
+# please note, if you will use subfox/subninja commands
+# then requirement will raise up to ninja v1.6 because we depend on scoped rules
+ninja_required_version = 1.3
 
 filter toolset:msvc
 	# msvc support
@@ -47,10 +52,10 @@ filter toolset:msvc
 		rspfile = $out.rsp
 		rspfile_content = $in $libs
 
-	auto r"(?i).*\.obj": cxx r"(?i).*\.(cpp|cxx|cc|c\+\+|c)$"
-	auto r"(?i).*\.exe": link r"(?i).*\.(obj|lib)$"
-	auto r"(?i).*\.dll": link_dll r"(?i).*\.(obj|lib)$"
-	auto r"(?i).*\.lib": lib r"(?i).*\.(obj|lib)$"
+	auto r"^(?i).*\.obj$": cxx r"^(?i).*\.(cpp|cxx|cc|c\+\+|c)$"
+	auto r"^(?i).*\.exe$": link r"^(?i).*\.(obj|lib)$"
+	auto r"^(?i).*\.dll$": link_dll r"^(?i).*\.(obj|lib)$"
+	auto r"^(?i).*\.lib$": lib r"^(?i).*\.(obj|lib)$"
 
 	# extensions transformers
 	transformer app: ${param}.exe
@@ -120,19 +125,19 @@ filter toolset:msvc
 	includedirs =
 	disable_warnings =
 	libdirs =
+	libs =
 	ignore_default_libs =
 	transformer defines: /D${param}
-	transformer includedirs: /I${param}
+	transformer includedirs: /I${rel_path}${param}
 	transformer disable_warnings: /wd${param}
-	transformer libdirs: /LIBPATH:${param}
+	transformer libdirs: /LIBPATH:${rel_path}${param}
+	transformer libs: ${param}.lib
 	transformer ignore_default_libs: /NODEFAULTLIB:${param}
 
 	# main flags
 	cxxflags =
 	ldflags =
 	libflags =
-	libs =
-	transformer libs: ${param}.lib
 	filter variation:debug
 		cxxflags += $cxx_disable_optimizations $cxx_symbols
 		ldflags += $ld_symbols
@@ -176,11 +181,11 @@ filter toolset: r"gcc|clang"
 		command = $cxx -shared -fPIC $ldflags $libdirs -o $out $in $libs
 		description = cxx $in
 
-	auto r"(?i).*\.o": cxx r"(?i).*\.(cpp|cxx|cc|c\+\+)$"
-	auto r"(?i).*\.o": cc r"(?i).*\.(c)$"
-	auto r"^(.*\/)?[^.\/]+$": link r"(?i).*\.(o|a|so)$"
-	auto r"(?i).*\.so": link_so r"(?i).*\.(o|so)$"
-	auto r"(?i).*\.a": lib r"(?i).*\.(o|a)$"
+	auto r"^(?i).*\.o$": cxx r"^(?i).*\.(cpp|cxx|cc|c\+\+)$"
+	auto r"^(?i).*\.o$": cc r"^(?i).*\.(c)$"
+	auto r"^(.*\/)?[^.\/]+$": link r"^(?i).*\.(o|a|so)$"
+	auto r"^(?i).*\.so$": link_so r"^(?i).*\.(o|so)$"
+	auto r"^(?i).*\.a$": lib r"^(?i).*\.(o|a)$"
 
 	# extensions transformers
 	transformer app: ${param}
@@ -223,14 +228,16 @@ filter toolset: r"gcc|clang"
 	libdirs =
 	libs =
 	transformer defines: -D${param}
-	transformer includedirs: -I${param}
-	transformer libdirs: -L${param}
+	transformer includedirs: -I${rel_path}${param}
+	transformer libdirs: -L${rel_path}${param}
 	transformer libs: -l${param}
 
 	# main flags
-	# TODO: We shouldn't have it enabled for every object file.
-	# But we need it to build object files of the shared libraries.
-	cxxflags = -fPIC
+	cxxflags =
+	filter system: r"^(?i)(?!windows).*$" # don't enable this with gcc/clang on Windows
+		# TODO: We shouldn't have it enabled for every object file.
+		# But we need it to build object files of the shared libraries.
+		cxxflags = -fPIC
 	ldflags = 
 	filter variation:debug
 		cxxflags += -g
@@ -249,6 +256,8 @@ argsparser.add_argument("--no-core", action = "store_false",
 	help = "disable parsing fox core definitions", default = True, dest = "core")
 argsparser.add_argument("--no-env", action = "store_false",
 	help = "disable environment discovery", default = True, dest = "env")
+argsparser.add_argument("--selftest", action = "store_true",
+	help = "run self test", default = False, dest = "selftest")
 args = vars(argsparser.parse_args())
 
 if args.get("workdir"):
@@ -272,5 +281,19 @@ for var in args.get("variables"):
 if args.get("core"):
 	engine.load_core(fox_core)
 
-engine.load(args.get("in"))
-engine.save(args.get("out"))
+if args.get("selftest"):
+	fox_filename, ninja_filename, app_filename = selftest_setup()
+	engine.load(fox_filename)
+	engine.save(ninja_filename)
+	result = not subprocess.call(["ninja", "-f", ninja_filename])
+	if result:
+		result = not subprocess.call([app_filename])
+	if result:
+		print("Selftest - ok")
+		selftest_wipe()
+	else:
+		print("Selftest - failed")
+		sys.exit(1)
+else:
+	engine.load(args.get("in"))
+	engine.save(args.get("out"))

@@ -1,3 +1,4 @@
+rel_path = suite/
 
 a = 1
 a = 1 2
@@ -11,12 +12,14 @@ b = 2
 b = 2 2
 b = 2
 
+rel_path = suite/
 
 rule test_adv_1
 
 build suite/test_1 suite/test_2: test_adv_1 suite/test_5 suite/test_6 | suite/test_7 suite/test_8 || suite/test_9 suite/test_10
   nested_var = value
 build suite/test_3 suite/test_4: phony suite/test_1 suite/test_2
+ninja_required_version = 1.6
 subninja __gen_0_parser_advanced_3.ninja
 
 

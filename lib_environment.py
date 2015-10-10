@@ -1,5 +1,7 @@
 # BuildFox ninja generator
 
+import os
+import platform
 from lib_util import which
 
 def discover():
@@ -23,6 +25,16 @@ def discover():
 	elif vars.get("toolset_gcc"):
 		vars["toolset"] = "gcc"
 	else:
-		raise ValueError("cant find any compiler")
+		raise ValueError("Can't find any compiler")
+
+	if not which("ninja"):
+		print("Warning ! Can't find ninja executable")
+
+	vars["system"] = platform.system()
+	vars["machine"] = platform.machine()
+	cwd = os.getcwd().replace("\\", "/")
+	if cwd and cwd != "." and not cwd.endswith("/"):
+		cwd += "/"
+	vars["cwd"] = cwd
 
 	return vars
