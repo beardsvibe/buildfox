@@ -91,7 +91,6 @@ For debug or other purposes you can use print operator.
 	# variables can be substituted as $name or ${name}
 	print $foo ${bar} !
 
-
 #### Variables
 
 For variables we support set, add and remove operators.
@@ -201,5 +200,39 @@ Every path in BuildFox can be one of three types : normal path, regex, wildcard.
 	
 	# wildcard and regexes are interchangeable
 	build r"obj_\2_\1.obj": cxx *_*.cpp
+
+#### Filters
+
+Filter allow us to evaluate scope depending on variable state.
+
+	a = 2
+	
+	# filter nested scope is only evaluated if a = 1 or a = 2
+	filter a: 1
+		b = 1
+	filter a: 2
+		b = 2
+	
+	# filters also can be nested
+	filter a: 2
+		filter b: 1
+			c = 1
+		filter b: 2
+			c = 2
+	
+	# should print 2 2 2
+	print $a $b $c
+	
+	# filter value also can be regex or wildcard
+	test = foo
+	filter test: r"foo|bar"
+		result = $test
+	filter test: ?oo
+		result += works
+	print $result # should print foo works
+	
+	# you can filter all other operations like build, rules, etc
+	filter c: 2
+		print filter on $c
 
 **TODO**
