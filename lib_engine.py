@@ -189,6 +189,8 @@ class Engine:
 		if value == None:
 			return None
 		elif isinstance(value, string_types):
+			if value.startswith("r\""):
+				return value
 			def path_transform(matchobj):
 				prefix = matchobj.group(1)
 				name = matchobj.group(2)

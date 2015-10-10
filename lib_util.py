@@ -5,7 +5,7 @@ import re
 import sys
 import shutil
 
-re_folder_part = re.compile(r"(?:[^\r\n(\[\"\\]|\\.)+") # match folder part in filename regex
+re_folder_part = re.compile(r"((?:[^\r\n(\[\"\\]|\\.)+)(\\/|\/|\\)") # match folder part in filename regex
 re_non_escaped_char = re.compile(r"(?<!\\)\\(.)") # looking for not escaped \ with char
 re_capture_group_ref = re.compile(r"(?<!\\)\\(\d)") # match regex capture group reference
 
@@ -90,7 +90,6 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 					separator = "\\" if base_folder.rfind("\\") > base_folder.rfind("/") else "/"
 					base_folder = os.path.dirname(base_folder)
 					list_folder = rel_path + base_folder
-					
 				else:
 					separator = ""
 					base_folder = ""
