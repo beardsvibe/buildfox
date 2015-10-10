@@ -236,9 +236,93 @@ Filter allow us to evaluate scope depending on variable state.
 		print filter on $c
 
 #### Rules
+
+Rules define executable command, form arguments and process dependency information. BuildFox is using ninja rules more or less as is (except for expand), so for more details please refer to [ninja manual](http://martine.github.io/ninja/manual.html#ref_rule).
+
+	# rule have just a name and set of nested variables
+	rule test
+		# values of this variables are not evaluated in BuildFox (except for expand)
+		# instead they are evaluated by ninja on moment when rule in triggered
+		# by build command
+		command = some_app $in $out # command is required variable
+		description = building $out # optional description for build log
+	
+	# in case of cpp related rules we have depfile and deps commands
+	rule cxx
+		command = gcc -o $out -MMD -c $in 
+		# -MMD flag asks gcc to output implicit dependencies information like user includes
+		# this line asks ninja to parse this information and add it to build graph
+		deps = gcc
+		
+		# gcc provides dependency information through dependecy file (.d)
+		# this line asks ninja to remove this file after the command is finished
+		depfile = $out.d # this will remove
+	
+	# for Windows we have commands to use response file
+	rule lib
+		command = lib @$out.rsp /nologo -OUT:$out
+		# this will create response the file with rspfile_content before running a command
+		# and ninja will remove the file after a command is finished
+		rspfile = $out.rsp
+		
+		# this sets the content of a response file
+		rspfile_content = $in $libs
+	
+	# expand tells BuildFox to expand the rule over sets of file
+	# expand variable is captured by the BuildFox engine and not passed to ninja
+	rule cxx
+		command = ...
+		expand = true
+	
+	build *.obj: cxx *.cpp
+	# let's imagine that we have a.cpp, b.cpp and c.cpp
+	# first BuildFox will do wildcard lookup and find all input files
+	# and it will generated list of related output files
+	#
+	# so after this our command will look like this :
+	# build a.obj b.obj c.obj: cxx a.cpp b.cpp c.cpp
+	# this is not what we actually wanted, so we set expand = true
+	# to tell BuildFox to create multiple build commands for this rule
+	# so we will get :
+	# build a.obj: cxx a.cpp
+	# build b.obj: cxx b.cpp
+	# build c.obj: cxx c.cpp
+
+#### Auto
+
+To simplify writing build commands we have auto rule. It will compare inputs and outputs of build command with known rules and insert correct rule for a case.
+
+	# just rules
+	rule cxx
+		command = ...
+	rule link
+		command = ...
+	
+	# auto have output and input masks which can be value, wildcard or regex
+	# and it also says which rule to use for this masks
+	auto *.obj: cxx *.cpp
+	auto *.exe: link *.obj
+	
+	# so now instead of specifying a rule we can just write auto
+	build *.obj: auto *.cpp
+	build *.exe: auto *.obj
+
 #### Default
+
+By default ninja will start building all targets that are not appear as inputs to any other targets. Sometimes it's useful to build just some targets by default, and build others targets (like docs, etc) only when we explicitly ask them to be built.
+
+	# we build some apps
+	...
+	build foo.exe: auto foo/*.obj
+	build bar.exe: auto bar/*.obj
+	
+	# and we specify default
+	default foo.exe # multiple defaults are also possible
+	
+	# now when we run ninja it will only build foo.exe
+	# and too built bar.exe we need to run "ninja bar.exe"
+
 #### Subfox and include
 #### Pool
-#### Auto
 
 **TODO**
