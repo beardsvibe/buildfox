@@ -231,9 +231,11 @@ filter toolset: r"gcc|clang"
 	transformer libs: -l${param}
 
 	# main flags
-	# TODO: We shouldn't have it enabled for every object file.
-	# But we need it to build object files of the shared libraries.
-	cxxflags = -fPIC
+	cxxflags =
+	filter system: r"^(?i)(?!windows).*$" # don't enable this with gcc/clang on Windows
+		# TODO: We shouldn't have it enabled for every object file.
+		# But we need it to build object files of the shared libraries.
+		cxxflags = -fPIC
 	ldflags = 
 	filter variation:debug
 		cxxflags += -g
