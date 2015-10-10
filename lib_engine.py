@@ -57,12 +57,14 @@ class Engine:
 		self.rel_path = rel_dir(filename)
 		if logo:
 			self.output.append("# generated with love by buildfox from %s" % filename)
+		self.write_rel_path()
 		parse(self, filename)
 
 	# load core definitions
 	def load_core(self, fox_core):
 		self.filename = "fox_core.fox"
 		self.rel_path = ""
+		self.write_rel_path()
 		parse(self, self.filename, text = fox_core)
 
 	# return output text
@@ -231,6 +233,9 @@ class Engine:
 			self.output.append("  %s = %s" % (name, self.to_esc(value, simple = True)))
 			local_scope[name] = value
 
+	def write_rel_path(self):
+		self.on_assign(("rel_path", self.rel_path, "="))
+
 	def on_empty_lines(self, lines):
 		self.output.extend([""] * lines)
 
@@ -386,6 +391,7 @@ class Engine:
 		for path in paths:
 			old_rel_path = self.rel_path
 			self.rel_path = rel_dir(path)
+			self.write_rel_path()
 			parse(self, path)
 			self.rel_path = old_rel_path
 
