@@ -4,11 +4,14 @@
 
 import os
 import re
+import sys
 import copy
 import argparse
+import subprocess
 
 from lib_engine import Engine
 from lib_environment import discover
+from lib_selftest import selftest_setup, selftest_wipe
 
 # core definitions -----------------------------------------------------------
 
@@ -249,6 +252,8 @@ argsparser.add_argument("--no-core", action = "store_false",
 	help = "disable parsing fox core definitions", default = True, dest = "core")
 argsparser.add_argument("--no-env", action = "store_false",
 	help = "disable environment discovery", default = True, dest = "env")
+argsparser.add_argument("--selftest", action = "store_true",
+	help = "run self test", default = False, dest = "selftest")
 args = vars(argsparser.parse_args())
 
 if args.get("workdir"):
@@ -272,5 +277,19 @@ for var in args.get("variables"):
 if args.get("core"):
 	engine.load_core(fox_core)
 
-engine.load(args.get("in"))
-engine.save(args.get("out"))
+if args.get("selftest"):
+	fox_filename, ninja_filename, app_filename = selftest_setup()
+	engine.load(fox_filename)
+	engine.save(ninja_filename)
+	result = not subprocess.call(["ninja", "-f", ninja_filename])
+	if result:
+		result = not subprocess.call([app_filename])
+	if result:
+		print("Selftest - ok")
+		selftest_wipe()
+	else:
+		print("Selftest - failed")
+		sys.exit(1)
+else:
+	engine.load(args.get("in"))
+	engine.save(args.get("out"))
