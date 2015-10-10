@@ -70,6 +70,24 @@ Now to set target you just call ```buildfox target=sharedlib```.
 
 ## Writing your own BuildFox files
 
+#### Fox core
+
+**TODO**
+
+#### Console apps
+
+**TODO**
+
+#### Static libs
+
+**TODO**
+
+#### Shared libs
+
+**TODO**
+
+#### Others
+
 **TODO**
 
 ## BuildFox file reference
