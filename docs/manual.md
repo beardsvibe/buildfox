@@ -6,7 +6,7 @@
 
 BuildFox is a minimalistic generator for [ninja build system](http://martine.github.io/ninja/). It's designed to take leverage on simplicity and straightforwardness of ninja. BuildFox tries its best to provide as simple as possible yet powerful and usable manifest format to explore how simple and beautiful build systems can be.
 
-### Introduction
+## Introduction
 
 **TODO revisit this**
 
@@ -20,11 +20,11 @@ BuildFox is different because of it's imperative manifest language - instead of 
 
 BuildFox is also designed to be very fast, it shouldn't take more then a second to translate a manifest to ninja build file.
 
-### Using BuildFox
+## Using BuildFox
 
 *Currently BuildFox is targeting C/C++ language support on all popular platforms, so following examples will be about those languages.*
 
-Before we start with the manifest, let's explore how do we actually build a C/C++ executable from source code.
+Before we start with the manifest, let's explore how do we actually build an executable from C/C++ source code.
 
 For Windows it usually looks like this :
 
@@ -66,13 +66,13 @@ What if we want to compile static library for target "lib" and dynamic library f
 		# **TODO** update this after we decide how it should be
 		build shlib(mylib) | lib(mylib): auto obj(*)
 
-To now to set target variable you just call ```buildfox target=sharedlib```.
+Now to set target you just call ```buildfox target=sharedlib```.
 
-### Writing your own BuildFox files
+## Writing your own BuildFox files
 
 **TODO**
 
-### BuildFox file reference
+## BuildFox file reference
 
 #### Comments
 
