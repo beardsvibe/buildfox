@@ -63,11 +63,10 @@ What if we want to compile static library for target "lib" and dynamic library f
 
 	filter target: sharedlib
 		# compiling mylib.dll/.so and .lib
+		# **TODO** update this after we decide how it should be
 		build shlib(mylib) | lib(mylib): auto obj(*)
 
 To now to set target variable you just call ```buildfox target=sharedlib```.
-
-**TODO**
 
 ### Writing your own BuildFox files
 
@@ -168,5 +167,13 @@ To build target (outputs) from inputs we use build commands.
 	build a.txt b.txt | c.txt d.txt: example2 e.txt f.txt | g.txt h.txt || i.txt j.txt
 		somevar = 1 # you can shadow rule variables from build command
 		somevar2 = 2
+
+Every path in BuildFox can be one of three types : normal path, regex, wildcard.
+
+	# normal path
+	build test.obj: cxx test.cpp
+
+	# regex path
+	build r"\2_\1.obj": cxx r"so(doge|wow)_(.*)\.cpp"
 
 **TODO**
