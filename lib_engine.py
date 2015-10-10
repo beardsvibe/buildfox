@@ -7,7 +7,7 @@ import copy
 import collections
 from lib_parser import parse
 from lib_util import rel_dir, wildcard_regex, find_files
-import lib_version
+from lib_version import version_check
 
 if sys.version_info[0] < 3:
 	string_types = basestring
@@ -371,7 +371,7 @@ class Engine:
 
 		if name == "buildfox_required_version":
 			# Checking the version immediately to fail fast.
-			lib_version.check(value)
+			version_check(value)
 
 		self.variables[name] = value
 		self.output.append("%s = %s" % (name, self.to_esc(value, simple = True)))

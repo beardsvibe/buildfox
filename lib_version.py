@@ -9,17 +9,15 @@ VERSION = "%d.%d" % (MAJOR, MINOR)
 # Simple major.minor matcher
 re_version = re.compile(r"^(\d+)\.(\d+)$")
 
-def parse(version):
-	match = re_version.match(version)
-	if match:
-		return int(match.group(1)), int(match.group(2))
-	else:
-		return None, None
+def version_check(required_version):
+	match = re_version.match(required_version)
 
-def check(required_version):
-	required_major, required_minor = parse(required_version)
-	if not required_major and not required_minor:
+	if match:
+		required_major = int(match.group(1))
+		required_minor = int(match.group(2))
+	else:
 		raise ValueError("Specified required version (%s) has incorrect format." % required_version)
+
 	if MAJOR > required_major:
 		print("WARNING: BuildFox executable major version (%s) is greater than 'buildfox_required_version' (%s).\nVersions may be incompatible." % (VERSION, required_version))
 	elif (required_major == MAJOR and required_minor > MINOR) or required_major > MAJOR:
