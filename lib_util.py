@@ -79,17 +79,25 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 		for input in inputs:
 			regex = wildcard_regex(input)
 			if regex:
+				print("-----------------------")
+				print("regex = " + regex)
 				# find the folder where to look for files
 				base_folder = re_folder_part.match(regex)
+				print("base_folder = " + str(base_folder))
 				if base_folder:
 					base_folder = base_folder.group()
+					print("base_folder = " + base_folder)
 					# rename regex back to readable form
 					def replace_non_esc(match_group):
 						return match_group.group(1)
 					base_folder = re_non_escaped_char.sub(replace_non_esc, base_folder)
+					print("base_folder = " + base_folder)
 					separator = "\\" if base_folder.rfind("\\") > base_folder.rfind("/") else "/"
+					print("separator = " + separator)
 					base_folder = os.path.dirname(base_folder)
+					print("base_folder = " + base_folder)
 					list_folder = rel_path + base_folder
+					print("list_folder = " + list_folder)
 				else:
 					separator = ""
 					base_folder = ""
@@ -100,6 +108,7 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 
 				# look for files
 				list_folder = os.path.normpath(list_folder).replace("\\", "/")
+				print("list_folder = " + list_folder)
 				re_regex = re.compile(regex)
 				if os.path.isdir(list_folder):
 					fs_files = set(os.listdir(list_folder))
@@ -111,6 +120,7 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 				all_files = sorted(list(fs_files.union(generated_files)))
 				for file in all_files:
 					name = base_folder + separator + file
+					print("file = %s and name = %s" % (file, name))
 					match = re_regex.match(name)
 					if match:
 						result.append(rel_path + name)
