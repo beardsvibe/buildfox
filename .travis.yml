@@ -8,15 +8,21 @@ install:
   - pip install coveralls
   - mkdir -p .bins
   - cd .bins
-  - wget https://github.com/martine/ninja/releases/download/v1.6.0/ninja-linux.zip
-  - unzip ninja-linux.zip
-  - chmod +x ninja
+  - wget https://github.com/martine/ninja/releases/download/v1.4.0/ninja-linux.zip -O ninja-linux-14.zip
+  - wget https://github.com/martine/ninja/releases/download/v1.6.0/ninja-linux.zip -O ninja-linux-16.zip
+  - unzip ninja-linux-14.zip
+  - mv ninja ninja_14
+  - unzip ninja-linux-16.zip
+  - mv ninja ninja_16
+  - chmod +x ninja_14
+  - chmod +x ninja_16
   - PATH=$PWD:$PATH
   - cd ..
 script:
   - cd tests
-  - coverage run --source=.. --omit=tests.py tests.py --compiler clang
-  - coverage run --source=.. --omit=tests.py tests.py --compiler gcc
+  - coverage run --source=.. --omit=tests.py tests.py --compiler clang --ninja ninja_16
+  - coverage run --source=.. --omit=tests.py tests.py --compiler gcc --ninja ninja_16
+  - coverage run --source=.. --omit=tests.py tests.py --compiler gcc --ninja ninja_14
   - coverage combine
 after_success:
   coveralls
