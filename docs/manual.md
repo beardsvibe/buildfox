@@ -164,6 +164,21 @@ To build target (outputs) from inputs we use build commands.
 	somevar = 0
 	
 	# should print "e.txt f.txt a.txt b.txt 1 2"
+	# in this case :
+	# - a.txt and b.txt are explicit targets
+	#   they will be passed to the rule in $out variable
+	# - c.txt and d.txt are implicit targets
+	#   they are not passed to the rule, but we know that command will generate them
+	# - e.txt and f.txt are explicit inputs
+	#   they will be passed to the rule in $in variable
+	# - g.txt and h.txt are implicit inputs
+	#   they are not passed to the rule
+	#   but we know that targets should be build after this file are built
+	#   and we also know that we should rebuild targets if implicit inputs change
+	# - i.txt and j.txt are order only inputs
+	#   they are not passed to the rule
+	#   but we know that targets should be build after this file are built
+	#   targets will not be rebuild if order only inputs change
 	build a.txt b.txt | c.txt d.txt: example2 e.txt f.txt | g.txt h.txt || i.txt j.txt
 		somevar = 1 # you can shadow rule variables from build command
 		somevar2 = 2
@@ -172,8 +187,19 @@ Every path in BuildFox can be one of three types : normal path, regex, wildcard.
 
 	# normal path
 	build test.obj: cxx test.cpp
-
+	
 	# regex path
+	# in this case it works similar to how regex replace works
+	# input files regex create capture groups 1 and 2
+	# and output files regex just use them as \2 and \1
 	build r"\2_\1.obj": cxx r"so(doge|wow)_(.*)\.cpp"
+	
+	# wildcard path
+	# in this case wildcard transforms to regex internally
+	# and each basic element converts to capture group
+	build *.obj: cxx *.cpp
+	
+	# wildcard and regexes are interchangeable
+	build r"obj_\2_\1.obj": cxx *_*.cpp
 
 **TODO**
