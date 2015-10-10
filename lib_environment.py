@@ -1,5 +1,7 @@
 # BuildFox ninja generator
 
+import os
+import platform
 from lib_util import which
 
 def discover():
@@ -16,9 +18,6 @@ def discover():
 	if which("gcc") and which("g++"):
 		vars["toolset_gcc"] = "true"
 
-	if not which("ninja"):
-		print("Warning ! Can't find ninja executable")
-
 	if vars.get("toolset_msvc"):
 		vars["toolset"] = "msvc"
 	elif vars.get("toolset_clang"):
@@ -27,5 +26,12 @@ def discover():
 		vars["toolset"] = "gcc"
 	else:
 		raise ValueError("Can't find any compiler")
+
+	if not which("ninja"):
+		print("Warning ! Can't find ninja executable")
+
+	vars["system"] = platform.system()
+	vars["machine"] = platform.machine()
+	vars["cwd"] = os.getcwd().replace("\\", "/")
 
 	return vars
