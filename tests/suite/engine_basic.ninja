@@ -20,3 +20,6 @@ build suite/app.exe: link suite/obj1/test1.obj suite/obj1/test2.obj suite/obj1/t
 build suite/lib1.lib: lib suite/obj1/test1.obj suite/obj1/test2.obj suite/obj1/test3.obj
 build suite/lib2.dll: link_dll suite/obj1/test1.obj suite/obj1/test2.obj suite/obj1/test3.obj
 build suite/lib2.lib: phony suite/lib2.dll
+
+build suite/sotest/so_wow_doge.obj suite/sotest/so_doge_wow.obj: cxx suite/src/so_doge_so_wow.cpp suite/src/so_wow_so_doge.cpp
+build suite/testlib.lib: lib suite/sotest/so_doge_wow.obj suite/sotest/so_wow_doge.obj

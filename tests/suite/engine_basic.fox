@@ -26,3 +26,6 @@ build obj(obj9/*?): cxx2 src/*_?[abc]2.cpp
 build app(app): auto obj(obj1/*)
 build lib(lib1): auto obj(obj1/*)
 build shlib(lib2) | lib(lib2): auto obj(obj1/*)
+
+build r"sotest\/\2_\1.obj": cxx r"src\/so_(doge|wow)_(.*)\.cpp"
+build lib(testlib): auto obj(sotest/*)
