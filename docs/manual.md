@@ -70,13 +70,32 @@ Now to set target you just call ```buildfox target=sharedlib```.
 
 ## Writing your own BuildFox files
 
-#### Fox core
+#### Fox core and environment discovery
 
-**TODO**
+BuildFox contains to main parts : execution engine and fox core definitions (this architecture is somewhat similar to MSBuild). So when you write your own fox files usually engine do environment discovery and executes fox core before your fox file is executed. This is needed so BuildFox can provide you language and compilers support, so you can write your own platform-independed fox files at ease.
 
 #### Console apps
 
-**TODO**
+Usually it's very simple to build console apps :
+
+	build obj(*): auto *.cpp
+	build app(test): auto obj(*)
+
+If you want to put object files and final executable in other folder, just add it :
+
+	out = build_${variation} # this will form build_debug or build_release
+	
+	build $out/obj(*): auto *.cpp
+	build $out/app(test): auto $out/obj(*)
+
+In case if you need to specify some compiler flags or defines :
+
+	out = build_${variation} # this will form build_debug or build_release
+	cxxflags = $cxx_speed_optimizations
+	defines = TEST_DEFINE
+	
+	build $out/obj(*): auto *.cpp
+	build $out/app(test): auto $out/obj(*)
 
 #### Static libs
 
@@ -369,3 +388,8 @@ Pools allow you to restrict how many usages of a rule are executed in parallel. 
 	rule heavy
 		command = ...
 		pool = heavy_job_pool
+
+## Fox core reference
+
+## Environment discovery reference
+
