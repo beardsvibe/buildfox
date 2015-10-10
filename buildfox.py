@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
 
 # BuildFox ninja generator
 
@@ -33,19 +33,19 @@ filter toolset:msvc
 		command = $cxx /nologo @$out.rsp /link $ldflags $libdirs $ignore_default_libs /out:$out
 		description = link $out
 		rspfile = $out.rsp
-		rspfile_content = $in
+		rspfile_content = $in $libs
 
 	rule link_dll
 		command = $cxx /nologo @$out.rsp /link /DLL $ldflags $libdirs $ignore_default_libs /out:$out
 		description = link $out
 		rspfile = $out.rsp
-		rspfile_content = $in
+		rspfile_content = $in $libs
 
 	rule lib
 		command = $lib $libflags @$out.rsp /nologo -OUT:$out
 		description = lib $out
 		rspfile = $out.rsp
-		rspfile_content = $in
+		rspfile_content = $in $libs
 
 	auto r"(?i).*\.obj": cxx r"(?i).*\.(cpp|cxx|cc|c\+\+|c)$"
 	auto r"(?i).*\.exe": link r"(?i).*\.(obj|lib)$"
@@ -57,6 +57,7 @@ filter toolset:msvc
 	transformer obj: ${param}.obj
 	transformer lib: ${param}.lib
 	transformer shlib: ${param}.dll
+	transformer shlib_dependency: ${param}.lib
 
 	# MSVC flags
 	# more info here https://msdn.microsoft.com/en-us/library/19z1t1wy.aspx
@@ -130,12 +131,110 @@ filter toolset:msvc
 	cxxflags =
 	ldflags =
 	libflags =
+	libs =
+	transformer libs: ${param}.lib
 	filter variation:debug
-		cxxflags = $cxx_disable_optimizations $cxx_symbols
-		ldflags = $ld_symbols
+		cxxflags += $cxx_disable_optimizations $cxx_symbols
+		ldflags += $ld_symbols
 	filter variation:release
-		cxxflags = $cxx_speed_optimizations
-		ldflags =
+		cxxflags += $cxx_speed_optimizations
+
+filter toolset:clang
+	# clang suport
+	cc = clang
+	cxx = clang++
+
+filter toolset:gcc
+	# gcc support
+	cc = gcc
+	cxx = g++
+
+filter toolset: r"gcc|clang"
+	rule cc
+		command = $cc -c $in -o $out -MMD $cxxflags $defines $includedirs
+		description = cc $in
+		depfile = $out.d
+		deps = gcc
+		expand = true
+
+	rule cxx
+		command = $cxx -o $out -MMD $cxxflags $defines $includedirs -c $in 
+		description = cxx $in
+		depfile = $out.d
+		deps = gcc
+		expand = true
+
+	rule lib
+		command = ar rcs $out $in
+		description = ar $in
+
+	rule link
+		command = $cxx $ldflags $libdirs $in -o $out $libs
+		description = link $out
+
+	rule link_so
+		command = $cxx -shared -fPIC $ldflags $libdirs -o $out $in $libs
+		description = cxx $in
+
+	auto r"(?i).*\.o": cxx r"(?i).*\.(cpp|cxx|cc|c\+\+)$"
+	auto r"(?i).*\.o": cc r"(?i).*\.(c)$"
+	auto r"^(.*\/)?[^.\/]+$": link r"(?i).*\.(o|a|so)$"
+	auto r"(?i).*\.so": link_so r"(?i).*\.(o|so)$"
+	auto r"(?i).*\.a": lib r"(?i).*\.(o|a)$"
+
+	# extensions transformers
+	transformer app: ${param}
+	transformer obj: ${param}.o
+	transformer lib: lib${param}.a
+	transformer shlib: lib${param}.so
+	transformer shlib_dependency: lib${param}.so
+
+	# Clang flags
+	# more info here http://clang.llvm.org/docs/CommandGuide/clang.html
+	# TODO:
+
+	# optimizations
+	cxx_omit_frame_pointer = -fomit-frame-pointer
+	cxx_disable_optimizations = -O0
+	cxx_full_optimizations = -O3
+	cxx_size_optimizations = -Os
+	cxx_speed_optimizations = -Ofast
+
+	# code generation
+	cxx_exceptions = -fexceptions
+	cxx_no_exceptions = -fno-exceptions
+	cxx_whole_program_optimizations = -O4
+	cxx_rtti = -frtti
+	cxx_no_rtti = -fno-rtti
+	cxx_floatpoint_fast = -funsafe-math-optimizations
+	cxx_avx = -mavx
+	cxx_avx2 = -mavx2
+	cxx_sse = -msse
+	cxx_sse2 = -msse2
+
+	# miscellaneous
+	cxx_fatal_warnings = -Werror
+	cxx_extra_warnings = -Wall -Wextra
+	cxx_no_warnings = -w
+
+	# transformers
+	defines =
+	includedirs =
+	libdirs =
+	libs =
+	transformer defines: -D${param}
+	transformer includedirs: -I${param}
+	transformer libdirs: -L${param}
+	transformer libs: -l${param}
+
+	# main flags
+	# TODO: We shouldn't have it enabled for every object file.
+	# But we need it to build object files of the shared libraries.
+	cxxflags = -fPIC
+	ldflags = 
+	filter variation:debug
+		cxxflags += -g
+		ldflags += -g
 """
 
 # main app -----------------------------------------------------------

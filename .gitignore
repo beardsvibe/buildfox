@@ -1,6 +1,7 @@
 __pycache__/
 build/
 *.ninja
+!tests/suite/*.ninja
 *.ninja_deps
 *.ninja_log
 *.obj
@@ -10,5 +11,11 @@ build/
 *.exe
 *.pdb
 *.ilk
+*.d
+*.o
+*.so
+*.a
 *.coverage
 tests/htmlcov/
+*.pyc
+tests/.coverage*

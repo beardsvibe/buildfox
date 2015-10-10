@@ -14,7 +14,7 @@ b = 2
 
 rule test_adv_1
 
-build suite/test_1 suite/test_2: test_adv_1 suite/test_5 suite/test_6 | suite/test_7 suite/test_8 || suite/test_10 suite/test_9
+build suite/test_1 suite/test_2: test_adv_1 suite/test_5 suite/test_6 | suite/test_7 suite/test_8 || suite/test_9 suite/test_10
   nested_var = value
 build suite/test_3 suite/test_4: phony suite/test_1 suite/test_2
 subninja __gen_0_parser_advanced_3.ninja
