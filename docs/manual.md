@@ -323,6 +323,31 @@ By default ninja will start building all targets that are not appear as inputs t
 	# and too built bar.exe we need to run "ninja bar.exe"
 
 #### Subfox and include
+
+To import or include another fox file from ours we use subfox or import commands. The difference between them is that import is not changing your local scope, on other hand include just pastes other fox file into yours.
+
+	# subfox will not change your local variables, and will not introduce new rules
+	# useful for adding libraries or other projects into yours
+	subfox other_file.fox
+	
+	# include will just put file content into yours
+	# useful for adding rules, setting variables, etc
+	include some_file.fox
+	
+	# and of couse you can use wildcards or regexes
+	subfox *.fox
+	
+	# to be compatible with ninja BuildFox also allow to use subninja command, which equal to subfox
+	subninja *.ninja
+
 #### Pool
 
-**TODO**
+Pools allow you to restrict how many usages of a rule are executed in parallel. For more details please refer to [ninja manual](http://martine.github.io/ninja/manual.html#ref_pool)
+
+	# only 2 or less rules can be runned in parallel
+	pool heavy_job_pool
+		depth = 2
+	
+	rule heavy
+		command = ...
+		pool = heavy_job_pool
