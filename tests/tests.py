@@ -186,17 +186,15 @@ def build_examples(args):
 	results = []
 	compiler = args.get("compiler")
 	for fox_file in find_files("../examples", "*.fox"):
-		work_dir = os.path.dirname(fox_file).replace("\\", "/")
-		fox_file = os.path.basename(fox_file)
 		print("-> Testing %s" % fox_file)
 
 		def test_with_toolset(name, build):
 			result = not subprocess.call(["coverage", "run", "--source=..", "--parallel-mode",
-				"../buildfox.py", "-i", fox_file, "-w", work_dir, "toolset_%s=true" % name, "toolset=%s" % name])
+				"../buildfox.py", "-i", fox_file, "toolset_%s=true" % name, "toolset=%s" % name])
 			if result and build:
 				# just clean workspace, don't care if this fails
-				subprocess.call(["ninja", "-C", work_dir, "-t", "clean"])
-				return not subprocess.call(["ninja", "-C", work_dir])
+				subprocess.call(["ninja", "-t", "clean"])
+				return not subprocess.call(["ninja"])
 			return result
 
 		results.extend([test_with_toolset(name, name == compiler) for name in ["clang", "gcc", "msvc"]])

@@ -123,19 +123,19 @@ filter toolset:msvc
 	includedirs =
 	disable_warnings =
 	libdirs =
+	libs =
 	ignore_default_libs =
 	transformer defines: /D${param}
-	transformer includedirs: /I${param}
+	transformer includedirs: /I${rel_path}${param}
 	transformer disable_warnings: /wd${param}
-	transformer libdirs: /LIBPATH:${param}
+	transformer libdirs: /LIBPATH:${rel_path}${param}
+	transformer libs: ${param}.lib
 	transformer ignore_default_libs: /NODEFAULTLIB:${param}
 
 	# main flags
 	cxxflags =
 	ldflags =
 	libflags =
-	libs =
-	transformer libs: ${param}.lib
 	filter variation:debug
 		cxxflags += $cxx_disable_optimizations $cxx_symbols
 		ldflags += $ld_symbols
@@ -226,8 +226,8 @@ filter toolset: r"gcc|clang"
 	libdirs =
 	libs =
 	transformer defines: -D${param}
-	transformer includedirs: -I${param}
-	transformer libdirs: -L${param}
+	transformer includedirs: -I${rel_path}${param}
+	transformer libdirs: -L${rel_path}${param}
 	transformer libs: -l${param}
 
 	# main flags

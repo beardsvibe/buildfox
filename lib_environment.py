@@ -32,6 +32,9 @@ def discover():
 
 	vars["system"] = platform.system()
 	vars["machine"] = platform.machine()
-	vars["cwd"] = os.getcwd().replace("\\", "/")
+	cwd = os.getcwd().replace("\\", "/")
+	if cwd and cwd != "." and not cwd.endswith("/"):
+		cwd += "/"
+	vars["cwd"] = cwd
 
 	return vars
