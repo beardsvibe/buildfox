@@ -73,6 +73,9 @@ def wildcard_regex(filename, replace_groups = False):
 # input can be string or list of strings
 # outputs are always lists
 def find_files(inputs, outputs = None, rel_path = "", generated = None):
+	# rename regex back to readable form
+	def replace_non_esc(match_group):
+		return match_group.group(1)
 	if inputs:
 		result = []
 		matched = []
@@ -83,9 +86,6 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 				base_folder = re_folder_part.match(regex)
 				if base_folder:
 					base_folder = base_folder.group()
-					# rename regex back to readable form
-					def replace_non_esc(match_group):
-						return match_group.group(1)
 					base_folder = re_non_escaped_char.sub(replace_non_esc, base_folder)
 					separator = "\\" if base_folder.rfind("\\") > base_folder.rfind("/") else "/"
 					base_folder = os.path.dirname(base_folder)
@@ -134,6 +134,8 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 						else:
 							return ""
 					file = re_capture_group_ref.sub(replace_group, regex)
+					file = re_non_escaped_char.sub(replace_non_esc, file)
+
 					result.append(rel_path + file)
 			else:
 				result.append(rel_path + output)
