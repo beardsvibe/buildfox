@@ -1,3 +1,4 @@
+rel_path = suite/
 
 # buildfox must preserve order
 rule test
