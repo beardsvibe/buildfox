@@ -1,9 +1,0 @@
-rel_path = suite/
-
-# buildfox must preserve order
-rule test
-
-build suite/a.test1 suite/b.test1 suite/c.test1: test
-build suite/t_a.test2 suite/t_b.test2 suite/t_c.test2: test suite/a.test1 suite/b.test1 suite/c.test1
-
-build suite/a.test3 suite/b.test3 suite/c.test3 suite/t_a.test3 suite/t_b.test3 suite/t_c.test3: test suite/a.test1 suite/b.test1 suite/c.test1 suite/t_a.test2 suite/t_b.test2 suite/t_c.test2
