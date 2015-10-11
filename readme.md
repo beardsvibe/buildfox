@@ -11,7 +11,7 @@ Minimalistic ninja generator
 
 ### Usage
 
-	buildfox && ninja
+	bf && ninja
 
 ### Resources
 
@@ -21,9 +21,9 @@ Minimalistic ninja generator
 
 - Get [ninja](https://martine.github.io/ninja/) (v1.3+ is supported, v1.6 is recommended)
 - Get [python](https://www.python.org/) (v2.7+ is supported, v3.5 is recommended)
-- Get [buildfox latest release](https://github.com/beardsvibe/buildfox/releases/download/v0.1-dev/buildfox)
-- Put buildfox file in folder that accessible from PATH (optional)
-- For *nix run ```chmod +x buildfox```
-- For Windows add this to your terminal ```doskey buildfox=python %path_to_buildfox%/buildfox $*```
-- Run ```buildfox --selftest``` to make sure everything is ok
+- Get [buildfox latest release](https://github.com/beardsvibe/buildfox/releases/download/v0.1-dev/bf)
+- Put bf file in folder that accessible from PATH (optional)
+- For *nix run ```chmod +x bf```
+- For Windows add this to your terminal ```doskey buildfox=python %path_to_buildfox%/bf $*```
+- Run ```bf --selftest``` to make sure everything is ok
 - Done !
