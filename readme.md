@@ -24,6 +24,6 @@ Minimalistic ninja generator
 - Get [buildfox latest release](https://github.com/beardsvibe/buildfox/releases/download/v0.1-dev/bf)
 - Put bf file in folder that accessible from PATH (optional)
 - For *nix run ```chmod +x bf```
-- For Windows add this to your terminal ```doskey buildfox=python %path_to_buildfox%/bf $*```
+- For Windows add this to your terminal ```doskey bf=python %path_to_buildfox%/bf $*```
 - Run ```bf --selftest``` to make sure everything is ok
 - Done !
