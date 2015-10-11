@@ -72,7 +72,7 @@ Now to set target you just call ```buildfox target=sharedlib```.
 
 #### Fox core and environment discovery
 
-BuildFox contains to main parts : execution engine and fox core definitions (this architecture is somewhat similar to MSBuild). So when you write your own fox files usually engine do environment discovery and executes fox core before your fox file is executed. This is needed so BuildFox can provide you language and compilers support, so you can write your own platform-independed fox files at ease.
+BuildFox contains two main parts : execution engine and fox core definitions (this architecture is somewhat similar to MSBuild). So when you run your own fox files, engine do environment discovery and executes fox core before your fox file is executed. This is needed so BuildFox can provide language and compiler support, so you can write your own platform-independed fox files at ease.
 
 #### Console apps
 
@@ -93,6 +93,7 @@ In case if you need to specify some compiler flags or defines :
 	out = build_${variation} # this will form build_debug or build_release
 	cxxflags = $cxx_speed_optimizations
 	defines = TEST_DEFINE
+	includedirs = some_folder
 	
 	build $out/obj(*): auto *.cpp
 	build $out/app(test): auto $out/obj(*)
@@ -391,5 +392,22 @@ Pools allow you to restrict how many usages of a rule are executed in parallel. 
 
 ## Fox core reference
 
+**TODO**
+
 ## Environment discovery reference
 
+Environment discovery is responsible for figuring out which compiler to use, what current system is, etc. Environment discovery is executed before fox core and it only generated set of variables that are described in table below.
+
+You can override this values by specifying them as BuildFox arguments.
+
+Name            | Possible Values       | Description
+--------------- | --------------------- | --------------------------------------------
+variation       | debug                 | build variation, by default is always debug
+toolset_msvc    | true or not set       | true if msvc toolset is available
+toolset_clang   | true or not set       | true if clang toolset is available
+toolset_gcc     | true or not set       | true if gcc toolset is available
+toolset         | msvc or clang or gcc  | preferred toolset to use, preferences : msvc > clang > gcc
+system          | [platfrom.system](https://docs.python.org/2/library/platform.html#platform.system) | current system os string
+machine         | [platfrom.machine](https://docs.python.org/2/library/platform.html#platform.machine) | current machine arch name string
+cwd             | path that ends with / | current working directory
+rel_path        | path that ends with / | relative path from cwd to location of current fox file, please note that this one is updated in runtime
