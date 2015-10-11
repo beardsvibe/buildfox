@@ -47,7 +47,7 @@ filter toolset:msvc
 		rspfile = $out.rsp
 		rspfile_content = $in $libs
 
-	rule link_dll
+	rule link_so
 		command = $cxx /nologo @$out.rsp /link /DLL $ldflags $libdirs $ignore_default_libs /out:$out
 		description = link $out
 		rspfile = $out.rsp
@@ -62,7 +62,7 @@ filter toolset:msvc
 	auto r"^(?i).*\.obj$": cxx r"^(?i).*\.(cpp|cxx|cc|c\+\+)$"
 	auto r"^(?i).*\.obj$": cc r"^(?i).*\.(c)$"
 	auto r"^(?i).*\.exe$": link r"^(?i).*\.(obj|lib)$"
-	auto r"^(?i).*\.dll$": link_dll r"^(?i).*\.(obj|lib)$"
+	auto r"^(?i).*\.dll$": link_so r"^(?i).*\.(obj|lib)$"
 	auto r"^(?i).*\.lib$": lib r"^(?i).*\.(obj|lib)$"
 
 	# extensions transformers
@@ -70,7 +70,7 @@ filter toolset:msvc
 	transformer obj: ${param}.obj
 	transformer lib: ${param}.lib
 	transformer shlib: ${param}.dll
-	transformer shlib_dependency: ${param}.lib
+	transformer shlibdep: ${param}.lib
 
 	# MSVC flags
 	# more info here https://msdn.microsoft.com/en-us/library/19z1t1wy.aspx
@@ -200,7 +200,7 @@ filter toolset: r"gcc|clang"
 	transformer obj: ${param}.o
 	transformer lib: lib${param}.a
 	transformer shlib: lib${param}.so
-	transformer shlib_dependency: lib${param}.so
+	transformer shlibdep: lib${param}.so
 
 	# Clang flags
 	# more info here http://clang.llvm.org/docs/CommandGuide/clang.html

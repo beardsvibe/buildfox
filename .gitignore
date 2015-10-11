@@ -1,7 +1,10 @@
-__pycache__/
-build/
 *.ninja
 !tools/suite/*.ninja
+tools/bf
+tools/.coverage*
+tools/htmlcov/
+__pycache__/
+*.pyc
 *.ninja_deps
 *.ninja_log
 *.obj
@@ -16,7 +19,3 @@ build/
 *.so
 *.a
 *.coverage
-tests/htmlcov/
-*.pyc
-tests/.coverage*
-tools/bf

@@ -2,13 +2,9 @@
 
 **WIP document**
 
-**TODO revisit this**
-
 BuildFox is a minimalistic generator for [ninja build system](http://martine.github.io/ninja/). It's designed to take leverage on simplicity and straightforwardness of ninja. BuildFox tries its best to provide as simple as possible yet powerful and usable manifest format to explore how simple and beautiful build systems can be.
 
 ## Introduction
-
-**TODO revisit this**
 
 There are many build systems with declarative style manifests (for example cmake, premake, tundra, gradle, gyp, etc). In declarative type you tell build system what inputs are, what configuration is, and what kind of outputs you want to achieve, that's it. And then build system tries to figure out how to actually achieve this. Figuring out step is often called decision making step or configuration step. Next step is execution step - actual building by running compiler executables. Execution step is often delegated to simpler tools like make, nmake, jom, ninja, etc, though some systems like msbuild, tundra do build software on their own.
 
@@ -63,7 +59,6 @@ What if we want to compile static library for target "lib" and dynamic library f
 
 	filter target: sharedlib
 		# compiling mylib.dll/.so and .lib
-		# **TODO** update this after we decide how it should be
 		build shlib(mylib) | lib(mylib): auto obj(*)
 
 Now to set target you just call ```buildfox target=sharedlib```.
@@ -74,7 +69,7 @@ Now to set target you just call ```buildfox target=sharedlib```.
 
 BuildFox contains two main parts : execution engine and fox core definitions (this architecture is somewhat similar to MSBuild). So when you run your own fox files, engine do environment discovery and executes fox core before your fox file is executed. This is needed so BuildFox can provide language and compiler support, so you can write your own platform-independed fox files at ease.
 
-#### Console apps
+#### Apps
 
 Usually it's very simple to build console apps :
 
@@ -100,16 +95,30 @@ In case if you need to specify some compiler flags or defines :
 
 #### Static libs
 
-**TODO**
+To build static library we just change target name transform to lib.
+
+	build obj(*): auto *.cpp
+	build lib(test): auto obj(*)
+
+And then to use this library in application we just add it to inputs
+
+	build lib/obj(*): auto lib/*.cpp
+	build lib/lib(test): auto lib/obj(*)
+	
+	build obj(*): auto *.cpp
+	build app(test): auto obj(*) lib/lib(*)
 
 #### Shared libs
 
-**TODO**
-**TODO : fix shlib_dependency and how we build shlib and implicit .lib there**
+Compiling shared libs is a bit trickier because of differences between platforms. You need to pass shlib and lib to final library link step. Also to build an app you need to pass library as shlibdep.
 
-#### Others
+	build lib/obj(*): auto lib/*.cpp
+	build lib/shlib(test1) | lib/lib(test1): auto lib/obj(*)
+	
+	build obj(*): auto *.cpp
+	build app(app): auto obj(*) lib/shlibdep(*)
 
-**TODO**
+If you develop shared libraries for Windows then you also need to mark symbols for export with approach of your choice, one way could be to use [__declspec(dllexport)]( https://msdn.microsoft.com/en-us/library/a90k134d.aspx).
 
 ## BuildFox file reference
 
@@ -402,9 +411,9 @@ All provided rules are available through auto rule.
 Rule name        | Description
 ---------------- | --------------------------------------------
 cxx              | compile cpp files to object files
-cc               | compile c files to object files (only for clang and gcc)
+cc               | compile c files to object files
 link             | link object files into executable
-link_dll/link_so | link object files into dynamic library
+link_so          | link object files into dynamic library
 lib              | link object files into static library
 
 You can override compiler executable from your fox file through ```cc```, ```cxx``` and ```lib``` variables.
@@ -419,7 +428,7 @@ app              | .exe or as is         | executable
 obj              | .obj or .o            | object file
 lib              | .lib or .a            | static lib
 shlib            | .dll or .so           | shared lib
-shlib_dependency | .lib or .so           | used when you need to link with shared lib
+shlibdep         | .lib or .so           | used when you need to link with shared lib
 
 #### Compiler flags transformers
 
