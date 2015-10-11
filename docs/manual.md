@@ -430,7 +430,7 @@ Transformer name    | Possible Values       | Description
 defines             | /D or -D              | sets defines
 includedirs         | /I or -I              | sets includes directories
 libdirs             | /LIBPATH or -L        | sets libs directories
-libs                | .lib or -l            | sets libs
+libs                | .lib or -l            | sets system libs
 disable_warnings    | /wd                   | disables warnings (msvc only)
 ignore_default_libs | /NODEFAULTLIB         | ignores default lib (msvc only)
 
