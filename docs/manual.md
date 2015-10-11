@@ -486,9 +486,9 @@ ld_shared_lib                   | /DLL                                    | msvc
 
 ## Environment discovery reference
 
-Environment discovery is responsible for figuring out which compiler to use, what current system is, etc. Environment discovery is executed before fox core and it only generated set of variables that are described in table below.
+Environment discovery is responsible for figuring out which compiler to use, what current system is, etc. Environment discovery is executed before fox core and it only generates set of variables that are described in table below.
 
-You can override this values by specifying them as BuildFox arguments.
+You can override this variables values by specifying them as BuildFox arguments.
 
 Name            | Possible Values       | Description
 --------------- | --------------------- | --------------------------------------------
