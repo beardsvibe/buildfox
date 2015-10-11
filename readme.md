@@ -22,8 +22,7 @@ Minimalistic ninja generator
 
 ### Usage
 
-	buildfox
-	ninja
+	buildfox && ninja
 
 ### Resources
 
