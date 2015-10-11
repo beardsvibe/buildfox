@@ -19,7 +19,7 @@ install:
   - PATH=$PWD:$PATH
   - cd ..
 script:
-  - cd tests
+  - cd tools
   - coverage run --source=.. --omit=tests.py tests.py --compiler clang --ninja ninja_16
   - coverage run --source=.. --omit=tests.py tests.py --compiler gcc --ninja ninja_16
   - coverage run --source=.. --omit=tests.py tests.py --compiler gcc --ninja ninja_14
