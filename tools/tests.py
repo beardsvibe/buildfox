@@ -212,7 +212,7 @@ def build_examples(args):
 argsparser = argparse.ArgumentParser(description = "buildfox test suite")
 argsparser.add_argument("-i", "--in", help = "Test inputs", default = "suite/*.fox")
 argsparser.add_argument("--compiler", help = "Test compiler", default = "gcc")
-argsparser.add_argument("--ninja", help = "Ninja executable", default = "gcc")
+argsparser.add_argument("--ninja", help = "Ninja executable", default = "ninja")
 argsparser.add_argument("--dry", action = "store_true",
 	help = "Ignore tests failures", default = False, dest = "dry")
 argsparser.add_argument("--json", action = "store_true",

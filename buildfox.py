@@ -25,8 +25,15 @@ ninja_required_version = 1.3
 
 filter toolset:msvc
 	# msvc support
+	cc = cl
 	cxx = cl
 	lib = lib
+
+	rule cc
+		command = $cc $cxxflags $defines $includedirs $disable_warnings /nologo /showIncludes -c $in /Fo$out
+		description = cc $in
+		deps = msvc
+		expand = true
 
 	rule cxx
 		command = $cxx $cxxflags $defines $includedirs $disable_warnings /nologo /showIncludes -c $in /Fo$out
@@ -52,7 +59,8 @@ filter toolset:msvc
 		rspfile = $out.rsp
 		rspfile_content = $in $libs
 
-	auto r"^(?i).*\.obj$": cxx r"^(?i).*\.(cpp|cxx|cc|c\+\+|c)$"
+	auto r"^(?i).*\.obj$": cxx r"^(?i).*\.(cpp|cxx|cc|c\+\+)$"
+	auto r"^(?i).*\.obj$": cc r"^(?i).*\.(c)$"
 	auto r"^(?i).*\.exe$": link r"^(?i).*\.(obj|lib)$"
 	auto r"^(?i).*\.dll$": link_dll r"^(?i).*\.(obj|lib)$"
 	auto r"^(?i).*\.lib$": lib r"^(?i).*\.(obj|lib)$"
