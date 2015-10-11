@@ -105,6 +105,7 @@ In case if you need to specify some compiler flags or defines :
 #### Shared libs
 
 **TODO**
+**TODO : fix shlib_dependency and how we build shlib and implicit .lib there**
 
 #### Others
 
@@ -392,7 +393,105 @@ Pools allow you to restrict how many usages of a rule are executed in parallel. 
 
 ## Fox core reference
 
-**TODO**
+Fox core configures rules, variables, transformers, auto rules, etc depending on environment discovery variables. This enables users to use same rules, variables, etc to target multiple toolsets.
+
+#### Rules
+
+All provided rules are available through auto rule.
+
+Rule name        | Description
+---------------- | --------------------------------------------
+cxx              | compile cpp files to object files
+cc               | compile c files to object files (only for clang and gcc)
+link             | link object files into executable
+link_dll/link_so | link object files into dynamic library
+lib              | link object files into static library
+
+You can override compiler executable from your fox file through ```cc```, ```cxx``` and ```lib``` variables.
+
+#### Path transformers
+
+You need to use different file extensions on different platforms, to support this fox core provides multiple useful path transformers.
+
+Transformer name | Possible Values       | Description
+---------------- | --------------------- | --------------------------------------------
+app              | .exe or as is         | executable
+obj              | .obj or .o            | object file
+lib              | .lib or .a            | static lib
+shlib            | .dll or .so           | shared lib
+shlib_dependency | .lib or .so           | used when you need to link with shared lib
+
+#### Compiler flags transformers
+
+Some compiler flags are easier and better to specify as whitespace separated list, fox core provides set of transformers for this purpose. For example : ```defines = DEFINE1 DEFINE2```
+
+Transformer name    | Possible Values       | Description
+------------------- | --------------------- | --------------------------------------------
+defines             | /D or -D              | sets defines
+includedirs         | /I or -I              | sets includes directories
+libdirs             | /LIBPATH or -L        | sets libs directories
+libs                | .lib or -l            | sets libs
+disable_warnings    | /wd                   | disables warnings (msvc only)
+ignore_default_libs | /NODEFAULTLIB         | ignores default lib (msvc only)
+
+#### Compiler and linker flags
+
+To be able to target multiple toolsets fox core provides a selection of compiler flags. You can use them like ```cxxflags = $cxx_someflag```.
+
+More information about compiler flags is available on [msvc page](https://msdn.microsoft.com/en-us/library/19z1t1wy.aspx) and [clang page](http://clang.llvm.org/docs/CommandGuide/clang.html).
+
+Optimizations flags       | Possible Values             | Description
+------------------------- | --------------------------- | ----------------
+cxx_omit_frame_pointer    | /Oy or -fomit-frame-pointer |
+cxx_disable_optimizations | /Od or -O0                  |
+cxx_full_optimizations    | /Ox or -O3                  |
+cxx_size_optimizations    | /O1 or -Os                  |
+cxx_speed_optimizations   | /O2 or -Ofast               |
+
+Code generation flags           | Possible Values                         | Description
+------------------------------- | --------------------------------------- | ----------------
+cxx_exceptions                  | /EHsc or -fexceptions                   |
+cxx_no_exceptions               | /EHsc- or -fno-exceptions               |
+cxx_seh_exceptions              | /EHa                                    | msvc only
+cxx_whole_program_optimizations | /GL or -O4                              |
+cxx_rtti                        | /GR or -frtti                           |
+cxx_no_rtti                     | /GR- or -fno-rtti                       |
+cxx_clr                         | /clr                                    | msvc only
+cxx_clr_pure                    | /clr:pure                               | msvc only
+cxx_clr_safe                    | /clr:safe                               | msvc only
+cxx_multithread_compilation     | /MP                                     | msvc only
+cxx_mimimal_rebuild             | /Gm                                     | msvc only
+cxx_no_mimimal_rebuild          | /Gm-                                    | msvc only
+cxx_floatpoint_fast             | /fp:fast or -funsafe-math-optimizations |
+cxx_floatpoint_strict           | /fp:strict                              | msvc only
+cxx_cdecl                       | /Gd                                     | msvc only
+cxx_fastcall                    | /Gr                                     | msvc only
+cxx_stdcall                     | /Gz                                     | msvc only
+cxx_vectorcall                  | /Gv                                     | msvc only
+cxx_avx                         | /arch:AVX or -mavx                      |
+cxx_avx2                        | /arch:AVX2 or -mavx2                    |
+cxx_sse                         | /arch:SSE or -msse                      |
+cxx_sse2                        | /arch:SSE2 or -msse2                    |
+cxx_symbols                     | /Z7                                     | msvc only
+cxx_omit_default_lib            | /Zl                                     | msvc only
+cxx_runtime_static_debug        | /MTd                                    | msvc only
+cxx_runtime_dynamic_debug       | /MDd                                    | msvc only
+cxx_runtime_static_release      | /MT                                     | msvc only
+cxx_runtime_dynamic_release     | /MD                                     | msvc only
+
+Misc compiler flags       | Possible Values      | Description
+------------------------- | -------------------- | ----------------
+cxx_fatal_warnings        | /WX or -Werror       |
+cxx_extra_warnings        | /W4 or -Wall -Wextra |
+cxx_no_warnings           | /W0 or -w            |
+
+Linker flags              | Possible Values              | Description
+------------------------- | ---------------------------- | ----------------
+ld_no_incremental_link    | /INCREMENTAL:NO              | msvc only
+ld_no_manifest            | /MANIFEST:NO                 | msvc only
+ld_ignore_default_libs    | /NODEFAULTLIB                | msvc only
+ld_symbols                | /DEBUG                       | msvc only
+ld_shared_lib             | /DLL                         | msvc only
 
 ## Environment discovery reference
 
@@ -411,3 +510,5 @@ system          | [platfrom.system](https://docs.python.org/2/library/platform.h
 machine         | [platfrom.machine](https://docs.python.org/2/library/platform.html#platform.machine) | current machine arch name string
 cwd             | path that ends with / | current working directory
 rel_path        | path that ends with / | relative path from cwd to location of current fox file, please note that this one is updated in runtime
+
+## Special variables reference
