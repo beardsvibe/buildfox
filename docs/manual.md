@@ -500,6 +500,12 @@ toolset         | msvc or clang or gcc  | preferred toolset to use, preferences 
 system          | [platfrom.system](https://docs.python.org/2/library/platform.html#platform.system) | current system os string
 machine         | [platfrom.machine](https://docs.python.org/2/library/platform.html#platform.machine) | current machine arch name string
 cwd             | path that ends with / | current working directory
-rel_path        | path that ends with / | relative path from cwd to location of current fox file, please note that this one is updated in runtime
 
 ## Special variables reference
+
+BuildFox have some special variables that are processed differently from others.
+
+Name                      | Possible Values       | Description
+------------------------- | --------------------- | --------------------------------------------
+rel_path                  | path that ends with / | relative path from cwd to location of current fox file, updated at runtime
+buildfox_required_version | 0.1, etc              | sets required version of BuildFox from fox file
