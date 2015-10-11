@@ -1,0 +1,13 @@
+rel_path = suite/
+a = 1
+b = 1
+
+a = 1
+b = 2
+c = 1 2
+
+a = 1 $$not_set
+b = 1 $$not_set 1 $$not_set 1 $$not_set 1 $$not_set
+
+a = 1 1 $$not_set
+b = 1 1 $$not_set 1 1 $$not_set 1 1 $$not_set
