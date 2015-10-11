@@ -292,7 +292,7 @@ class Engine:
 			assigns = vars + assigns
 
 		# rule should exist
-		if rule_name not in self.rules:
+		if rule_name != "phony" and rule_name not in self.rules:
 			raise ValueError("unknown rule %s at '%s' (%s:%i)" % (
 				rule_name,
 				self.current_line,
@@ -301,7 +301,7 @@ class Engine:
 			))
 
 		# expand this rule
-		expand = self.rules.get(rule_name).get("expand", None)
+		expand = self.rules.get(rule_name, {}).get("expand", None)
 
 		if expand:
 			# TODO probably this expand implementation is not enough

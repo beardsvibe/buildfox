@@ -334,6 +334,11 @@ Rules define executable command, form arguments and process dependency informati
 	# build b.obj: cxx b.cpp
 	# build c.obj: cxx c.cpp
 
+Also there is the phony rule that can be used to create alises.
+
+	# later you can just run ninja docs and it will build the docs
+	build docs: phony doc1.txt doc2.txt ...
+
 #### Auto
 
 To simplify writing build commands we have auto rule. It will compare inputs and outputs of build command with known rules and insert correct rule for a case.
