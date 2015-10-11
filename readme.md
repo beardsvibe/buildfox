@@ -9,6 +9,14 @@ Minimalistic ninja generator
 	build obj(*): auto *.cpp
 	build app(helloworld): auto obj(*)
 
+### Usage
+
+	buildfox && ninja
+
+### Resources
+
+- [Manual](docs/manual.md)
+
 ### Installation
 
 - Get [ninja](https://martine.github.io/ninja/) (v1.3+ is supported, v1.6 is recommended)
@@ -19,11 +27,3 @@ Minimalistic ninja generator
 - For Windows add this to your terminal ```doskey buildfox=python %path_to_buildfox%/buildfox $*```
 - Run ```buildfox --selftest``` to make sure everything is ok
 - Done !
-
-### Usage
-
-	buildfox && ninja
-
-### Resources
-
-- [Manual](docs/manual.md)
