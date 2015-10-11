@@ -1,7 +1,5 @@
 # BuildFox
 
-**WIP document**
-
 BuildFox is a minimalistic generator for [ninja build system](http://martine.github.io/ninja/). It's designed to take leverage on simplicity and straightforwardness of ninja. BuildFox tries its best to provide as simple as possible yet powerful and usable manifest format to explore how simple and beautiful build systems can be.
 
 ## Introduction
