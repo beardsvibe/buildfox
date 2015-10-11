@@ -1,5 +1,5 @@
 # BuildFox deploy script
-# compiles multiple files in one python script
+# compiles multiple files into one python script
 
 import re
 from pprint import pprint
@@ -68,7 +68,7 @@ else:
 print("BuildFox %s" % ver)
 
 # write compiled version
-with open("buildfox.py", "w") as f:
+with open("buildfox", "w") as f:
 	f.write("#!/usr/bin/env python\n\n")
 	f.write("# BuildFox ninja generator, %s\n\n" % ver)
 	f.write(license_text())
