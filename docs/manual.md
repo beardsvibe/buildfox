@@ -440,16 +440,13 @@ To be able to target multiple toolsets fox core provides a selection of compiler
 
 More information about compiler flags is available on [msvc page](https://msdn.microsoft.com/en-us/library/19z1t1wy.aspx) and [clang page](http://clang.llvm.org/docs/CommandGuide/clang.html).
 
-Optimizations flags       | Possible Values             | Description
-------------------------- | --------------------------- | ----------------
-cxx_omit_frame_pointer    | /Oy or -fomit-frame-pointer |
-cxx_disable_optimizations | /Od or -O0                  |
-cxx_full_optimizations    | /Ox or -O3                  |
-cxx_size_optimizations    | /O1 or -Os                  |
-cxx_speed_optimizations   | /O2 or -Ofast               |
-
-Code generation flags           | Possible Values                         | Description
+Flag                            | Possible Values                         | Description
 ------------------------------- | --------------------------------------- | ----------------
+cxx_omit_frame_pointer          | /Oy or -fomit-frame-pointer             |
+cxx_disable_optimizations       | /Od or -O0                              |
+cxx_full_optimizations          | /Ox or -O3                              |
+cxx_size_optimizations          | /O1 or -Os                              |
+cxx_speed_optimizations         | /O2 or -Ofast                           |
 cxx_exceptions                  | /EHsc or -fexceptions                   |
 cxx_no_exceptions               | /EHsc- or -fno-exceptions               |
 cxx_seh_exceptions              | /EHa                                    | msvc only
@@ -478,20 +475,14 @@ cxx_runtime_static_debug        | /MTd                                    | msvc
 cxx_runtime_dynamic_debug       | /MDd                                    | msvc only
 cxx_runtime_static_release      | /MT                                     | msvc only
 cxx_runtime_dynamic_release     | /MD                                     | msvc only
-
-Misc compiler flags       | Possible Values      | Description
-------------------------- | -------------------- | ----------------
-cxx_fatal_warnings        | /WX or -Werror       |
-cxx_extra_warnings        | /W4 or -Wall -Wextra |
-cxx_no_warnings           | /W0 or -w            |
-
-Linker flags              | Possible Values              | Description
-------------------------- | ---------------------------- | ----------------
-ld_no_incremental_link    | /INCREMENTAL:NO              | msvc only
-ld_no_manifest            | /MANIFEST:NO                 | msvc only
-ld_ignore_default_libs    | /NODEFAULTLIB                | msvc only
-ld_symbols                | /DEBUG                       | msvc only
-ld_shared_lib             | /DLL                         | msvc only
+cxx_fatal_warnings              | /WX or -Werror                          |
+cxx_extra_warnings              | /W4 or -Wall -Wextra                    |
+cxx_no_warnings                 | /W0 or -w                               |
+ld_no_incremental_link          | /INCREMENTAL:NO                         | msvc only
+ld_no_manifest                  | /MANIFEST:NO                            | msvc only
+ld_ignore_default_libs          | /NODEFAULTLIB                           | msvc only
+ld_symbols                      | /DEBUG                                  | msvc only
+ld_shared_lib                   | /DLL                                    | msvc only
 
 ## Environment discovery reference
 
