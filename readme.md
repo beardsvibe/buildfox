@@ -34,3 +34,4 @@ Minimalistic ninja generator
 - Run ```python deploy.py```
 - You will get bf file in tools folder
 - Run ```bf --selftest``` to make sure everything is ok
+- Done !
