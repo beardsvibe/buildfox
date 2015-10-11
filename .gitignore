@@ -19,3 +19,4 @@ build/
 tests/htmlcov/
 *.pyc
 tests/.coverage*
+tools/bf
