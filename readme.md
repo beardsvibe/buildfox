@@ -27,3 +27,10 @@ Minimalistic ninja generator
 - For Windows add this to your terminal ```doskey bf=python %path_to_buildfox%/bf $*```
 - Run ```bf --selftest``` to make sure everything is ok
 - Done !
+
+### Building from source
+
+- Go to tools directory
+- Run ```python deploy.py```
+- You will get bf file in tools folder
+- Run ```bf --selftest``` to make sure everything is ok
