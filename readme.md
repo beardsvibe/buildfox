@@ -2,64 +2,29 @@
 
 Minimalistic ninja generator
 
-WIP
+**This project is a WIP**
+
+### Example
+
+	build obj(*): auto *.cpp
+	build app(helloworld): auto obj(*)
+
+### Installation
+
+- Get [ninja](https://martine.github.io/ninja/) (v1.3+ is supported, v1.6 is recommended)
+- Get [python](https://www.python.org/) (v2.7+ is supported, v3.5 is recommended)
+- Get [buildfox latest release](https://github.com/beardsvibe/buildfox/releases/download/v0.1-dev/buildfox)
+- Put buildfox file in folder that accessible from PATH (optional)
+- For *nix run ```chmod +x buildfox```
+- For Windows add this to your terminal ```doskey buildfox=python buildfox $*```
+- Run ```buildfox --selftest``` to make sure everything is ok
+- Done !
 
 ### Usage
-
-Installation on windows :
-
-	doskey buildfox=python %path_to_buildfox%\buildfox.py $*
-
-Usage :
 
 	buildfox
 	ninja
 
-Release build :
+### Resources
 
-	buildfox variation=release
-	ninja
-
-### Manifest
-
-BuildFox manifest is a super set to ninja manifest.
-
-Core features are :
-
-- variable filtering
-- regex/wildcard file names
-- auto build rule
-- transformers for cross-toolchain defines, includes, etc.
-
-Example :
-
-	# filtering	
-	# value in filter could be wildcard or regex
-	# TODO var-value-var-value separators
-	filter var1:value_or_wildcard_or_regex var2:value_or_wildcard_or_regex
-		var3 = value
-		...
-	
-	# wildcard file names
-	build *.exe: auto *.c
-	
-	# regex file names
-	build r"\1\.exe": auto r"(.+)\.c"
-	
-	# configure auto build rule
-	# all auto build commands with .obj targets and .cpp inputs will be converted to cxx
-	auto *.obj: cxx *.cpp
-
-	# macro-like transformer
-	transformer define: /D${param}
-
-### Generator
-
-BuildFox is written in python and compatible with python 3.3+
-
-App contains four main parts :
-
-- Parser
-- Engine
-- Environment
-- Fox Core - contains core definitions and toolset support
+- [Manual](docs/manual.md)
