@@ -509,8 +509,8 @@ toolset_msvc    | true or not set       | true if msvc toolset is available
 toolset_clang   | true or not set       | true if clang toolset is available
 toolset_gcc     | true or not set       | true if gcc toolset is available
 toolset         | msvc or clang or gcc  | preferred toolset to use, preferences : msvc > clang > gcc
-system          | [platfrom.system](https://docs.python.org/2/library/platform.html#platform.system) | current system os string
-machine         | [platfrom.machine](https://docs.python.org/2/library/platform.html#platform.machine) | current machine arch name string
+system          | [platform.system](https://docs.python.org/2/library/platform.html#platform.system) | current system os string
+machine         | [platform.machine](https://docs.python.org/2/library/platform.html#platform.machine) | current machine arch name string
 cwd             | path that ends with / | current working directory
 
 ## Special variables reference
