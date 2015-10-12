@@ -26,7 +26,7 @@ Minimalistic ninja generator
 - For *nix run ```chmod +x bf```
 - For Windows add this to your terminal ```doskey bf=python %path_to_buildfox%/bf $*```
 - Run ```bf --selftest``` to make sure everything is ok
-- Done !
+- Done!
 
 ### Building from source
 
