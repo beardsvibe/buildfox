@@ -92,19 +92,12 @@ msvs_reference_flt = r"""<?xml version="1.0" encoding="utf-8"?>
 </Project>"""
 
 def gen_msvs(all_files, defines, includedirs):
-	# TODO simplify filtering here
 	interest_src_files = {}
 	interest_bin_files = {}
 	for folder, files in all_files.items():
-		folder = os.path.relpath(folder)
-		folder = folder.replace("/", "\\") + "\\"
-		interest_src = set()
-		interest_bin = set()
-		for name in files:
-			if name.lower().endswith(msvs_ext_of_interest_src):
-				interest_src.add(name)
-			if name.lower().endswith(msvs_ext_of_interest_bin):
-				interest_bin.add(name)
+		folder = os.path.relpath(folder).replace("/", "\\") + "\\"
+		interest_src = set(filter(lambda n: n.lower().endswith(msvs_ext_of_interest_src), files))
+		interest_bin = set(filter(lambda n: n.lower().endswith(msvs_ext_of_interest_bin), files))
 		if interest_src:
 			interest_src_files[folder] = interest_src
 		if interest_bin:
@@ -129,10 +122,10 @@ def gen_msvs(all_files, defines, includedirs):
 		if folder == ".\\":
 			continue
 		folder_guid = "{%s}" % str(uuid.uuid5(uuid.NAMESPACE_URL, folder)).lower()
-		filter  = "		<Filter Include=\"%s\">\n" % folder[:-1]
-		filter += "			<UniqueIdentifier>%s</UniqueIdentifier>\n" % folder_guid
-		filter += "		</Filter>"
-		flt_filters.append(filter)
+		filter_folder  = "		<Filter Include=\"%s\">\n" % folder[:-1]
+		filter_folder += "			<UniqueIdentifier>%s</UniqueIdentifier>\n" % folder_guid
+		filter_folder += "		</Filter>"
+		flt_filters.append(filter_folder)
 		for name in files:
 			item  = "		<ClCompile Include=\"%s%s\">\n" % (folder, name)
 			item += "			<Filter>%s</Filter>\n" % folder[:-1]
