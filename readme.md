@@ -11,7 +11,13 @@ Minimalistic ninja generator
 
 ### Usage
 
+Building project
+
 	bf && ninja
+
+Generating MSVS solution
+
+	bf --msvs
 
 ### Resources
 
