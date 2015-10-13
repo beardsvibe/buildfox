@@ -91,7 +91,7 @@ msvs_reference_flt = r"""<?xml version="1.0" encoding="utf-8"?>
 	</ItemGroup>
 </Project>"""
 
-def gen_msvs(all_files, defines, includedirs):
+def gen_msvs(all_files, defines, includedirs, prj_name):
 	interest_src_files = {}
 	interest_bin_files = {}
 	for folder, files in all_files.items():
@@ -134,7 +134,6 @@ def gen_msvs(all_files, defines, includedirs):
 	flt_filters = "\n".join(flt_filters)
 	flt_items = "\n".join(flt_items)
 
-	prj_name = "__name"
 	prj_file = "%s.vcxproj" % prj_name
 	prj_guid = "{%s}" % str(uuid.uuid4()).upper()
 	prj_text = msvs_reference_prj

@@ -263,6 +263,7 @@ argsparser.add_argument("variables", metavar = "name=value", type = str, nargs =
 #argsparser.add_argument("-v", "--verbose", action = "store_true", help = "verbose output") # TODO
 argsparser.add_argument("--msvs", action = "store_true",
 	help = "generate msvs solution", default = False, dest = "msvs")
+argsparser.add_argument("--msvs-prj", help = "msvs project prefix", default = "build")
 argsparser.add_argument("--no-core", action = "store_false",
 	help = "disable parsing fox core definitions", default = True, dest = "core")
 argsparser.add_argument("--no-env", action = "store_false",
@@ -312,4 +313,5 @@ else:
 	if args.get("msvs"):
 		gen_msvs(engine.context.all_files,
 			engine.variables.get("defines", ""),
-			engine.variables.get("includedirs", ""))
+			engine.variables.get("includedirs", ""),
+			args.get("msvs_prj"))
