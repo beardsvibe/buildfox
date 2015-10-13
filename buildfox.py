@@ -310,4 +310,6 @@ else:
 	engine.save(args.get("out"))
 
 	if args.get("msvs"):
-		gen_msvs(engine.context.all_files)
+		gen_msvs(engine.context.all_files,
+			engine.variables.get("defines", ""),
+			engine.variables.get("includedirs", ""))
