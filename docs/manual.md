@@ -483,6 +483,8 @@ cxx_sse                         | /arch:SSE or -msse                      |
 cxx_sse2                        | /arch:SSE2 or -msse2                    |
 cxx_symbols                     | /Z7                                     | msvc only
 cxx_omit_default_lib            | /Zl                                     | msvc only
+cxx_11                          | empty or -std=c++11                     |
+cxx_14                          | empty or -std=c++14                     |
 cxx_runtime_static_debug        | /MTd                                    | msvc only
 cxx_runtime_dynamic_debug       | /MDd                                    | msvc only
 cxx_runtime_static_release      | /MT                                     | msvc only
