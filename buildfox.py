@@ -109,6 +109,8 @@ filter toolset:msvc
 	# language
 	cxx_symbols = /Z7
 	cxx_omit_default_lib = /Zl
+	cxx_11 =
+	cxx_14 =
 
 	# linking
 	cxx_runtime_static_debug = /MTd
@@ -224,6 +226,10 @@ filter toolset: r"gcc|clang"
 	cxx_avx2 = -mavx2
 	cxx_sse = -msse
 	cxx_sse2 = -msse2
+
+	# language
+	cxx_11 = -std=c++11
+	cxx_14 = -std=c++14
 
 	# miscellaneous
 	cxx_fatal_warnings = -Werror
