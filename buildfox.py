@@ -295,7 +295,7 @@ if args.get("selftest"):
 	engine.save(ninja_filename)
 	result = not subprocess.call(["ninja", "-f", ninja_filename])
 	if result:
-		result = not subprocess.call([app_filename])
+		result = not subprocess.call(["./" + app_filename])
 	if result:
 		print("Selftest - ok")
 		selftest_wipe()
