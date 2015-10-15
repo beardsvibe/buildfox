@@ -16,6 +16,8 @@ install:
   - mv ninja ninja_16
   - chmod +x ninja_14
   - chmod +x ninja_16
+  - ./ninja_14 --version
+  - ./ninja_16 --version
   - PATH=$PWD:$PATH
   - cd ..
 script:
@@ -26,6 +28,6 @@ script:
   - coverage combine
   - python deploy.py
   - chmod +x bf
-  - bf --selftest
+  - ./bf --selftest
 after_success:
   coveralls
