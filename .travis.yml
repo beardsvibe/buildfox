@@ -16,8 +16,10 @@ install:
   - mv ninja ninja_16
   - chmod +x ninja_14
   - chmod +x ninja_16
+  - ln -s ninja_16 ninja
   - ./ninja_14 --version
   - ./ninja_16 --version
+  - ./ninja --version
   - PATH=$PWD:$PATH
   - cd ..
 script:
