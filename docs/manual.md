@@ -443,6 +443,7 @@ defines             | /D or -D              | sets defines
 includedirs         | /I or -I              | sets includes directories
 libdirs             | /LIBPATH or -L        | sets libs directories
 libs                | .lib or -l            | sets system libs
+frameworks          | none or -framework    | sets frameworks (OS X only)
 disable_warnings    | /wd                   | disables warnings (msvc only)
 ignore_default_libs | /NODEFAULTLIB         | ignores default lib (msvc only)
 
