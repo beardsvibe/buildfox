@@ -81,10 +81,14 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 		matched = []
 		for input in inputs:
 			regex = wildcard_regex(input)
+			print("----------------------")
+			print("input %s" % input)
+			print("regex %s" % regex)
 			if regex:
 				# find the folder where to look for files
 				base_folder = re_folder_part.match(regex)
 				if base_folder:
+					print(base_folder)
 					base_folder = base_folder.group()
 					base_folder = re_non_escaped_char.sub(replace_non_esc, base_folder)
 					separator = "\\" if base_folder.rfind("\\") > base_folder.rfind("/") else "/"
