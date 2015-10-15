@@ -184,11 +184,11 @@ filter toolset: r"gcc|clang"
 		description = ar $in
 
 	rule link
-		command = $cxx $ldflags $libdirs $in -o $out $libs
+		command = $cxx $ldflags $frameworks $libdirs $in -o $out $libs
 		description = link $out
 
 	rule link_so
-		command = $cxx -shared -fPIC $ldflags $libdirs -o $out $in $libs
+		command = $cxx -shared -fPIC $ldflags $frameworks $libdirs -o $out $in $libs
 		description = cxx $in
 
 	auto r"^(?i).*\.o$": cxx r"^(?i).*\.(cpp|cxx|cc|c\+\+)$"
@@ -241,10 +241,15 @@ filter toolset: r"gcc|clang"
 	includedirs =
 	libdirs =
 	libs =
+	frameworks =
 	transformer defines: -D${param}
 	transformer includedirs: -I${rel_path}${param}
 	transformer libdirs: -L${rel_path}${param}
 	transformer libs: -l${param}
+	filter system: Darwin
+		transformer frameworks: -framework ${param}
+	filter system: r"^(?i)(?!darwin).*$" # don't enable this with gcc/clang on non Darwins
+		transformer frameworks:
 
 	# main flags
 	cxxflags =
