@@ -5,10 +5,11 @@ init:
   - "ECHO %PYTHON%"
   - ps: "ls C:/Python*"
 install:
-  - ps: (new-object net.webclient).DownloadFile('https://raw.github.com/pypa/pip/master/contrib/get-pip.py', 'C:/get-pip.py')
-  - "%PYTHON%/python.exe C:/get-pip.py"
-  - "%PYTHON%/Scripts/pip.exe install -e ."
-  - "%PYTHON%/python --version"
+  #- ps: (new-object net.webclient).DownloadFile('https://raw.github.com/pypa/pip/master/contrib/get-pip.py', 'C:/get-pip.py')
+  #- "%PYTHON%/python.exe C:/get-pip.py"
+  #- "%PYTHON%/Scripts/pip.exe install -e ."
+  - "set PATH=%PYTHON%;%PYTHON%/Scripts;%PATH%"
+  - "python --version"
   - "pip install deepdiff"
   #- mkdir -p .bins
   #- cd .bins
