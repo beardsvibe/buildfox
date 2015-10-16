@@ -1,14 +1,10 @@
 environment:
   global:
-    WITH_COMPILER: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_compiler.cmd"
     PYTHON: "C:\\Python34"
-    PYTHON_VERSION: "3.4.x"
-    PYTHON_ARCH: "32"
-init:
-  - "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
 install:
-  - powershell appveyor\\install.ps1
-  - python --version
+  - %PYTHON%/python.exe C:/get-pip.py
+  - %PYTHON%/Scripts/pip.exe install -e .
+  - %PYTHON%/python --version
   #- pip install deepdiff
   #- mkdir -p .bins
   #- cd .bins
