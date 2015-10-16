@@ -300,6 +300,21 @@ class Engine:
 				self.current_line_i,
 			))
 
+		# you probably want to match some files
+		def warn_no_files(type):
+			print("no %s input files matched for '%s' (%s:%i)" % (
+				type,
+				self.current_line,
+				self.filename,
+				self.current_line_i,
+			))
+		if (obj[3] and not inputs_explicit):
+			warn_no_files("explicit")
+		if (obj[4] and not inputs_implicit):
+			warn_no_files("implicit")
+		if (obj[5] and not inputs_order):
+			warn_no_files("order-only")
+
 		# expand this rule
 		expand = self.rules.get(rule_name, {}).get("expand", None)
 
