@@ -433,9 +433,19 @@ lib              | .lib or .a            | static lib
 shlib            | .dll or .so           | shared lib
 shlibdep         | .lib or .so           | used when you need to link with shared lib
 
+#### Compiler and linker configuration
+
+To set compiler or linker flags you need to use configuration variables. This variables will be passed as-is to compiler or linker and we recommend using cxx_\* and ld_\* flags from flags table to set required arguments in cross platform fashion.
+
+Variable                        | Description
+------------------------------- | ----------------
+cxxflags                        | compiler flags
+ldflags                         | linker flags
+libflags                        | static lib archiver flags
+
 #### Compiler flags transformers
 
-Some compiler flags are easier and better to specify as whitespace separated list, fox core provides set of transformers for this purpose. For example : ```defines = DEFINE1 DEFINE2```
+Some compiler flags are easier and better to specify as whitespace separated list, fox core provides set of transformers for this purpose. For example : ```defines = DEFINE1 DEFINE2```. Please note that this transformers are passed to compiler and linker directly without interaction with ```cxxflags``` or ```ldflags```.
 
 Transformer name    | Possible Values       | Description
 ------------------- | --------------------- | --------------------------------------------
