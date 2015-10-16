@@ -1,3 +1,4 @@
+version: 0.1.{build}
 environment:
   global:
     PYTHON: "C:\\Python35"
@@ -11,12 +12,10 @@ install:
   - cd .bins
   #- wget -q --no-check-certificate https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip -O ninja.zip
   - ps wget https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip -OutFile ninja.zip
-  - ps "$shell_app=new-object -com shell.application"
-  - ps "$filename = \"ninja.zip\""
-  - ps "$zip_file = $shell_app.namespace((Get-Location).Path + \"\$filename\")"
-  - ps "$destination = $shell_app.namespace((Get-Location).Path)"
-  - ps "$destination.Copyhere($zip_file.items())"
+  - ps $shell_app=new-object -com shell.application
+  - ps $shell_app.namespace((Get-Location).Path).Copyhere($shell_app.namespace((Get-Location).Path + "\$ninja.zip").items())
   #- 7z x ninja.zip -o. -y > nul
+  - dir
   - ninja --version
   - cd ..
 build: off
