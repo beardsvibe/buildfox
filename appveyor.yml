@@ -1,27 +1,20 @@
 environment:
   global:
-    PYTHON: "C:\\Python34"
-init:
-  - "ECHO %PYTHON%"
-  - ps: "ls C:/Python*"
+    PYTHON: "C:\\Python35"
 install:
-  #- ps: (new-object net.webclient).DownloadFile('https://raw.github.com/pypa/pip/master/contrib/get-pip.py', 'C:/get-pip.py')
-  #- "%PYTHON%/python.exe C:/get-pip.py"
-  #- "%PYTHON%/Scripts/pip.exe install -e ."
-  - "set PATH=%PYTHON%;%PYTHON%/Scripts;%PATH%"
-  - "python --version"
-  - "pip install deepdiff"
-  #- mkdir -p .bins
-  #- cd .bins
-  #- wget https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip -O ninja.zip
-  #- unzip ninja.zip
-  #- ./ninja --version
-  #- PATH=$PWD:$PATH
-  #- cd ..
+  - set PATH=%cd%/.bins;%PYTHON%;%PYTHON%/Scripts;%PATH%
+  - python --version
+  - pip install deepdiff
+  - mkdir -p .bins
+  - cd .bins
+  - wget https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip -O ninja.zip
+  - unzip ninja.zip
+  - ./ninja --version
+  - cd ..
 build: off
 test_script:
   - call "%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
   - cd tools
-  - "%PYTHON%/python deploy.py"
-  - "%PYTHON%/python bf --selftest"
+  - python deploy.py
+  - python bf --selftest
   - cd ..
