@@ -6,6 +6,7 @@ install:
   - set PATH=%cd%/.bins;%PYTHON%;%PYTHON%/Scripts;%PATH%
   - python --version
   - pip install deepdiff
+  - pip install coveralls
 
   # TODO cinst is very slow, so we need to use powershell to download and unzip ninja
   - cinst wget -x86
@@ -21,7 +22,7 @@ build: off
 test_script:
   - call "%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
   - cd tools
-  - python tests.py --compiler msvc
+  - coverage run --source=.. --omit=tests.py tests.py --compiler msvc
   - python deploy.py
   - doskey bf=python bf $*
   - bf --selftest
