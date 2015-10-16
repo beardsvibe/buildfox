@@ -5,11 +5,13 @@ install:
   - set PATH=%cd%/.bins;%PYTHON%;%PYTHON%/Scripts;%PATH%
   - python --version
   - pip install deepdiff
+  - cinst wget -x86
+  - cinst 7zip.commandline -x86
   - mkdir -p .bins
   - cd .bins
   - wget https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip -O ninja.zip
-  - unzip ninja.zip
-  - ./ninja --version
+  - 7z x ninja.zip -o. -y > nul
+  - ninja --version
   - cd ..
 build: off
 test_script:
