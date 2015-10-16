@@ -6,15 +6,15 @@ install:
   - set PATH=%cd%/.bins;%PYTHON%;%PYTHON%/Scripts;%PATH%
   - python --version
   - pip install deepdiff
-  #- cinst wget -x86
-  #- cinst 7zip.commandline -x86
+  - cinst wget -x86
+  - cinst 7zip.commandline -x86
   - mkdir -p .bins
   - cd .bins
-  #- wget -q --no-check-certificate https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip -O ninja.zip
-  - ps wget https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip -OutFile ninja.zip
-  - ps $shell_app=new-object -com shell.application
-  - ps $shell_app.namespace((Get-Location).Path).Copyhere($shell_app.namespace((Get-Location).Path + "\$ninja.zip").items())
-  #- 7z x ninja.zip -o. -y > nul
+  - wget -q --no-check-certificate https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip -O ninja.zip
+  #- ps wget https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip -OutFile ninja.zip
+  #- ps $shell_app=new-object -com shell.application
+  #- ps $shell_app.namespace((Get-Location).Path).Copyhere($shell_app.namespace((Get-Location).Path + "\$ninja.zip").items())
+  - 7z x ninja.zip -o. -y > nul
   - dir
   - ninja --version
   - cd ..
