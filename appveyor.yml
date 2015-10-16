@@ -24,6 +24,5 @@ test_script:
   - cd tools
   - coverage run --source=.. --omit=tests.py tests.py --compiler msvc
   - python deploy.py
-  - doskey bf=python bf $*
-  - bf --selftest
+  - python bf --selftest
   - cd ..
