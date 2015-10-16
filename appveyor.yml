@@ -1,0 +1,28 @@
+version: 0.1.{build}
+environment:
+  global:
+    PYTHON: "C:\\Python35"
+install:
+  - set PATH=%cd%/.bins;%PYTHON%;%PYTHON%/Scripts;%PATH%
+  - python --version
+  - pip install deepdiff
+  - pip install coveralls
+
+  # TODO cinst is very slow, so we need to use powershell to download and unzip ninja
+  - cinst wget -x86
+  - cinst 7zip.commandline -x86
+  - mkdir -p .bins
+  - cd .bins
+  - wget -q --no-check-certificate https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip -O ninja.zip
+  - 7z x ninja.zip -o. -y > nul
+  - dir
+  - ninja --version
+  - cd ..
+build: off
+test_script:
+  - call "%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
+  - cd tools
+  - coverage run --source=.. --omit=tests.py tests.py --compiler msvc
+  - python deploy.py
+  - python bf --selftest
+  - cd ..
