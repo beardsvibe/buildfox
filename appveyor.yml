@@ -1,0 +1,15 @@
+install:
+  - pip install deepdiff
+  - mkdir -p .bins
+  - cd .bins
+  - wget https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip -O ninja.zip
+  - unzip ninja.zip
+  - ./ninja --version
+  - PATH=$PWD:$PATH
+  - cd ..
+build_script:
+  - call "%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
+  - cd tools
+  - python deploy.py
+  - python bf --selftest
+  - cd ..
