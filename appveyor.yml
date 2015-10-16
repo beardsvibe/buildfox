@@ -2,9 +2,9 @@ environment:
   global:
     PYTHON: "C:\\Python34"
 install:
-  - %PYTHON%/python.exe C:/get-pip.py
-  - %PYTHON%/Scripts/pip.exe install -e .
-  - %PYTHON%/python --version
+  - "%PYTHON%/python.exe C:/get-pip.py"
+  - "%PYTHON%/Scripts/pip.exe install -e ."
+  - "%PYTHON%/python --version"
   #- pip install deepdiff
   #- mkdir -p .bins
   #- cd .bins
@@ -17,6 +17,6 @@ build: off
 test_script:
   - call "%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
   - cd tools
-  - python deploy.py
-  - python bf --selftest
+  - "%PYTHON%/python deploy.py"
+  - "%PYTHON%/python bf --selftest"
   - cd ..
