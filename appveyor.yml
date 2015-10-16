@@ -16,7 +16,7 @@ install:
   - ps "$zip_file = $shell_app.namespace((Get-Location).Path + \"\$filename\")"
   - ps "$destination = $shell_app.namespace((Get-Location).Path)"
   - ps "$destination.Copyhere($zip_file.items())"
-  - 7z x ninja.zip -o. -y > nul
+  #- 7z x ninja.zip -o. -y > nul
   - ninja --version
   - cd ..
 build: off
