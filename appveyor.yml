@@ -6,14 +6,13 @@ install:
   - set PATH=%cd%/.bins;%PYTHON%;%PYTHON%/Scripts;%PATH%
   - python --version
   - pip install deepdiff
+
+  # TODO cinst is very slow, so we need to use powershell to download and unzip ninja
   - cinst wget -x86
   - cinst 7zip.commandline -x86
   - mkdir -p .bins
   - cd .bins
   - wget -q --no-check-certificate https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip -O ninja.zip
-  #- ps wget https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip -OutFile ninja.zip
-  #- ps $shell_app=new-object -com shell.application
-  #- ps $shell_app.namespace((Get-Location).Path).Copyhere($shell_app.namespace((Get-Location).Path + "\$ninja.zip").items())
   - 7z x ninja.zip -o. -y > nul
   - dir
   - ninja --version
@@ -22,6 +21,8 @@ build: off
 test_script:
   - call "%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
   - cd tools
+  - python tests.py --compiler msvc
   - python deploy.py
-  - python bf --selftest
+  - doskey bf=python bf $*
+  - bf --selftest
   - cd ..
