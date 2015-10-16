@@ -106,17 +106,63 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 
 				# look for files
 				list_folder = os.path.normpath(list_folder).replace("\\", "/")
-				re_regex = re.compile(regex)
-				if os.path.isdir(list_folder):
-					fs_files = set(os.listdir(list_folder))
+				print("list_folder %s" % list_folder)
+				
+				all_listed_folders = list_folder.split("/")
+				print("all_listed_folders:")
+				from pprint import pprint
+				pprint(all_listed_folders)
+				
+				is_recursive_glob = "(.*)(.*)" in all_listed_folders
+				print("is_recursive_glob %s" % str(is_recursive_glob))
+				
+				
+				fs_files = set()
+				generated_files = set()
+				
+				if is_recursive_glob:
+					tmp_folders = ["."]
+					print(" --> TODO")
+					
+					for folder in all_listed_folders:
+						if folder == "(.*)(.*)":
+							print(folder)
+							pprint(tmp_folders)
+							tmp_folders2 = []
+							for tmp_folder in tmp_folders:
+								print(tmp_folder)
+								for root, dirnames, filenames in os.walk(tmp_folder):
+									for dir in dirnames:
+										tmp_folders2.append(os.path.join(root, dir).replace("\\", "/"))
+										print(root + " === " + dir)
+							# TODO filtering ?
+							tmp_folders = tmp_folders2
+							
+						else:
+							tmp_folders = [f + separator + folder for f in tmp_folders]
+					pprint(tmp_folders)
 				else:
-					fs_files = set()
-				generated_files = generated.get(list_folder, set())
+					if os.path.isdir(list_folder):
+						fs_files = set(os.listdir(list_folder))
+						fs_files = set([base_folder + separator + name for name in fs_files()])
+
+					generated_files = generated.get(list_folder, set())
+					generated_files = set([base_folder + separator + name for name in generated_files])
+
 				# we must have stable sort here
 				# so output ninja files will be same between runs
-				all_files = sorted(list(fs_files.union(generated_files)))
+				all_files = list(fs_files.union(generated_files))
+				all_files = sorted(all_files)
+
+				# while capturing ** we want just to capture *
+				if is_recursive_glob:
+					regex = regex.replace("(.*)(.*)", "(.*)") # TODO check if this is correct
+
+				print("final regex : %s" % regex)
+
+				re_regex = re.compile(regex)
 				for file in all_files:
-					name = base_folder + separator + file
+					name =  file
 					match = re_regex.match(name)
 					if match:
 						result.append(rel_path + name)
