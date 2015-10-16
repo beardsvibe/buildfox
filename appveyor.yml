@@ -1,22 +1,24 @@
 environment:
-  matrix:
-    - PYTHON: "C:\\Python34"
-      PYTHON_VERSION: "3.4.x"
-      PYTHON_ARCH: "32"
+  global:
+    WITH_COMPILER: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_compiler.cmd"
+    PYTHON: "C:\\Python34"
+    PYTHON_VERSION: "3.4.x"
+    PYTHON_ARCH: "32"
 init:
   - "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
 install:
-  - "powershell appveyor\\install.ps1"
+  - powershell appveyor\\install.ps1
   - python --version
-  - pip install deepdiff
-  - mkdir -p .bins
-  - cd .bins
-  - wget https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip -O ninja.zip
-  - unzip ninja.zip
-  - ./ninja --version
-  - PATH=$PWD:$PATH
-  - cd ..
-build_script:
+  #- pip install deepdiff
+  #- mkdir -p .bins
+  #- cd .bins
+  #- wget https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip -O ninja.zip
+  #- unzip ninja.zip
+  #- ./ninja --version
+  #- PATH=$PWD:$PATH
+  #- cd ..
+build: off
+test_script:
   - call "%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
   - cd tools
   - python deploy.py
