@@ -70,6 +70,76 @@ def wildcard_regex(filename, replace_groups = False):
 	else:
 		return None
 
+# return list of folders that match provided pattern
+def glob_folders(pattern, rel_path = "", generated = None):
+	# generally recursive glob requires accessing directory structure and it's slow
+	# to avoid this first we check if we need to access drive at all
+	if not "(.*)(.*)" in pattern:
+		pass
+
+	from pprint import pprint
+	print("----> glob_folders(%s)" % pattern)
+
+	real_folders = [rel_path if rel_path else "."]
+	gen_folders = [rel_path if rel_path else "."]
+
+	generated = {
+		"../withapp/wtf/testx/bb/whatever": ""
+	}
+	#a = generated.keys()
+	#print(a)
+
+	for folder in pattern.split("/"):
+		#print(folder)
+
+		if folder == "(.*)(.*)":
+			new_real_folders = []
+			for real_folder in real_folders:
+				for root, dirnames, filenames in os.walk(real_folder): # TODO this is slow, optimize
+					for dir in dirnames:
+						result = os.path.join(root, dir).replace("\\", "/")
+						new_real_folders.append(result)
+						#print("->" + result)
+			real_folders = new_real_folders
+
+			new_gen_folders = []
+			for gen_folder in gen_folders:
+				prepend_dot = False
+				if gen_folder.startswith("./"):
+					prepend_dot = True
+					gen_folder = gen_folder[2:] # strip ./
+				for folder in generated.keys():
+					if folder.startswith(gen_folder):
+						root = folder[:len(gen_folder)]
+						tmp_folder = folder[len(gen_folder):]
+						tmp_folder = tmp_folder.lstrip("/")
+						#root = ""
+						print("gen folder %s" % gen_folder)
+						print("folder %s" % folder)
+						print("root %s" % root)
+						new_gen_folders.append("./%s" % root if prepend_dot else root)
+						for subfolder in tmp_folder.split("/"):
+							root += "/%s" % subfolder
+							print(root)
+							new_gen_folders.append("./%s" % root if prepend_dot else root)
+					
+					
+						#new_gen_folders.append("./%s" % folder if prepend_dot else folder)
+			#pprint(gen_folders)
+			gen_folders = new_gen_folders
+			#pprint(gen_folders)
+		else:
+			real_folders = ["%s/%s" % (p, folder) for p in real_folders]
+			gen_folders = ["%s/%s" % (p, folder) for p in gen_folders]
+
+
+	# TODO some produced folders can point into non existing location
+	
+	print("----> result : ")
+	pprint(real_folders)
+	pprint(gen_folders)
+
+
 # input can be string or list of strings
 # outputs are always lists
 def find_files(inputs, outputs = None, rel_path = "", generated = None):
@@ -82,20 +152,20 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 		for input in inputs:
 			regex = wildcard_regex(input)
 			print("----------------------")
-			print("input %s" % input)
-			print("regex %s" % regex)
+			#print("input %s" % input)
+			#print("regex %s" % regex)
 			if regex:
 				# find the folder where to look for files
 				base_folder = re_folder_part.match(regex)
 				if base_folder:
-					print("matched %s" % str(base_folder))
+					#print("matched %s" % str(base_folder))
 					base_folder = base_folder.group(1) + base_folder.group(2)
 					base_folder = re_non_escaped_char.sub(replace_non_esc, base_folder)
-					print("basefolder %s" % str(base_folder))
+					#print("basefolder %s" % str(base_folder))
 					separator = "\\" if base_folder.rfind("\\") > base_folder.rfind("/") else "/"
 					base_folder = os.path.dirname(base_folder)
 					list_folder = rel_path + base_folder
-					print("list_folder %s" % list_folder)
+					#print("list_folder %s" % list_folder)
 				else:
 					separator = ""
 					base_folder = ""
@@ -108,43 +178,38 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 				list_folder = os.path.normpath(list_folder).replace("\\", "/")
 				print("list_folder %s" % list_folder)
 				
-				all_listed_folders = list_folder.split("/")
-				print("all_listed_folders:")
-				from pprint import pprint
-				pprint(all_listed_folders)
-				
-				is_recursive_glob = "(.*)(.*)" in all_listed_folders
-				print("is_recursive_glob %s" % str(is_recursive_glob))
+				all_listed_folders = glob_folders(list_folder, rel_path, generated)
+
 				
 				
 				fs_files = set()
 				generated_files = set()
 				
-				if is_recursive_glob:
-					tmp_folders = ["."]
+				if False:
+					#tmp_folders = ["."]
 					print(" --> TODO")
-					
-					for folder in all_listed_folders:
-						if folder == "(.*)(.*)":
-							print(folder)
-							pprint(tmp_folders)
-							tmp_folders2 = []
-							for tmp_folder in tmp_folders:
-								print(tmp_folder)
-								for root, dirnames, filenames in os.walk(tmp_folder):
-									for dir in dirnames:
-										tmp_folders2.append(os.path.join(root, dir).replace("\\", "/"))
-										print(root + " === " + dir)
-							# TODO filtering ?
-							tmp_folders = tmp_folders2
-							
-						else:
-							tmp_folders = [f + separator + folder for f in tmp_folders]
-					pprint(tmp_folders)
+					#
+					#for folder in all_listed_folders:
+					#	if folder == "(.*)(.*)":
+					#		print(folder)
+					#		pprint(tmp_folders)
+					#		tmp_folders2 = []
+					#		for tmp_folder in tmp_folders:
+					#			print(tmp_folder)
+					#			for root, dirnames, filenames in os.walk(tmp_folder):
+					#				for dir in dirnames:
+					#					tmp_folders2.append(os.path.join(root, dir).replace("\\", "/"))
+					#					print(root + " === " + dir)
+					#		# TODO filtering ?
+					#		tmp_folders = tmp_folders2
+					#		
+					#	else:
+					#		tmp_folders = [f + separator + folder for f in tmp_folders]
+					#pprint(tmp_folders)
 				else:
 					if os.path.isdir(list_folder):
 						fs_files = set(os.listdir(list_folder))
-						fs_files = set([base_folder + separator + name for name in fs_files()])
+						fs_files = set([base_folder + separator + name for name in fs_files])
 
 					generated_files = generated.get(list_folder, set())
 					generated_files = set([base_folder + separator + name for name in generated_files])
@@ -155,10 +220,10 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 				all_files = sorted(all_files)
 
 				# while capturing ** we want just to capture *
-				if is_recursive_glob:
-					regex = regex.replace("(.*)(.*)", "(.*)") # TODO check if this is correct
+				#if is_recursive_glob:
+				#	regex = regex.replace("(.*)(.*)", "(.*)") # TODO check if this is correct
 
-				print("final regex : %s" % regex)
+				#print("final regex : %s" % regex)
 
 				re_regex = re.compile(regex)
 				for file in all_files:
