@@ -70,28 +70,14 @@ def wildcard_regex(filename, replace_groups = False):
 	else:
 		return None
 
+from pprint import pprint
 # return list of folders that match provided pattern
+# please note that some folders may point into non existing location
 def glob_folders(pattern, rel_path = "", generated = None):
-	# generally recursive glob requires accessing directory structure and it's slow
-	# to avoid this first we check if we need to access drive at all
-	if not "(.*)(.*)" in pattern:
-		pass
-
-	from pprint import pprint
-	print("----> glob_folders(%s)" % pattern)
-
 	real_folders = [rel_path if rel_path else "."]
 	gen_folders = [rel_path if rel_path else "."]
 
-	generated = {
-		"../withapp/wtf/testx/bb/whatever": ""
-	}
-	#a = generated.keys()
-	#print(a)
-
 	for folder in pattern.split("/"):
-		#print(folder)
-
 		if folder == "(.*)(.*)":
 			new_real_folders = []
 			for real_folder in real_folders:
@@ -99,7 +85,6 @@ def glob_folders(pattern, rel_path = "", generated = None):
 					for dir in dirnames:
 						result = os.path.join(root, dir).replace("\\", "/")
 						new_real_folders.append(result)
-						#print("->" + result)
 			real_folders = new_real_folders
 
 			new_gen_folders = []
@@ -108,36 +93,23 @@ def glob_folders(pattern, rel_path = "", generated = None):
 				if gen_folder.startswith("./"):
 					prepend_dot = True
 					gen_folder = gen_folder[2:] # strip ./
+				gen_folder_len = len(gen_folder)
 				for folder in generated.keys():
 					if folder.startswith(gen_folder):
-						root = folder[:len(gen_folder)]
-						tmp_folder = folder[len(gen_folder):]
-						tmp_folder = tmp_folder.lstrip("/")
-						#root = ""
-						print("gen folder %s" % gen_folder)
-						print("folder %s" % folder)
-						print("root %s" % root)
+						root = folder[:gen_folder_len]
+						sub_folders = folder[gen_folder_len:]
+						sub_folders = sub_folders.lstrip("/")
+						# walk through directories in similar fashion with os.walk
 						new_gen_folders.append("./%s" % root if prepend_dot else root)
-						for subfolder in tmp_folder.split("/"):
+						for subfolder in sub_folders.split("/"): 
 							root += "/%s" % subfolder
-							print(root)
 							new_gen_folders.append("./%s" % root if prepend_dot else root)
-					
-					
-						#new_gen_folders.append("./%s" % folder if prepend_dot else folder)
-			#pprint(gen_folders)
-			gen_folders = new_gen_folders
-			#pprint(gen_folders)
+			gen_folders = list(set(new_gen_folders))
 		else:
 			real_folders = ["%s/%s" % (p, folder) for p in real_folders]
 			gen_folders = ["%s/%s" % (p, folder) for p in gen_folders]
 
-
-	# TODO some produced folders can point into non existing location
-	
-	print("----> result : ")
-	pprint(real_folders)
-	pprint(gen_folders)
+	return (real_folders, gen_folders)
 
 
 # input can be string or list of strings
