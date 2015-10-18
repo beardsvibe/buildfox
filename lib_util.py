@@ -145,36 +145,38 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 				print("base_folder %s" % base_folder)
 				print("lookup_path %s" % lookup_path)
 				
-
-				
 				real_folders, gen_folders = glob_folders(base_folder, lookup_path, generated)
 
 				fs_files = set()
-				generated_files = set()
-
 				for real_folder in real_folders:
-					print(real_folder)
 					if os.path.isdir(real_folder):
 						root = real_folder[len(lookup_path) + 1:]
 						files = [root + separator + file for file in os.listdir(real_folder) if os.path.isfile(real_folder + "/" + file)]
 						fs_files = fs_files.union(files)
-				pprint(fs_files)
-						#fs_files = set([base_folder + separator + name for name in fs_files])
 
-				pprint(generated)
-				generated_files = generated.get(base_folder, set())
-				generated_files = set([base_folder + separator + name for name in generated_files])
+				gen_files = set()
+				for gen_folder in gen_folders:
+					if gen_folder in generated:
+						root = gen_folder[len(lookup_path) + 1:]
+						files = [root + separator + file for file in generated.get(gen_folder)]
+						gen_files = gen_files.union(files)
+
+				#pprint(generated)
+				#generated_files = generated.get(base_folder, set())
+				#generated_files = set([base_folder + separator + name for name in generated_files])
 
 				# we must have stable sort here
 				# so output ninja files will be same between runs
-				all_files = list(fs_files.union(generated_files))
+				all_files = list(fs_files.union(gen_files))
 				all_files = sorted(all_files)
 
 				# while capturing ** we want just to capture *
 				#if is_recursive_glob:
 				regex = regex.replace("(.*)(.*)", "(.*)") # TODO check if this is correct
+				
+				# TODO if we have recursive regex, then current folder should be also included
 
-				#print("final regex : %s" % regex)
+				print("final regex : %s" % regex)
 
 				re_regex = re.compile(regex)
 				for file in all_files:
