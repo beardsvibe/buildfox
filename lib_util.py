@@ -174,7 +174,8 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 
 				pprint(all_files)
 
-				# while capturing ** we want just to capture *
+				# while capturing ** we want just to capture */ optionally
+				# so we can match files in root folder as well
 				regex = regex.replace("(.*)(.*)\/", "(?:(.*)\/)?")
 
 				print("final regex : %s" % regex)
