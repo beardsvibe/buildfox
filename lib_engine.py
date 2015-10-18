@@ -27,6 +27,8 @@ class Engine:
 		def __init__(self):
 			# key is folder name that ends /, value is set of file names
 			self.generated = collections.defaultdict(set)
+			# key is folder name, value is set of file names
+			self.all_files = collections.defaultdict(set)
 			# number of generated subninja files
 			self.subninja_num = 0
 
@@ -117,7 +119,17 @@ class Engine:
 						  rel_path = self.rel_path,
 						  generated = self.context.generated)
 
+	def add_files(self, files):
+		if not files:
+			return
+		for file in files:
+			dir = os.path.dirname(file)
+			dir = dir + "/" if dir else "./"
+			self.context.all_files[dir].add(os.path.basename(file))
+
 	def add_generated_files(self, files):
+		if not files:
+			return
 		for file in files:
 			dir = os.path.dirname(file)
 			dir = dir + "/" if dir else "./"
@@ -279,10 +291,13 @@ class Engine:
 		inputs_implicit = self.eval_find_files(obj[4])
 		inputs_order = self.eval_find_files(obj[5])
 
+		self.add_files(inputs_explicit)
+		self.add_files(inputs_implicit)
+		self.add_files(inputs_order)
+		self.add_files(targets_explicit)
+		self.add_files(targets_implicit)
 		self.add_generated_files(targets_explicit)
-
-		if targets_implicit:
-			self.add_generated_files(targets_implicit)
+		self.add_generated_files(targets_implicit)
 
 		# deduce auto rule
 		if rule_name == "auto":

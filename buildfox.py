@@ -12,6 +12,7 @@ import subprocess
 from lib_engine import Engine
 from lib_environment import discover
 from lib_selftest import selftest_setup, selftest_wipe
+from lib_ide_vs import gen_vs
 
 # core definitions -----------------------------------------------------------
 
@@ -23,8 +24,8 @@ fox_core = r"""
 # then requirement will raise up to ninja v1.6 because we depend on scoped rules
 ninja_required_version = 1.3
 
-filter toolset:msvc
-	# msvc support
+filter toolset:msc
+	# msc support
 	cc = cl
 	cxx = cl
 	lib = lib
@@ -32,13 +33,13 @@ filter toolset:msvc
 	rule cc
 		command = $cc $cxxflags $defines $includedirs $disable_warnings /nologo /showIncludes -c $in /Fo$out
 		description = cc $in
-		deps = msvc
+		deps = msvc # ninja call msc as msvc
 		expand = true
 
 	rule cxx
 		command = $cxx $cxxflags $defines $includedirs $disable_warnings /nologo /showIncludes -c $in /Fo$out
 		description = cxx $in
-		deps = msvc
+		deps = msvc # ninja call msc as msvc
 		expand = true
 
 	rule link
@@ -72,7 +73,7 @@ filter toolset:msvc
 	transformer shlib: ${param}.dll
 	transformer shlibdep: ${param}.lib
 
-	# MSVC flags
+	# MSC flags
 	# more info here https://msdn.microsoft.com/en-us/library/19z1t1wy.aspx
 
 	# optimizations
@@ -271,6 +272,8 @@ argsparser.add_argument("-o", "--out", help = "output file", default = "build.ni
 argsparser.add_argument("-w", "--workdir", help = "working directory")
 argsparser.add_argument("variables", metavar = "name=value", type = str, nargs = "*", help = "variables with values to setup", default = [])
 #argsparser.add_argument("-v", "--verbose", action = "store_true", help = "verbose output") # TODO
+argsparser.add_argument("--ide", help = "generate ide solution (vs, vs2013)", default = None, dest = "ide")
+argsparser.add_argument("--ide-prj", help = "ide project prefix", default = "build")
 argsparser.add_argument("--no-core", action = "store_false",
 	help = "disable parsing fox core definitions", default = True, dest = "core")
 argsparser.add_argument("--no-env", action = "store_false",
@@ -316,3 +319,9 @@ if args.get("selftest"):
 else:
 	engine.load(args.get("in"))
 	engine.save(args.get("out"))
+
+	if args.get("ide") in ["vs", "vs2013"]:
+		gen_vs(engine.context.all_files,
+			engine.variables.get("defines", ""),
+			engine.variables.get("includedirs", ""),
+			args.get("ide_prj"))

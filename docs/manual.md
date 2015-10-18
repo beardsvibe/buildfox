@@ -454,14 +454,14 @@ includedirs         | /I or -I              | sets includes directories
 libdirs             | /LIBPATH or -L        | sets libs directories
 libs                | .lib or -l            | sets system libs
 frameworks          | none or -framework    | sets frameworks (OS X only)
-disable_warnings    | /wd                   | disables warnings (msvc only)
-ignore_default_libs | /NODEFAULTLIB         | ignores default lib (msvc only)
+disable_warnings    | /wd                   | disables warnings (msc only)
+ignore_default_libs | /NODEFAULTLIB         | ignores default lib (msc only)
 
 #### Compiler and linker flags
 
 To be able to target multiple toolsets fox core provides a selection of compiler flags. You can use them like ```cxxflags = $cxx_someflag```.
 
-More information about compiler flags is available on [msvc page](https://msdn.microsoft.com/en-us/library/19z1t1wy.aspx) and [clang page](http://clang.llvm.org/docs/CommandGuide/clang.html).
+More information about compiler flags is available on [msc page](https://msdn.microsoft.com/en-us/library/19z1t1wy.aspx) and [clang page](http://clang.llvm.org/docs/CommandGuide/clang.html).
 
 Flag                            | Possible Values                         | Description
 ------------------------------- | --------------------------------------- | ----------------
@@ -472,42 +472,42 @@ cxx_size_optimizations          | /O1 or -Os                              |
 cxx_speed_optimizations         | /O2 or -Ofast                           |
 cxx_exceptions                  | /EHsc or -fexceptions                   |
 cxx_no_exceptions               | /EHsc- or -fno-exceptions               |
-cxx_seh_exceptions              | /EHa                                    | msvc only
+cxx_seh_exceptions              | /EHa                                    | msc only
 cxx_whole_program_optimizations | /GL or -O4                              |
 cxx_rtti                        | /GR or -frtti                           |
 cxx_no_rtti                     | /GR- or -fno-rtti                       |
-cxx_clr                         | /clr                                    | msvc only
-cxx_clr_pure                    | /clr:pure                               | msvc only
-cxx_clr_safe                    | /clr:safe                               | msvc only
-cxx_multithread_compilation     | /MP                                     | msvc only
-cxx_mimimal_rebuild             | /Gm                                     | msvc only
-cxx_no_mimimal_rebuild          | /Gm-                                    | msvc only
+cxx_clr                         | /clr                                    | msc only
+cxx_clr_pure                    | /clr:pure                               | msc only
+cxx_clr_safe                    | /clr:safe                               | msc only
+cxx_multithread_compilation     | /MP                                     | msc only
+cxx_mimimal_rebuild             | /Gm                                     | msc only
+cxx_no_mimimal_rebuild          | /Gm-                                    | msc only
 cxx_floatpoint_fast             | /fp:fast or -funsafe-math-optimizations |
-cxx_floatpoint_strict           | /fp:strict                              | msvc only
-cxx_cdecl                       | /Gd                                     | msvc only
-cxx_fastcall                    | /Gr                                     | msvc only
-cxx_stdcall                     | /Gz                                     | msvc only
-cxx_vectorcall                  | /Gv                                     | msvc only
+cxx_floatpoint_strict           | /fp:strict                              | msc only
+cxx_cdecl                       | /Gd                                     | msc only
+cxx_fastcall                    | /Gr                                     | msc only
+cxx_stdcall                     | /Gz                                     | msc only
+cxx_vectorcall                  | /Gv                                     | msc only
 cxx_avx                         | /arch:AVX or -mavx                      |
 cxx_avx2                        | /arch:AVX2 or -mavx2                    |
 cxx_sse                         | /arch:SSE or -msse                      |
 cxx_sse2                        | /arch:SSE2 or -msse2                    |
-cxx_symbols                     | /Z7                                     | msvc only
-cxx_omit_default_lib            | /Zl                                     | msvc only
+cxx_symbols                     | /Z7                                     | msc only
+cxx_omit_default_lib            | /Zl                                     | msc only
 cxx_11                          | empty or -std=c++11                     |
 cxx_14                          | empty or -std=c++14                     |
-cxx_runtime_static_debug        | /MTd                                    | msvc only
-cxx_runtime_dynamic_debug       | /MDd                                    | msvc only
-cxx_runtime_static_release      | /MT                                     | msvc only
-cxx_runtime_dynamic_release     | /MD                                     | msvc only
+cxx_runtime_static_debug        | /MTd                                    | msc only
+cxx_runtime_dynamic_debug       | /MDd                                    | msc only
+cxx_runtime_static_release      | /MT                                     | msc only
+cxx_runtime_dynamic_release     | /MD                                     | msc only
 cxx_fatal_warnings              | /WX or -Werror                          |
 cxx_extra_warnings              | /W4 or -Wall -Wextra                    |
 cxx_no_warnings                 | /W0 or -w                               |
-ld_no_incremental_link          | /INCREMENTAL:NO                         | msvc only
-ld_no_manifest                  | /MANIFEST:NO                            | msvc only
-ld_ignore_default_libs          | /NODEFAULTLIB                           | msvc only
-ld_symbols                      | /DEBUG                                  | msvc only
-ld_shared_lib                   | /DLL                                    | msvc only
+ld_no_incremental_link          | /INCREMENTAL:NO                         | msc only
+ld_no_manifest                  | /MANIFEST:NO                            | msc only
+ld_ignore_default_libs          | /NODEFAULTLIB                           | msc only
+ld_symbols                      | /DEBUG                                  | msc only
+ld_shared_lib                   | /DLL                                    | msc only
 
 ## Environment discovery reference
 
@@ -518,10 +518,10 @@ You can override this variables values by specifying them as BuildFox arguments.
 Name            | Possible Values       | Description
 --------------- | --------------------- | --------------------------------------------
 variation       | debug                 | build variation, by default is always debug
-toolset_msvc    | true or not set       | true if msvc toolset is available
+toolset_msc     | true or not set       | true if msc toolset is available
 toolset_clang   | true or not set       | true if clang toolset is available
 toolset_gcc     | true or not set       | true if gcc toolset is available
-toolset         | msvc or clang or gcc  | preferred toolset to use, preferences : msvc > clang > gcc
+toolset         | msc or clang or gcc   | preferred toolset to use, preferences : msc > clang > gcc
 system          | [platform.system](https://docs.python.org/2/library/platform.html#platform.system) | current system os string
 machine         | [platform.machine](https://docs.python.org/2/library/platform.html#platform.machine) | current machine arch name string
 cwd             | path that ends with / | current working directory

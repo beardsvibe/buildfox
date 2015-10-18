@@ -10,7 +10,7 @@ def discover():
 	}
 
 	if which("cl") and which("link") and which("lib"):
-		vars["toolset_msvc"] = "true"
+		vars["toolset_msc"] = "true"
 
 	if which("clang"):
 		vars["toolset_clang"] = "true"
@@ -18,8 +18,8 @@ def discover():
 	if which("gcc") and which("g++"):
 		vars["toolset_gcc"] = "true"
 
-	if vars.get("toolset_msvc"):
-		vars["toolset"] = "msvc"
+	if vars.get("toolset_msc"):
+		vars["toolset"] = "msc"
 	elif vars.get("toolset_clang"):
 		vars["toolset"] = "clang"
 	elif vars.get("toolset_gcc"):
