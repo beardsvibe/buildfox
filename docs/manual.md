@@ -78,8 +78,8 @@ If you want to put object files and final executable in other folder, just add i
 
 	out = build_${variation} # this will form build_debug or build_release
 	
-	build $out/obj(*): auto *.cpp
-	build $out/app(test): auto $out/obj(*)
+	build obj($out/*): auto *.cpp
+	build app($out/test): auto obj($out/*)
 
 In case if you need to specify some compiler flags or defines :
 
@@ -88,8 +88,8 @@ In case if you need to specify some compiler flags or defines :
 	defines = TEST_DEFINE
 	includedirs = some_folder
 	
-	build $out/obj(*): auto *.cpp
-	build $out/app(test): auto $out/obj(*)
+	build obj($out/*): auto *.cpp
+	build app($out/test): auto obj($out/*)
 
 #### Static libs
 
@@ -100,21 +100,21 @@ To build static library we just change target name transform to lib.
 
 And then to use this library in application we just add it to inputs
 
-	build lib/obj(*): auto lib/*.cpp
-	build lib/lib(test): auto lib/obj(*)
+	build obj(lib/*): auto lib/*.cpp
+	build lib(lib/test): auto obj(lib/*)
 	
 	build obj(*): auto *.cpp
-	build app(test): auto obj(*) lib/lib(*)
+	build app(test): auto obj(*) lib(lib/*)
 
 #### Shared libs
 
 Compiling shared libs is a bit trickier because of differences between platforms. You need to pass shlib and lib to final library link step. Also to build an app you need to pass library as shlibdep.
 
-	build lib/obj(*): auto lib/*.cpp
-	build lib/shlib(test1) | lib/lib(test1): auto lib/obj(*)
+	build obj(lib/*): auto lib/*.cpp
+	build shlib(lib/test1) | lib(lib/test1): auto obj(lib/*)
 	
 	build obj(*): auto *.cpp
-	build app(app): auto obj(*) lib/shlibdep(*)
+	build app(app): auto obj(*) shlibdep(lib/*)
 
 If you develop shared libraries for Windows then you also need to mark symbols for export with approach of your choice, one way could be to use [__declspec(dllexport)]( https://msdn.microsoft.com/en-us/library/a90k134d.aspx).
 
