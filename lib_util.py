@@ -70,7 +70,7 @@ def wildcard_regex(filename, replace_groups = False, rec_capture_groups = set())
 				else:
 					stuff = filename[i + 1: j].replace("\\", "\\\\")
 					i = j + 1
-					res += "(?!%s).*" % stuff
+					res += "(?!%s)(.*)" % stuff
 			elif c == "[":
 				j = i
 				if j < n and filename[j] == "!":
