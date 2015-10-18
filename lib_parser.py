@@ -9,7 +9,7 @@ keywords = ["rule", "build", "default", "pool", "include", "subninja",
 re_newline_escaped = re.compile("\$+$")
 re_comment = re.compile("(?<!\$)(?:\$\$)*\#(.*)$") # looking for not escaped #
 re_identifier = re.compile("[a-zA-Z0-9\${}_.-]+")
-re_path = re.compile(r"(r\"(?:\\\"|.)*?\")|((\$\||\$ |\$:|[^ :|\n])+)")
+re_path = re.compile(r"(r?\"(?:\\\"|.)*?\")|((\$\||\$ |\$:|[^ :|\n])+)")
 
 class Parser:
 	def __init__(self, engine, filename, text = None):

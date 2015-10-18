@@ -21,41 +21,56 @@ def rel_dir(filename):
 def wildcard_regex(filename, replace_groups = False, rec_capture_groups = set()):
 	if filename.startswith("r\""):
 		return filename[2:-1] # strip r" and "
-	elif "*" in filename or "?" in filename or "[" in filename:
+
+	if filename.startswith("\""):
+		filename = filename[1:-1] # strip " and "
+
+	if "!" in filename or "*" in filename or "?" in filename or "[" in filename:
 		# based on fnmatch.translate with each wildcard is a capture group
 		i, n = 0, len(filename)
 		groups = 1
 		res = ""
 		while i < n:
 			c = filename[i]
-			cn = filename[i + 1] if i + 1 < n else ""
 			i = i + 1
-			if c == "*" and cn == "*":
-				if replace_groups:
-					res = res + "\\" + str(groups)
+			if c == "*":
+				if i < n and filename[i] == "*":
+					if replace_groups:
+						res += "\\" + str(groups)
+					else:
+						res += "(.*)(.*)"
+						rec_capture_groups.add(groups)
+					i = i + 1
 				else:
-					res = res + "(.*)(.*)"
-					rec_capture_groups.add(groups)
-				groups += 1
-				i = i + 1
-			elif c == "*":
-				if replace_groups:
-					# if inputs have recursive capture groups and output don't use them
-					# then just switch to next non recursive capture group
-					while groups in rec_capture_groups:
-						groups += 1
-					res = res + "\\" + str(groups)
-				else:
-					res = res + "(.*)"
+					if replace_groups:
+						# if inputs have recursive capture groups and output don't use them
+						# then just switch to next non recursive capture group
+						while groups in rec_capture_groups:
+							groups += 1
+						res += "\\" + str(groups)
+					else:
+						res += "(.*)"
 				groups += 1
 			elif c == "?":
 				if replace_groups:
-					res = res + "\\" + str(groups)
+					res += "\\" + str(groups)
 				else:
-					res = res + "(.)"
+					res += "(.)"
 				groups += 1
 			elif replace_groups:
-				res = res + c
+				res += c
+			elif c == "!":
+				j = i
+				if j < n and filename[j] == "(":
+					j = j + 1
+				while j < n and filename[j] != ")":
+					j = j + 1
+				if j >= n:
+					res += "\!"
+				else:
+					stuff = filename[i + 1: j].replace("\\", "\\\\")
+					i = j + 1
+					res += "(?!%s).*" % stuff
 			elif c == "[":
 				j = i
 				if j < n and filename[j] == "!":
@@ -65,7 +80,7 @@ def wildcard_regex(filename, replace_groups = False, rec_capture_groups = set())
 				while j < n and filename[j] != "]":
 					j = j + 1
 				if j >= n:
-					res = res + "\\["
+					res += "\\["
 				else:
 					stuff = filename[i:j].replace("\\", "\\\\")
 					i = j + 1
@@ -75,7 +90,7 @@ def wildcard_regex(filename, replace_groups = False, rec_capture_groups = set())
 						stuff = "\\" + stuff
 					res = "%s([%s])" % (res, stuff)
 			else:
-				res = res + re.escape(c)
+				res += re.escape(c)
 		if replace_groups:
 			return res
 		else:
