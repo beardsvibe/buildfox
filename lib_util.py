@@ -81,13 +81,17 @@ def glob_folders(pattern, base_path, generated):
 	real_folders = [base_path.rstrip("/")]
 	gen_folders = [base_path.rstrip("/")]
 
+	# temporary solution
+	exclude_dirs = set([".git", ".hg"])
+
 	for folder in pattern.split("/"):
 		if folder == "(.*)(.*)":
 			new_real_folders = []
 			for real_folder in real_folders:
 				new_real_folders.append(real_folder)
-				for root, dirnames, filenames in os.walk(real_folder): # TODO this is slow, optimize
-					for dir in dirnames:
+				for root, dirs, filenames in os.walk(real_folder, topdown = True): # TODO this is slow, optimize
+					dirs[:] = [dir for dir in dirs if dir not in exclude_dirs]
+					for dir in dirs:
 						result = os.path.join(root, dir).replace("\\", "/")
 						new_real_folders.append(result)
 			real_folders = new_real_folders
@@ -146,8 +150,8 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 
 				# look for files
 				lookup_path = rel_path if rel_path else "./"
-				print("base_folder %s" % base_folder)
-				print("lookup_path %s" % lookup_path)
+				#print("base_folder %s" % base_folder)
+				#print("lookup_path %s" % lookup_path)
 				
 				real_folders, gen_folders = glob_folders(base_folder, lookup_path, generated)
 
@@ -158,10 +162,10 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 						files = [root + file for file in os.listdir(real_folder) if os.path.isfile(real_folder + "/" + file)]
 						fs_files = fs_files.union(files)
 
-				pprint(generated)
+				#pprint(generated)
 				gen_files = set()
 				for gen_folder in gen_folders:
-					print("gen %s" % gen_folder)
+					#print("gen %s" % gen_folder)
 					if gen_folder in generated:
 						root = gen_folder[len(lookup_path):]
 						files = [root + file for file in generated.get(gen_folder)]
@@ -172,7 +176,7 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 				all_files = list(fs_files.union(gen_files))
 				all_files = sorted(all_files)
 
-				pprint(all_files)
+				#pprint(all_files)
 
 				# while capturing ** we want just to capture */ optionally
 				# so we can match files in root folder as well
