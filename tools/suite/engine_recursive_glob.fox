@@ -4,5 +4,14 @@ rule cxx
 	expand = true
 rule link
 
-build out/**/*.obj: cxx src/rec/**/*.cpp
+build out1/**/*.obj: cxx src/rec/**/*.cpp
 
+build out2/**/**/*.obj: cxx src/rec/**/zz/**/*.cpp
+build ./out3/**/**/*.obj: cxx ./src/rec/**/zz/**/*.cpp
+
+build out2/test1.exe: link out2/**/*.obj
+build out2/test2.exe: link ./out2/**/*.obj
+build out3/test1.exe: link out3/**/*.obj
+build out3/test2.exe: link ./out3/**/*.obj
+
+build out4/**_**_*.obj: cxx src/rec/**/zz/**/*.cpp
