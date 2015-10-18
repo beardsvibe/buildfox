@@ -28,8 +28,16 @@ def wildcard_regex(filename, replace_groups = False):
 		res = ""
 		while i < n:
 			c = filename[i]
+			cn = filename[i + 1] if i + 1 < n else ""
 			i = i + 1
-			if c == "*":
+			if c == "*" and cn == "*":
+				if replace_groups:
+					res = res + "\\" + str(groups)
+					groups += 1
+				else:
+					res = res + "(.*)(.*)"
+				i = i + 1
+			elif c == "*":
 				if replace_groups:
 					res = res + "\\" + str(groups)
 					groups += 1
@@ -201,6 +209,9 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 		for output in outputs:
 			# we want \number instead of capture groups
 			regex = wildcard_regex(output, True)
+
+			print("final output regex : %s" % regex)
+
 			if regex:
 				for match in matched:
 					# replace \number with data
@@ -212,6 +223,11 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 							return ""
 					file = re_capture_group_ref.sub(replace_group, regex)
 					file = re_non_escaped_char.sub(replace_non_esc, file)
+					# in case of **/* mask in output, input capture group
+					# for ** can be empty, so we get // in output, so just fix it here
+					file = file.replace("//", "/")
+					
+					print("out %s" % file)
 
 					result.append(rel_path + file)
 			else:
