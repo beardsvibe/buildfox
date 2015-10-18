@@ -25,7 +25,7 @@ re_base_escaped = re.compile(r"\$([\| :()])")
 class Engine:
 	class Context:
 		def __init__(self):
-			# key is folder name, value is set of file names
+			# key is folder name that ends /, value is set of file names
 			self.generated = collections.defaultdict(set)
 			# number of generated subninja files
 			self.subninja_num = 0
@@ -120,8 +120,7 @@ class Engine:
 	def add_generated_files(self, files):
 		for file in files:
 			dir = os.path.dirname(file)
-			if dir == "":
-				dir = "."
+			dir = dir + "/" if dir else "./"
 			name = os.path.basename(file)
 			if name in self.context.generated[dir]:
 				raise ValueError("two or more commands generate '%s' in '%s' (%s:%i)" % (
