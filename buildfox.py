@@ -24,8 +24,8 @@ fox_core = r"""
 # then requirement will raise up to ninja v1.6 because we depend on scoped rules
 ninja_required_version = 1.3
 
-filter toolset:msvc
-	# msvc support
+filter toolset:msc
+	# msc support
 	cc = cl
 	cxx = cl
 	lib = lib
@@ -33,13 +33,13 @@ filter toolset:msvc
 	rule cc
 		command = $cc $cxxflags $defines $includedirs $disable_warnings /nologo /showIncludes -c $in /Fo$out
 		description = cc $in
-		deps = msvc
+		deps = msvc # ninja call msc as msvc
 		expand = true
 
 	rule cxx
 		command = $cxx $cxxflags $defines $includedirs $disable_warnings /nologo /showIncludes -c $in /Fo$out
 		description = cxx $in
-		deps = msvc
+		deps = msvc # ninja call msc as msvc
 		expand = true
 
 	rule link
@@ -73,7 +73,7 @@ filter toolset:msvc
 	transformer shlib: ${param}.dll
 	transformer shlibdep: ${param}.lib
 
-	# MSVC flags
+	# MSC flags
 	# more info here https://msdn.microsoft.com/en-us/library/19z1t1wy.aspx
 
 	# optimizations

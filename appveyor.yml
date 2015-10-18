@@ -22,7 +22,7 @@ build: off
 test_script:
   - call "%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
   - cd tools
-  - coverage run --source=.. --omit=tests.py tests.py --compiler msvc
+  - coverage run --source=.. --omit=tests.py tests.py --compiler msc
   - python deploy.py
   - python bf --selftest
   - cd ..

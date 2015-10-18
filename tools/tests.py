@@ -198,7 +198,7 @@ def build_examples(args):
 				return not subprocess.call([ninja])
 			return result
 
-		results.extend([test_with_toolset(name, name == compiler) for name in ["clang", "gcc", "msvc"]])
+		results.extend([test_with_toolset(name, name == compiler) for name in ["clang", "gcc", "msc"]])
 		if args.get("failfast") and not all(results):
 			break
 
