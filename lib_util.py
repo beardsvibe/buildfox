@@ -157,7 +157,7 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 					base_folder = base_folder.group(1) + base_folder.group(2)
 					base_folder = re_non_escaped_char.sub(replace_non_esc, base_folder)
 					if "\\" in base_folder:
-						raise ValueError("please only use forward slashes in path") # TODO more detailed log
+						raise ValueError("please only use forward slashes in path \"%s\"" % input)
 					real_folders, gen_folders = glob_folders(base_folder, lookup_path, generated)
 
 				# look for files
@@ -211,11 +211,6 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 			# we want \number instead of capture groups
 			regex = wildcard_regex(output, True, rec_capture_groups)
 
-			#print("final output regex : %s" % regex)
-			
-			# TODO if we have ** in input, and we don't have it in output
-			# then we need to skip this capture group in output regex !
-
 			if regex:
 				for match in matched:
 					# replace \number with data
@@ -230,8 +225,6 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 					# in case of **/* mask in output, input capture group
 					# for ** can be empty, so we get // in output, so just fix it here
 					file = file.replace("//", "/")
-
-					#print("out %s" % file)
 
 					result.append(rel_path + file)
 			else:
