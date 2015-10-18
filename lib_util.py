@@ -140,7 +140,7 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 		matched = []
 		for input in inputs:
 			regex = wildcard_regex(input)
-			print("----------------------")
+			#print("----------------------")
 			#print("input %s" % input)
 			#print("regex %s" % regex)
 			if regex:
@@ -190,14 +190,14 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 				# so we can match files in root folder as well
 				regex = regex.replace("(.*)(.*)\/", "(?:(.*)\/)?")
 
-				print("final regex : %s" % regex)
+				#print("final regex : %s" % regex)
 
 				re_regex = re.compile(regex)
 				for file in all_files:
 					#print("file %s" % file)
 					match = re_regex.match(file)
 					if match:
-						print("wow " + str(match))
+						#print("wow " + str(match))
 						result.append(rel_path + file)
 						matched.append(match.groups())
 			else:
@@ -210,7 +210,7 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 			# we want \number instead of capture groups
 			regex = wildcard_regex(output, True)
 
-			print("final output regex : %s" % regex)
+			#print("final output regex : %s" % regex)
 
 			if regex:
 				for match in matched:
@@ -226,8 +226,8 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 					# in case of **/* mask in output, input capture group
 					# for ** can be empty, so we get // in output, so just fix it here
 					file = file.replace("//", "/")
-					
-					print("out %s" % file)
+
+					#print("out %s" % file)
 
 					result.append(rel_path + file)
 			else:
