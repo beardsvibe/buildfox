@@ -4,10 +4,10 @@ from pprint import pprint
 import os
 import uuid
 
-msvs_ext_of_interest_src = (".c", ".cpp", ".cxx", ".c++", ".cc", ".h", ".hpp", ".hxx")
-msvs_ext_of_interest_bin = (".exe")
+vs_ext_of_interest_src = (".c", ".cpp", ".cxx", ".c++", ".cc", ".h", ".hpp", ".hxx")
+vs_ext_of_interest_bin = (".exe")
 
-msvs_reference_sln = r"""Microsoft Visual Studio Solution File, Format Version 13.00
+vs_reference_sln = r"""Microsoft Visual Studio Solution File, Format Version 13.00
 # Visual Studio 2013
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "%%%name%%%", "%%%file%%%", "%%%guid%%%"
 EndProject
@@ -17,7 +17,7 @@ Global
 	EndGlobalSection
 EndGlobal"""
 
-msvs_reference_prj = r"""<?xml version="1.0" encoding="utf-8"?>
+vs_reference_prj = r"""<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<ItemGroup Label="ProjectConfigurations">
 		<ProjectConfiguration Include="Debug|Win32">
@@ -81,7 +81,7 @@ msvs_reference_prj = r"""<?xml version="1.0" encoding="utf-8"?>
 	</ImportGroup>
 </Project>"""
 
-msvs_reference_flt = r"""<?xml version="1.0" encoding="utf-8"?>
+vs_reference_flt = r"""<?xml version="1.0" encoding="utf-8"?>
 	<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<ItemGroup>
 %%%filters%%%
@@ -91,13 +91,13 @@ msvs_reference_flt = r"""<?xml version="1.0" encoding="utf-8"?>
 	</ItemGroup>
 </Project>"""
 
-def gen_msvs(all_files, defines, includedirs, prj_name):
+def gen_vs(all_files, defines, includedirs, prj_name):
 	interest_src_files = {}
 	interest_bin_files = {}
 	for folder, files in all_files.items():
 		folder = os.path.relpath(folder).replace("/", "\\") + "\\"
-		interest_src = set(filter(lambda n: n.lower().endswith(msvs_ext_of_interest_src), files))
-		interest_bin = set(filter(lambda n: n.lower().endswith(msvs_ext_of_interest_bin), files))
+		interest_src = set(filter(lambda n: n.lower().endswith(vs_ext_of_interest_src), files))
+		interest_bin = set(filter(lambda n: n.lower().endswith(vs_ext_of_interest_bin), files))
 		if interest_src:
 			interest_src_files[folder] = interest_src
 		if interest_bin:
@@ -136,7 +136,7 @@ def gen_msvs(all_files, defines, includedirs, prj_name):
 
 	prj_file = "%s.vcxproj" % prj_name
 	prj_guid = "{%s}" % str(uuid.uuid4()).upper()
-	prj_text = msvs_reference_prj
+	prj_text = vs_reference_prj
 	prj_text = prj_text.replace("%%%name%%%", prj_name)
 	prj_text = prj_text.replace("%%%guid%%%", prj_guid)
 	prj_text = prj_text.replace("%%%output%%%", output)
@@ -145,13 +145,13 @@ def gen_msvs(all_files, defines, includedirs, prj_name):
 	prj_text = prj_text.replace("%%%item_groups%%%", items)
 
 	sln_file = "%s.sln" % prj_name
-	sln_text = msvs_reference_sln
+	sln_text = vs_reference_sln
 	sln_text = sln_text.replace("%%%name%%%", prj_name)
 	sln_text = sln_text.replace("%%%file%%%", prj_file)
 	sln_text = sln_text.replace("%%%guid%%%", prj_guid)
 
 	flt_file = "%s.vcxproj.filters" % prj_name
-	flt_text = msvs_reference_flt
+	flt_text = vs_reference_flt
 	flt_text = flt_text.replace("%%%filters%%%", flt_filters)
 	flt_text = flt_text.replace("%%%items%%%", flt_items)
 

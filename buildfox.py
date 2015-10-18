@@ -12,7 +12,7 @@ import subprocess
 from lib_engine import Engine
 from lib_environment import discover
 from lib_selftest import selftest_setup, selftest_wipe
-from lib_ide_msvs import gen_msvs
+from lib_ide_vs import gen_vs
 
 # core definitions -----------------------------------------------------------
 
@@ -272,9 +272,8 @@ argsparser.add_argument("-o", "--out", help = "output file", default = "build.ni
 argsparser.add_argument("-w", "--workdir", help = "working directory")
 argsparser.add_argument("variables", metavar = "name=value", type = str, nargs = "*", help = "variables with values to setup", default = [])
 #argsparser.add_argument("-v", "--verbose", action = "store_true", help = "verbose output") # TODO
-argsparser.add_argument("--msvs", action = "store_true",
-	help = "generate msvs solution", default = False, dest = "msvs")
-argsparser.add_argument("--msvs-prj", help = "msvs project prefix", default = "build")
+argsparser.add_argument("--ide", help = "generate ide solution (vs, vs2013)", default = None, dest = "ide")
+argsparser.add_argument("--ide-prj", help = "ide project prefix", default = "build")
 argsparser.add_argument("--no-core", action = "store_false",
 	help = "disable parsing fox core definitions", default = True, dest = "core")
 argsparser.add_argument("--no-env", action = "store_false",
@@ -321,8 +320,8 @@ else:
 	engine.load(args.get("in"))
 	engine.save(args.get("out"))
 
-	if args.get("msvs"):
-		gen_msvs(engine.context.all_files,
+	if args.get("ide") in ["vs", "vs2013"]:
+		gen_vs(engine.context.all_files,
 			engine.variables.get("defines", ""),
 			engine.variables.get("includedirs", ""),
-			args.get("msvs_prj"))
+			args.get("ide_prj"))
