@@ -92,6 +92,8 @@ def glob_folders(pattern, base_path, generated):
 	# temporary solution
 	exclude_dirs = set([".git", ".hg"])
 
+	pattern = pattern[2:] if pattern.startswith("./") else pattern
+
 	for folder in pattern.split("/"):
 		if folder == "(.*)(.*)":
 			new_real_folders = []
@@ -146,6 +148,9 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 			if regex:
 				# find the folder where to look for files
 				base_folder = re_folder_part.match(regex)
+				lookup_path = rel_path if rel_path else "./"
+				real_folders = [lookup_path]
+				gen_folders = [lookup_path]
 				if base_folder:
 					#print("matched %s" % str(base_folder))
 					base_folder = base_folder.group(1) + base_folder.group(2)
@@ -153,15 +158,12 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 
 					if "\\" in base_folder:
 						raise ValueError("please only use forward slashes in path") # TODO more detailed log
-				else:
-					base_folder = ""
+
+					real_folders, gen_folders = glob_folders(base_folder, lookup_path, generated)
 
 				# look for files
-				lookup_path = rel_path if rel_path else "./"
 				#print("base_folder %s" % base_folder)
 				#print("lookup_path %s" % lookup_path)
-				
-				real_folders, gen_folders = glob_folders(base_folder, lookup_path, generated)
 
 				fs_files = set()
 				for real_folder in real_folders:
@@ -170,13 +172,24 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 						files = [root + file for file in os.listdir(real_folder) if os.path.isfile(real_folder + "/" + file)]
 						fs_files = fs_files.union(files)
 
+				#print("generated : ")
 				#pprint(generated)
+				#print("gen_folders : ")
+				#pprint(gen_folders)
+
 				gen_files = set()
 				for gen_folder in gen_folders:
 					#print("gen %s" % gen_folder)
-					if gen_folder in generated:
+					
+					# in case if gen_folder is "./something" then we need to strip ./
+					# but if gen_folder is just "./" then we don't need to strip it !
+					if len(gen_folder) > 2 and gen_folder.startswith("./"):
+						check_folder = gen_folder[2:]
+					else:
+						check_folder = gen_folder
+					if check_folder in generated:
 						root = gen_folder[len(lookup_path):]
-						files = [root + file for file in generated.get(gen_folder)]
+						files = [root + file for file in generated.get(check_folder)]
 						gen_files = gen_files.union(files)
 
 				# we must have stable sort here
@@ -189,6 +202,11 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 				# while capturing ** we want just to capture */ optionally
 				# so we can match files in root folder as well
 				regex = regex.replace("(.*)(.*)\/", "(?:(.*)\/)?")
+
+				# if you want to match something in local folder
+				# then you may write wildcard/regex that starts as ./
+				if regex.startswith("\.\/"):
+					regex = regex[4:]
 
 				#print("final regex : %s" % regex)
 
