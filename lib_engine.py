@@ -124,8 +124,7 @@ class Engine:
 			return
 		for file in files:
 			dir = os.path.dirname(file)
-			if dir == "":
-				dir = "."
+			dir = dir + "/" if dir else "./"
 			self.context.all_files[dir].add(os.path.basename(file))
 
 	def add_generated_files(self, files):
