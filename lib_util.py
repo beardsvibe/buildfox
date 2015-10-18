@@ -78,7 +78,6 @@ def wildcard_regex(filename, replace_groups = False):
 	else:
 		return None
 
-from pprint import pprint
 # return list of folders (always ends with /) that match provided pattern
 # please note that some result folders may point into non existing location
 # because it's too costly here to check if they exist
@@ -142,9 +141,6 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 		matched = []
 		for input in inputs:
 			regex = wildcard_regex(input)
-			#print("----------------------")
-			#print("input %s" % input)
-			#print("regex %s" % regex)
 			if regex:
 				# find the folder where to look for files
 				base_folder = re_folder_part.match(regex)
@@ -152,19 +148,13 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 				real_folders = [lookup_path]
 				gen_folders = [lookup_path]
 				if base_folder:
-					#print("matched %s" % str(base_folder))
 					base_folder = base_folder.group(1) + base_folder.group(2)
 					base_folder = re_non_escaped_char.sub(replace_non_esc, base_folder)
-
 					if "\\" in base_folder:
 						raise ValueError("please only use forward slashes in path") # TODO more detailed log
-
 					real_folders, gen_folders = glob_folders(base_folder, lookup_path, generated)
 
 				# look for files
-				#print("base_folder %s" % base_folder)
-				#print("lookup_path %s" % lookup_path)
-
 				fs_files = set()
 				for real_folder in real_folders:
 					if os.path.isdir(real_folder):
@@ -172,15 +162,8 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 						files = [root + file for file in os.listdir(real_folder) if os.path.isfile(real_folder + "/" + file)]
 						fs_files = fs_files.union(files)
 
-				#print("generated : ")
-				#pprint(generated)
-				#print("gen_folders : ")
-				#pprint(gen_folders)
-
 				gen_files = set()
 				for gen_folder in gen_folders:
-					#print("gen %s" % gen_folder)
-					
 					# in case if gen_folder is "./something" then we need to strip ./
 					# but if gen_folder is just "./" then we don't need to strip it !
 					if len(gen_folder) > 2 and gen_folder.startswith("./"):
@@ -197,8 +180,6 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 				all_files = list(fs_files.union(gen_files))
 				all_files = sorted(all_files)
 
-				#pprint(all_files)
-
 				# while capturing ** we want just to capture */ optionally
 				# so we can match files in root folder as well
 				regex = regex.replace("(.*)(.*)\/", "(?:(.*)\/)?")
@@ -208,14 +189,10 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 				if regex.startswith("\.\/"):
 					regex = regex[4:]
 
-				#print("final regex : %s" % regex)
-
 				re_regex = re.compile(regex)
 				for file in all_files:
-					#print("file %s" % file)
 					match = re_regex.match(file)
 					if match:
-						#print("wow " + str(match))
 						result.append(rel_path + file)
 						matched.append(match.groups())
 			else:
