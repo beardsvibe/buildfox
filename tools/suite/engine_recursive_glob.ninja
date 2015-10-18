@@ -1,0 +1,27 @@
+rel_path = suite/
+
+# buildfox resursive magic
+rule cxx
+rule link
+
+build suite/out/a/1.obj: cxx suite/src/rec/a/1.cpp
+build suite/out/a/2.obj: cxx suite/src/rec/a/2.cpp
+build suite/out/a/3.obj: cxx suite/src/rec/a/3.cpp
+build suite/out/a/b/1.obj: cxx suite/src/rec/a/b/1.cpp
+build suite/out/a/b/2.obj: cxx suite/src/rec/a/b/2.cpp
+build suite/out/a/b/3.obj: cxx suite/src/rec/a/b/3.cpp
+build suite/out/a/zz/a/1.obj: cxx suite/src/rec/a/zz/a/1.cpp
+build suite/out/a/zz/a/2.obj: cxx suite/src/rec/a/zz/a/2.cpp
+build suite/out/a/zz/a/3.obj: cxx suite/src/rec/a/zz/a/3.cpp
+build suite/out/a/zz/b/1.obj: cxx suite/src/rec/a/zz/b/1.cpp
+build suite/out/a/zz/b/2.obj: cxx suite/src/rec/a/zz/b/2.cpp
+build suite/out/a/zz/b/3.obj: cxx suite/src/rec/a/zz/b/3.cpp
+build suite/out/a/zz/c/1.obj: cxx suite/src/rec/a/zz/c/1.cpp
+build suite/out/a/zz/c/2.obj: cxx suite/src/rec/a/zz/c/2.cpp
+build suite/out/a/zz/c/3.obj: cxx suite/src/rec/a/zz/c/3.cpp
+build suite/out/b/1.obj: cxx suite/src/rec/b/1.cpp
+build suite/out/b/2.obj: cxx suite/src/rec/b/2.cpp
+build suite/out/b/3.obj: cxx suite/src/rec/b/3.cpp
+build suite/out/c/1.obj: cxx suite/src/rec/c/1.cpp
+build suite/out/c/2.obj: cxx suite/src/rec/c/2.cpp
+build suite/out/c/3.obj: cxx suite/src/rec/c/3.cpp

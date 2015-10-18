@@ -1,0 +1,8 @@
+# buildfox resursive magic
+
+rule cxx
+	expand = true
+rule link
+
+build out/**/*.obj: cxx src/rec/**/*.cpp
+
