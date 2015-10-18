@@ -229,6 +229,9 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 			regex = wildcard_regex(output, True)
 
 			#print("final output regex : %s" % regex)
+			
+			# TODO if we have ** in input, and we don't have it in output
+			# then we need to skip this capture group in output regex !
 
 			if regex:
 				for match in matched:
