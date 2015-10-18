@@ -18,7 +18,7 @@ def rel_dir(filename):
 
 # return regex value in filename for regex or wildcard
 # replace_groups replace wildcards with group reference indexes
-def wildcard_regex(filename, replace_groups = False):
+def wildcard_regex(filename, replace_groups = False, rec_capture_groups = set()):
 	if filename.startswith("r\""):
 		return filename[2:-1] # strip r" and "
 	elif "*" in filename or "?" in filename or "[" in filename:
@@ -33,22 +33,27 @@ def wildcard_regex(filename, replace_groups = False):
 			if c == "*" and cn == "*":
 				if replace_groups:
 					res = res + "\\" + str(groups)
-					groups += 1
 				else:
 					res = res + "(.*)(.*)"
+					rec_capture_groups.add(groups)
+				groups += 1
 				i = i + 1
 			elif c == "*":
 				if replace_groups:
+					# if inputs have recursive capture groups and output don't use them
+					# then just switch to next non recursive capture group
+					while groups in rec_capture_groups:
+						groups += 1
 					res = res + "\\" + str(groups)
-					groups += 1
 				else:
 					res = res + "(.*)"
+				groups += 1
 			elif c == "?":
 				if replace_groups:
 					res = res + "\\" + str(groups)
-					groups += 1
 				else:
 					res = res + "(.)"
+				groups += 1
 			elif replace_groups:
 				res = res + c
 			elif c == "[":
@@ -136,11 +141,12 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 	# rename regex back to readable form
 	def replace_non_esc(match_group):
 		return match_group.group(1)
+	rec_capture_groups = set()
 	if inputs:
 		result = []
 		matched = []
 		for input in inputs:
-			regex = wildcard_regex(input)
+			regex = wildcard_regex(input, False, rec_capture_groups)
 			if regex:
 				# find the folder where to look for files
 				base_folder = re_folder_part.match(regex)
@@ -203,7 +209,7 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 		result = []
 		for output in outputs:
 			# we want \number instead of capture groups
-			regex = wildcard_regex(output, True)
+			regex = wildcard_regex(output, True, rec_capture_groups)
 
 			#print("final output regex : %s" % regex)
 			
