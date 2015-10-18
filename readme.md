@@ -17,7 +17,7 @@ Building project
 
 Generating MSVS solution
 
-	bf --msvs
+	bf --ide vs
 
 ### Resources
 
