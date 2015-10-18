@@ -66,12 +66,12 @@ def wildcard_regex(filename, replace_groups = False):
 		if replace_groups:
 			return res
 		else:
-			return res + "\Z(?ms)"
+			return "%s\Z(?ms)" % res
 	else:
 		return None
 
 from pprint import pprint
-# return list of folders that match provided pattern
+# return list of folders (always ends with /) that match provided pattern
 # please note that some result folders may point into non existing location
 # because it's too costly here to check if they exist
 def glob_folders(pattern, base_path, generated):
@@ -175,20 +175,17 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 				pprint(all_files)
 
 				# while capturing ** we want just to capture *
-				#if is_recursive_glob:
-				regex = regex.replace("(.*)(.*)", "(.*)") # TODO check if this is correct
-				
-				# TODO if we have recursive regex, then current folder should be also included
+				regex = regex.replace("(.*)(.*)\/", "(?:(.*)\/)?")
 
 				print("final regex : %s" % regex)
 
 				re_regex = re.compile(regex)
 				for file in all_files:
-					name =  file
-					match = re_regex.match(name)
+					#print("file %s" % file)
+					match = re_regex.match(file)
 					if match:
 						print("wow " + str(match))
-						result.append(rel_path + name)
+						result.append(rel_path + file)
 						matched.append(match.groups())
 			else:
 				result.append(rel_path + input)
