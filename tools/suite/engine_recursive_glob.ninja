@@ -1,0 +1,67 @@
+rel_path = suite/
+
+# buildfox resursive magic
+rule cxx
+rule link
+
+build suite/out1/a/1.obj: cxx suite/src/rec/a/1.cpp
+build suite/out1/a/2.obj: cxx suite/src/rec/a/2.cpp
+build suite/out1/a/3.obj: cxx suite/src/rec/a/3.cpp
+build suite/out1/a/b/1.obj: cxx suite/src/rec/a/b/1.cpp
+build suite/out1/a/b/2.obj: cxx suite/src/rec/a/b/2.cpp
+build suite/out1/a/b/3.obj: cxx suite/src/rec/a/b/3.cpp
+build suite/out1/a/zz/a/1.obj: cxx suite/src/rec/a/zz/a/1.cpp
+build suite/out1/a/zz/a/2.obj: cxx suite/src/rec/a/zz/a/2.cpp
+build suite/out1/a/zz/a/3.obj: cxx suite/src/rec/a/zz/a/3.cpp
+build suite/out1/a/zz/b/1.obj: cxx suite/src/rec/a/zz/b/1.cpp
+build suite/out1/a/zz/b/2.obj: cxx suite/src/rec/a/zz/b/2.cpp
+build suite/out1/a/zz/b/3.obj: cxx suite/src/rec/a/zz/b/3.cpp
+build suite/out1/a/zz/c/1.obj: cxx suite/src/rec/a/zz/c/1.cpp
+build suite/out1/a/zz/c/2.obj: cxx suite/src/rec/a/zz/c/2.cpp
+build suite/out1/a/zz/c/3.obj: cxx suite/src/rec/a/zz/c/3.cpp
+build suite/out1/b/1.obj: cxx suite/src/rec/b/1.cpp
+build suite/out1/b/2.obj: cxx suite/src/rec/b/2.cpp
+build suite/out1/b/3.obj: cxx suite/src/rec/b/3.cpp
+build suite/out1/c/1.obj: cxx suite/src/rec/c/1.cpp
+build suite/out1/c/2.obj: cxx suite/src/rec/c/2.cpp
+build suite/out1/c/3.obj: cxx suite/src/rec/c/3.cpp
+
+build suite/out2/a/a/1.obj: cxx suite/src/rec/a/zz/a/1.cpp
+build suite/out2/a/a/2.obj: cxx suite/src/rec/a/zz/a/2.cpp
+build suite/out2/a/a/3.obj: cxx suite/src/rec/a/zz/a/3.cpp
+build suite/out2/a/b/1.obj: cxx suite/src/rec/a/zz/b/1.cpp
+build suite/out2/a/b/2.obj: cxx suite/src/rec/a/zz/b/2.cpp
+build suite/out2/a/b/3.obj: cxx suite/src/rec/a/zz/b/3.cpp
+build suite/out2/a/c/1.obj: cxx suite/src/rec/a/zz/c/1.cpp
+build suite/out2/a/c/2.obj: cxx suite/src/rec/a/zz/c/2.cpp
+build suite/out2/a/c/3.obj: cxx suite/src/rec/a/zz/c/3.cpp
+build suite/out3/a/a/1.obj: cxx suite/src/rec/a/zz/a/1.cpp
+build suite/out3/a/a/2.obj: cxx suite/src/rec/a/zz/a/2.cpp
+build suite/out3/a/a/3.obj: cxx suite/src/rec/a/zz/a/3.cpp
+build suite/out3/a/b/1.obj: cxx suite/src/rec/a/zz/b/1.cpp
+build suite/out3/a/b/2.obj: cxx suite/src/rec/a/zz/b/2.cpp
+build suite/out3/a/b/3.obj: cxx suite/src/rec/a/zz/b/3.cpp
+build suite/out3/a/c/1.obj: cxx suite/src/rec/a/zz/c/1.cpp
+build suite/out3/a/c/2.obj: cxx suite/src/rec/a/zz/c/2.cpp
+build suite/out3/a/c/3.obj: cxx suite/src/rec/a/zz/c/3.cpp
+
+build suite/out2/test1.exe: link suite/out2/a/a/1.obj suite/out2/a/a/2.obj suite/out2/a/a/3.obj suite/out2/a/b/1.obj suite/out2/a/b/2.obj suite/out2/a/b/3.obj suite/out2/a/c/1.obj suite/out2/a/c/2.obj suite/out2/a/c/3.obj
+build suite/out2/test2.exe: link suite/out2/a/a/1.obj suite/out2/a/a/2.obj suite/out2/a/a/3.obj suite/out2/a/b/1.obj suite/out2/a/b/2.obj suite/out2/a/b/3.obj suite/out2/a/c/1.obj suite/out2/a/c/2.obj suite/out2/a/c/3.obj
+build suite/out3/test1.exe: link suite/out3/a/a/1.obj suite/out3/a/a/2.obj suite/out3/a/a/3.obj suite/out3/a/b/1.obj suite/out3/a/b/2.obj suite/out3/a/b/3.obj suite/out3/a/c/1.obj suite/out3/a/c/2.obj suite/out3/a/c/3.obj
+build suite/out3/test2.exe: link suite/out3/a/a/1.obj suite/out3/a/a/2.obj suite/out3/a/a/3.obj suite/out3/a/b/1.obj suite/out3/a/b/2.obj suite/out3/a/b/3.obj suite/out3/a/c/1.obj suite/out3/a/c/2.obj suite/out3/a/c/3.obj
+
+build suite/out4/a_a_1.obj: cxx suite/src/rec/a/zz/a/1.cpp
+build suite/out4/a_a_2.obj: cxx suite/src/rec/a/zz/a/2.cpp
+build suite/out4/a_a_3.obj: cxx suite/src/rec/a/zz/a/3.cpp
+build suite/out4/a_b_1.obj: cxx suite/src/rec/a/zz/b/1.cpp
+build suite/out4/a_b_2.obj: cxx suite/src/rec/a/zz/b/2.cpp
+build suite/out4/a_b_3.obj: cxx suite/src/rec/a/zz/b/3.cpp
+build suite/out4/a_c_1.obj: cxx suite/src/rec/a/zz/c/1.cpp
+build suite/out4/a_c_2.obj: cxx suite/src/rec/a/zz/c/2.cpp
+build suite/out4/a_c_3.obj: cxx suite/src/rec/a/zz/c/3.cpp
+build suite/out5/a__1.obj: cxx suite/src/rec/a/zz/a/1.cpp
+build suite/out5/a__2.obj: cxx suite/src/rec/a/zz/a/2.cpp
+build suite/out5/a__3.obj: cxx suite/src/rec/a/zz/a/3.cpp
+build suite/out6/zz_1.obj: cxx suite/src/rec/a/zz/a/1.cpp
+build suite/out6/zz_2.obj: cxx suite/src/rec/a/zz/a/2.cpp
+build suite/out6/zz_3.obj: cxx suite/src/rec/a/zz/a/3.cpp

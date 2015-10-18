@@ -433,9 +433,19 @@ lib              | .lib or .a            | static lib
 shlib            | .dll or .so           | shared lib
 shlibdep         | .lib or .so           | used when you need to link with shared lib
 
+#### Compiler and linker configuration
+
+To set compiler or linker flags you need to use configuration variables. This variables will be passed as-is to compiler or linker and we recommend using cxx_\* and ld_\* flags from flags table to set required arguments in cross platform fashion.
+
+Variable                        | Description
+------------------------------- | ----------------
+cxxflags                        | compiler flags
+ldflags                         | linker flags
+libflags                        | static lib archiver flags
+
 #### Compiler flags transformers
 
-Some compiler flags are easier and better to specify as whitespace separated list, fox core provides set of transformers for this purpose. For example : ```defines = DEFINE1 DEFINE2```
+Some compiler flags are easier and better to specify as whitespace separated list, fox core provides set of transformers for this purpose. For example : ```defines = DEFINE1 DEFINE2```. Please note that this transformers are passed to compiler and linker directly without interaction with ```cxxflags``` or ```ldflags```.
 
 Transformer name    | Possible Values       | Description
 ------------------- | --------------------- | --------------------------------------------
@@ -443,6 +453,7 @@ defines             | /D or -D              | sets defines
 includedirs         | /I or -I              | sets includes directories
 libdirs             | /LIBPATH or -L        | sets libs directories
 libs                | .lib or -l            | sets system libs
+frameworks          | none or -framework    | sets frameworks (OS X only)
 disable_warnings    | /wd                   | disables warnings (msvc only)
 ignore_default_libs | /NODEFAULTLIB         | ignores default lib (msvc only)
 
@@ -483,6 +494,8 @@ cxx_sse                         | /arch:SSE or -msse                      |
 cxx_sse2                        | /arch:SSE2 or -msse2                    |
 cxx_symbols                     | /Z7                                     | msvc only
 cxx_omit_default_lib            | /Zl                                     | msvc only
+cxx_11                          | empty or -std=c++11                     |
+cxx_14                          | empty or -std=c++14                     |
 cxx_runtime_static_debug        | /MTd                                    | msvc only
 cxx_runtime_dynamic_debug       | /MDd                                    | msvc only
 cxx_runtime_static_release      | /MT                                     | msvc only

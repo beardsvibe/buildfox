@@ -25,7 +25,7 @@ re_base_escaped = re.compile(r"\$([\| :()])")
 class Engine:
 	class Context:
 		def __init__(self):
-			# key is folder name, value is set of file names
+			# key is folder name that ends /, value is set of file names
 			self.generated = collections.defaultdict(set)
 			# key is folder name, value is set of file names
 			self.all_files = collections.defaultdict(set)
@@ -133,8 +133,7 @@ class Engine:
 			return
 		for file in files:
 			dir = os.path.dirname(file)
-			if dir == "":
-				dir = "."
+			dir = dir + "/" if dir else "./"
 			name = os.path.basename(file)
 			if name in self.context.generated[dir]:
 				raise ValueError("two or more commands generate '%s' in '%s' (%s:%i)" % (
@@ -219,7 +218,7 @@ class Engine:
 
 	def eval_transform(self, name, values, eval = True):
 		transformer = self.transformers.get(name)
-		if not transformer:
+		if transformer is None:
 			return self.eval(values) if eval else values
 
 		def transform_one(value):
@@ -315,6 +314,21 @@ class Engine:
 				self.filename,
 				self.current_line_i,
 			))
+
+		# you probably want to match some files
+		def warn_no_files(type):
+			print("no %s input files matched for '%s' (%s:%i)" % (
+				type,
+				self.current_line,
+				self.filename,
+				self.current_line_i,
+			))
+		if (obj[3] and not inputs_explicit):
+			warn_no_files("explicit")
+		if (obj[4] and not inputs_implicit):
+			warn_no_files("implicit")
+		if (obj[5] and not inputs_order):
+			warn_no_files("order-only")
 
 		# expand this rule
 		expand = self.rules.get(rule_name, {}).get("expand", None)

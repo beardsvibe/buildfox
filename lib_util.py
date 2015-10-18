@@ -5,7 +5,7 @@ import re
 import sys
 import shutil
 
-re_folder_part = re.compile(r"((?:[^\r\n(\[\"\\]|\\.)+)(\\/|\/|\\)") # match folder part in filename regex
+re_folder_part = re.compile(r"^((?:\(\.\*\)\(\.\*\)|(?:[^\r\n(\[\"\\]|\\.))+)(\\\/|\/|\\).*$") # match folder part in filename regex
 re_non_escaped_char = re.compile(r"(?<!\\)\\(.)") # looking for not escaped \ with char
 re_capture_group_ref = re.compile(r"(?<!\\)\\(\d)") # match regex capture group reference
 
@@ -18,7 +18,7 @@ def rel_dir(filename):
 
 # return regex value in filename for regex or wildcard
 # replace_groups replace wildcards with group reference indexes
-def wildcard_regex(filename, replace_groups = False):
+def wildcard_regex(filename, replace_groups = False, rec_capture_groups = set()):
 	if filename.startswith("r\""):
 		return filename[2:-1] # strip r" and "
 	elif "*" in filename or "?" in filename or "[" in filename:
@@ -28,19 +28,32 @@ def wildcard_regex(filename, replace_groups = False):
 		res = ""
 		while i < n:
 			c = filename[i]
+			cn = filename[i + 1] if i + 1 < n else ""
 			i = i + 1
-			if c == "*":
+			if c == "*" and cn == "*":
 				if replace_groups:
 					res = res + "\\" + str(groups)
-					groups += 1
+				else:
+					res = res + "(.*)(.*)"
+					rec_capture_groups.add(groups)
+				groups += 1
+				i = i + 1
+			elif c == "*":
+				if replace_groups:
+					# if inputs have recursive capture groups and output don't use them
+					# then just switch to next non recursive capture group
+					while groups in rec_capture_groups:
+						groups += 1
+					res = res + "\\" + str(groups)
 				else:
 					res = res + "(.*)"
+				groups += 1
 			elif c == "?":
 				if replace_groups:
 					res = res + "\\" + str(groups)
-					groups += 1
 				else:
 					res = res + "(.)"
+				groups += 1
 			elif replace_groups:
 				res = res + c
 			elif c == "[":
@@ -66,9 +79,61 @@ def wildcard_regex(filename, replace_groups = False):
 		if replace_groups:
 			return res
 		else:
-			return res + "\Z(?ms)"
+			return "%s\Z(?ms)" % res
 	else:
 		return None
+
+# return list of folders (always ends with /) that match provided pattern
+# please note that some result folders may point into non existing location
+# because it's too costly here to check if they exist
+def glob_folders(pattern, base_path, generated):
+	if not pattern.endswith("/"): # this shouldn't fail
+		raise ValueError("pattern should always end with \"/\", but got \"%s\"" % pattern)
+
+	real_folders = [base_path.rstrip("/")]
+	gen_folders = [base_path.rstrip("/")]
+
+	# temporary solution
+	exclude_dirs = set([".git", ".hg"])
+
+	pattern = pattern[2:] if pattern.startswith("./") else pattern
+
+	for folder in pattern.split("/"):
+		if folder == "(.*)(.*)":
+			new_real_folders = []
+			for real_folder in real_folders:
+				new_real_folders.append(real_folder)
+				for root, dirs, filenames in os.walk(real_folder, topdown = True): # TODO this is slow, optimize
+					dirs[:] = [dir for dir in dirs if dir not in exclude_dirs]
+					for dir in dirs:
+						result = os.path.join(root, dir).replace("\\", "/")
+						new_real_folders.append(result)
+			real_folders = new_real_folders
+
+			new_gen_folders = []
+			for gen_folder in gen_folders:
+				prepend_dot = False
+				if gen_folder.startswith("./"):
+					prepend_dot = True
+					gen_folder = gen_folder[2:] # strip ./
+
+				gen_folder_len = len(gen_folder)
+				for folder in generated.keys():
+					if folder.startswith(gen_folder):
+						root = folder[:gen_folder_len]
+						sub_folders = folder[gen_folder_len:]
+						sub_folders = sub_folders.lstrip("/").rstrip("/")
+						# walk through directories in similar fashion with os.walk
+						new_gen_folders.append("./%s" % root if prepend_dot else root)
+						for subfolder in sub_folders.split("/"): 
+							root += "/%s" % subfolder
+							new_gen_folders.append("./%s" % root if prepend_dot else root)
+			gen_folders = list(set(new_gen_folders))
+		else:
+			real_folders = ["%s/%s" % (p, folder) for p in real_folders]
+			gen_folders = ["%s/%s" % (p, folder) for p in gen_folders]
+
+	return (real_folders, gen_folders)
 
 # input can be string or list of strings
 # outputs are always lists
@@ -76,44 +141,65 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 	# rename regex back to readable form
 	def replace_non_esc(match_group):
 		return match_group.group(1)
+	rec_capture_groups = set()
 	if inputs:
 		result = []
 		matched = []
 		for input in inputs:
-			regex = wildcard_regex(input)
+			regex = wildcard_regex(input, False, rec_capture_groups)
 			if regex:
 				# find the folder where to look for files
 				base_folder = re_folder_part.match(regex)
+				lookup_path = rel_path if rel_path else "./"
+				real_folders = [lookup_path]
+				gen_folders = [lookup_path]
 				if base_folder:
-					base_folder = base_folder.group()
+					base_folder = base_folder.group(1) + base_folder.group(2)
 					base_folder = re_non_escaped_char.sub(replace_non_esc, base_folder)
-					separator = "\\" if base_folder.rfind("\\") > base_folder.rfind("/") else "/"
-					base_folder = os.path.dirname(base_folder)
-					list_folder = rel_path + base_folder
-				else:
-					separator = ""
-					base_folder = ""
-					if len(rel_path):
-						list_folder = rel_path[:-1] # strip last /
-					else:
-						list_folder = "."
+					if "\\" in base_folder:
+						raise ValueError("please only use forward slashes in path \"%s\"" % input)
+					real_folders, gen_folders = glob_folders(base_folder, lookup_path, generated)
 
 				# look for files
-				list_folder = os.path.normpath(list_folder).replace("\\", "/")
-				re_regex = re.compile(regex)
-				if os.path.isdir(list_folder):
-					fs_files = set(os.listdir(list_folder))
-				else:
-					fs_files = set()
-				generated_files = generated.get(list_folder, set())
+				fs_files = set()
+				for real_folder in real_folders:
+					if os.path.isdir(real_folder):
+						root = real_folder[len(lookup_path):]
+						files = [root + file for file in os.listdir(real_folder) if os.path.isfile(real_folder + "/" + file)]
+						fs_files = fs_files.union(files)
+
+				gen_files = set()
+				for gen_folder in gen_folders:
+					# in case if gen_folder is "./something" then we need to strip ./
+					# but if gen_folder is just "./" then we don't need to strip it !
+					if len(gen_folder) > 2 and gen_folder.startswith("./"):
+						check_folder = gen_folder[2:]
+					else:
+						check_folder = gen_folder
+					if check_folder in generated:
+						root = gen_folder[len(lookup_path):]
+						files = [root + file for file in generated.get(check_folder)]
+						gen_files = gen_files.union(files)
+
 				# we must have stable sort here
 				# so output ninja files will be same between runs
-				all_files = sorted(list(fs_files.union(generated_files)))
+				all_files = list(fs_files.union(gen_files))
+				all_files = sorted(all_files)
+
+				# while capturing ** we want just to capture */ optionally
+				# so we can match files in root folder as well
+				regex = regex.replace("(.*)(.*)\/", "(?:(.*)\/)?")
+
+				# if you want to match something in local folder
+				# then you may write wildcard/regex that starts as ./
+				if regex.startswith("\.\/"):
+					regex = regex[4:]
+
+				re_regex = re.compile(regex)
 				for file in all_files:
-					name = base_folder + separator + file
-					match = re_regex.match(name)
+					match = re_regex.match(file)
 					if match:
-						result.append(rel_path + name)
+						result.append(rel_path + file)
 						matched.append(match.groups())
 			else:
 				result.append(rel_path + input)
@@ -123,7 +209,8 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 		result = []
 		for output in outputs:
 			# we want \number instead of capture groups
-			regex = wildcard_regex(output, True)
+			regex = wildcard_regex(output, True, rec_capture_groups)
+
 			if regex:
 				for match in matched:
 					# replace \number with data
@@ -135,6 +222,9 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 							return ""
 					file = re_capture_group_ref.sub(replace_group, regex)
 					file = re_non_escaped_char.sub(replace_non_esc, file)
+					# in case of **/* mask in output, input capture group
+					# for ** can be empty, so we get // in output, so just fix it here
+					file = file.replace("//", "/")
 
 					result.append(rel_path + file)
 			else:
