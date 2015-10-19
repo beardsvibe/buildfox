@@ -5,10 +5,12 @@ import re
 import sys
 import shutil
 
-re_folder_part = re.compile(r"^((?:\(\.\*\)(?:\(\?\![\w\|]+\))?\(\.\*\)|(?:[^\r\n(\[\"\\]|\\.))+)(\\\/|\/|\\).*$") # match folder part in filename regex
+re_folder_part = re.compile(r"^((?:\(\[\^\\\/\]\*\)(?:\(\?\![\w\|]+\))?\(\[\^\\\/\]\*\)|(?:[^\r\n(\[\"\\]|\\.))+)(\\\/|\/|\\).*$") # match folder part in filename regex
 re_non_escaped_char = re.compile(r"(?<!\\)\\(.)") # looking for not escaped \ with char
 re_capture_group_ref = re.compile(r"(?<!\\)\\(\d)") # match regex capture group reference
-re_recursive_glob = re.compile(r"\(\.\*\)(\(\?\![\w\|]+\))?\(\.\*\)\\\/") # captures (.*)(?!a|b|c)(.*)\/
+re_pattern_split = re.compile(r"(?<!\[\^)\/")
+re_recursive_glob = re.compile(r"\(\[\^\\\/\]\*\)(\(\?\![\w\|]+\))?\(\[\^\\\/\]\*\)\\\/")
+re_recursive_glob_noslash = re.compile(r"\(\[\^\/\]\*\)(\(\?\![\w\|]+\))?\(\[\^\/\]\*\)")
 
 # return relative path to current work dir
 def rel_dir(filename):
@@ -39,7 +41,7 @@ def wildcard_regex(filename, replace_groups = False, rec_capture_groups = set())
 					if replace_groups:
 						res += "\\" + str(groups)
 					else:
-						res += "(.*)(.*)"
+						res += "([^\/]*)([^\/]*)"
 						rec_capture_groups.add(groups)
 					i = i + 1
 				else:
@@ -50,13 +52,13 @@ def wildcard_regex(filename, replace_groups = False, rec_capture_groups = set())
 							groups += 1
 						res += "\\" + str(groups)
 					else:
-						res += "(.*)"
+						res += "([^\/]*)"
 				groups += 1
 			elif c == "?":
 				if replace_groups:
 					res += "\\" + str(groups)
 				else:
-					res += "(.)"
+					res += "([^\/])"
 				groups += 1
 			elif replace_groups:
 				res += c
@@ -71,7 +73,7 @@ def wildcard_regex(filename, replace_groups = False, rec_capture_groups = set())
 				else:
 					stuff = filename[i + 1: j].replace("\\", "\\\\")
 					i = j + 1
-					res += "(?!%s)(.*)" % stuff
+					res += "(?!%s)([^\/]*)" % stuff
 			elif c == "[":
 				j = i
 				if j < n and filename[j] == "!":
@@ -114,8 +116,8 @@ def glob_folders(pattern, base_path, generated):
 
 	pattern = pattern[2:] if pattern.startswith("./") else pattern
 
-	for folder in pattern.split("/"):
-		recursive_match = re_recursive_glob.match(folder + "\/")
+	for folder in re_pattern_split.split(pattern):
+		recursive_match = re_recursive_glob_noslash.match(folder)
 		if recursive_match:
 			regex_filter = recursive_match.group(1)
 			re_regex_filter = re.compile("^%s.*$" % regex_filter) if regex_filter else None
