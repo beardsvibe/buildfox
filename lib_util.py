@@ -5,9 +5,10 @@ import re
 import sys
 import shutil
 
-re_folder_part = re.compile(r"^((?:\(\.\*\)\(\.\*\)|(?:[^\r\n(\[\"\\]|\\.))+)(\\\/|\/|\\).*$") # match folder part in filename regex
+re_folder_part = re.compile(r"^((?:\(\.\*\)(?:\(\?\![\w\|]+\))?\(\.\*\)|(?:[^\r\n(\[\"\\]|\\.))+)(\\\/|\/|\\).*$") # match folder part in filename regex
 re_non_escaped_char = re.compile(r"(?<!\\)\\(.)") # looking for not escaped \ with char
 re_capture_group_ref = re.compile(r"(?<!\\)\\(\d)") # match regex capture group reference
+re_recursive_glob = re.compile(r"\(\.\*\)(\(\?\![\w\|]+\))?\(\.\*\)\\\/") # captures (.*)(?!a|b|c)(.*)\/
 
 # return relative path to current work dir
 def rel_dir(filename):
@@ -114,12 +115,18 @@ def glob_folders(pattern, base_path, generated):
 	pattern = pattern[2:] if pattern.startswith("./") else pattern
 
 	for folder in pattern.split("/"):
-		if folder == "(.*)(.*)":
+		recursive_match = re_recursive_glob.match(folder + "\/")
+		if recursive_match:
+			regex_filter = recursive_match.group(1)
+			re_regex_filter = re.compile("^%s.*$" % regex_filter) if regex_filter else None
+
 			new_real_folders = []
 			for real_folder in real_folders:
 				new_real_folders.append(real_folder)
 				for root, dirs, filenames in os.walk(real_folder, topdown = True): # TODO this is slow, optimize
 					dirs[:] = [dir for dir in dirs if dir not in exclude_dirs]
+					if re_regex_filter:
+						dirs[:] = [dir for dir in dirs if re_regex_filter.match(dir)]
 					for dir in dirs:
 						result = os.path.join(root, dir).replace("\\", "/")
 						new_real_folders.append(result)
@@ -141,6 +148,10 @@ def glob_folders(pattern, base_path, generated):
 						# walk through directories in similar fashion with os.walk
 						new_gen_folders.append("./%s" % root if prepend_dot else root)
 						for subfolder in sub_folders.split("/"): 
+							if subfolder in exclude_dirs:
+								break
+							if re_regex_filter and not re_regex_filter.match(subfolder):
+								break
 							root += "/%s" % subfolder
 							new_gen_folders.append("./%s" % root if prepend_dot else root)
 			gen_folders = list(set(new_gen_folders))
@@ -203,7 +214,9 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 
 				# while capturing ** we want just to capture */ optionally
 				# so we can match files in root folder as well
-				regex = regex.replace("(.*)(.*)\/", "(?:(.*)\/)?")
+				# please note that result regex will not have folder ignore semantic
+				# we rely on glob_folders to filter all ignored folders
+				regex = re_recursive_glob.sub("(?:(.*)\/)?", regex)
 
 				# if you want to match something in local folder
 				# then you may write wildcard/regex that starts as ./
