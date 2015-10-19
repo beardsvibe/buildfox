@@ -39,6 +39,7 @@ class Engine:
 			self.rel_path = "" # this should be prepended to all parsed paths
 			self.rules = {} # rule_name: {var_name: var_value}
 			self.transformers = {} # target: pattern
+			self.excluded_dirs = set()
 			self.context = Engine.Context()
 		else:
 			self.variables = copy.copy(parent.variables)
@@ -46,6 +47,7 @@ class Engine:
 			self.rel_path = parent.rel_path
 			self.rules = copy.copy(parent.rules)
 			self.transformers = copy.copy(parent.transformers)
+			self.excluded_dirs = copy.copy(parent.excluded_dirs)
 			self.context = parent.context
 		self.output = []
 		self.need_eval = False
@@ -117,7 +119,8 @@ class Engine:
 		return find_files(self.eval_path_transform(input),
 						  self.eval_path_transform(output),
 						  rel_path = self.rel_path,
-						  generated = self.context.generated)
+						  generated = self.context.generated,
+						  excluded_dirs = self.excluded_dirs)
 
 	def add_files(self, files):
 		if not files:
@@ -409,6 +412,8 @@ class Engine:
 		if name == "buildfox_required_version":
 			# Checking the version immediately to fail fast.
 			version_check(value)
+		elif name == "excluded_dirs":
+			self.excluded_dirs = set(re_non_escaped_space.split(value))
 
 		self.variables[name] = value
 		self.output.append("%s = %s" % (name, self.to_esc(value, simple = True)))

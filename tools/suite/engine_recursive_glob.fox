@@ -20,3 +20,6 @@ build out6/*_*.obj: cxx src/rec/**/*/**/a/*.cpp
 
 build out7/**/*.obj: cxx "src/rec/*!(b|c)/!(2).cpp"
 build out8/**/*.obj: cxx "out1/*!(b|c)/*.obj"
+
+excluded_dirs = b c
+build out9/**/*.obj: cxx "src/rec/**/!(2).cpp"

@@ -104,15 +104,12 @@ def wildcard_regex(filename, replace_groups = False, rec_capture_groups = set())
 # return list of folders (always ends with /) that match provided pattern
 # please note that some result folders may point into non existing location
 # because it's too costly here to check if they exist
-def glob_folders(pattern, base_path, generated):
+def glob_folders(pattern, base_path, generated, excluded_dirs):
 	if not pattern.endswith("/"): # this shouldn't fail
 		raise ValueError("pattern should always end with \"/\", but got \"%s\"" % pattern)
 
 	real_folders = [base_path.rstrip("/")]
 	gen_folders = [base_path.rstrip("/")]
-
-	# temporary solution
-	exclude_dirs = set([".git", ".hg"])
 
 	pattern = pattern[2:] if pattern.startswith("./") else pattern
 
@@ -126,7 +123,7 @@ def glob_folders(pattern, base_path, generated):
 			for real_folder in real_folders:
 				new_real_folders.append(real_folder)
 				for root, dirs, filenames in os.walk(real_folder, topdown = True): # TODO this is slow, optimize
-					dirs[:] = [dir for dir in dirs if dir not in exclude_dirs]
+					dirs[:] = [dir for dir in dirs if dir not in excluded_dirs]
 					if re_regex_filter:
 						dirs[:] = [dir for dir in dirs if re_regex_filter.match(dir)]
 					for dir in dirs:
@@ -150,7 +147,7 @@ def glob_folders(pattern, base_path, generated):
 						# walk through directories in similar fashion with os.walk
 						new_gen_folders.append("./%s" % root if prepend_dot else root)
 						for subfolder in sub_folders.split("/"): 
-							if subfolder in exclude_dirs:
+							if subfolder in excluded_dirs:
 								break
 							if re_regex_filter and not re_regex_filter.match(subfolder):
 								break
@@ -165,7 +162,7 @@ def glob_folders(pattern, base_path, generated):
 
 # input can be string or list of strings
 # outputs are always lists
-def find_files(inputs, outputs = None, rel_path = "", generated = None):
+def find_files(inputs, outputs = None, rel_path = "", generated = None, excluded_dirs = set()):
 	# rename regex back to readable form
 	def replace_non_esc(match_group):
 		return match_group.group(1)
@@ -186,7 +183,7 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 					base_folder = re_non_escaped_char.sub(replace_non_esc, base_folder)
 					if "\\" in base_folder:
 						raise ValueError("please only use forward slashes in path \"%s\"" % input)
-					real_folders, gen_folders = glob_folders(base_folder, lookup_path, generated)
+					real_folders, gen_folders = glob_folders(base_folder, lookup_path, generated, excluded_dirs)
 
 				# look for files
 				fs_files = set()

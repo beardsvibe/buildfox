@@ -76,3 +76,9 @@ build suite/out8/a/3.obj: cxx suite/out1/a/3.obj
 build suite/out8/a/zz/a/1.obj: cxx suite/out1/a/zz/a/1.obj
 build suite/out8/a/zz/a/2.obj: cxx suite/out1/a/zz/a/2.obj
 build suite/out8/a/zz/a/3.obj: cxx suite/out1/a/zz/a/3.obj
+
+excluded_dirs = b c
+build suite/out9/a/1.obj: cxx suite/src/rec/a/1.cpp
+build suite/out9/a/3.obj: cxx suite/src/rec/a/3.cpp
+build suite/out9/a/zz/a/1.obj: cxx suite/src/rec/a/zz/a/1.cpp
+build suite/out9/a/zz/a/3.obj: cxx suite/src/rec/a/zz/a/3.cpp
