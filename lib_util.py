@@ -251,7 +251,7 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None, excluded
 					file = re_non_escaped_char.sub(replace_non_esc, file)
 					# in case of **/* mask in output, input capture group
 					# for ** can be empty, so we get // in output, so just fix it here
-					file = file.replace("//", "/")
+					file = file.replace("//", "/").lstrip("/")
 
 					result.append(rel_path + file)
 			else:
