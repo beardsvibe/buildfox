@@ -68,7 +68,7 @@ else:
 print("BuildFox %s" % ver)
 
 # write compiled version
-with open("bf", "w") as f:
+with open("__init__.py", "w") as f:
 	f.write("#!/usr/bin/env python\n\n")
 	f.write("# BuildFox ninja generator, %s\n\n" % ver)
 	f.write(license_text())

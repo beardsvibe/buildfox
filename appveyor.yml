@@ -18,5 +18,5 @@ test_script:
   - cd tools
   - coverage run --source=.. --omit=tests.py tests.py --compiler msc
   - python deploy.py
-  - python bf --selftest
+  - python __init__.py --selftest
   - cd ..

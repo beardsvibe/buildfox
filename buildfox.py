@@ -13,6 +13,7 @@ from lib_engine import Engine
 from lib_environment import discover
 from lib_selftest import selftest_setup, selftest_wipe
 from lib_ide_vs import gen_vs
+from lib_version import VERSION
 
 # core definitions -----------------------------------------------------------
 
@@ -269,7 +270,8 @@ filter toolset: r"gcc|clang"
 
 # main app -----------------------------------------------------------
 
-argsparser = argparse.ArgumentParser(description = "buildfox ninja generator")
+title = "buildfox ninja generator %s" % VERSION
+argsparser = argparse.ArgumentParser(description = title)
 argsparser.add_argument("-i", "--in", help = "input file", default = "build.fox")
 argsparser.add_argument("-o", "--out", help = "output file", default = "build.ninja")
 argsparser.add_argument("-w", "--workdir", help = "working directory")
@@ -283,7 +285,13 @@ argsparser.add_argument("--no-env", action = "store_false",
 	help = "disable environment discovery", default = True, dest = "env")
 argsparser.add_argument("--selftest", action = "store_true",
 	help = "run self test", default = False, dest = "selftest")
+argsparser.add_argument("--ver,--version", action = "store_true",
+	help = "shows version", default = False, dest = "show_ver")
 args = vars(argsparser.parse_args())
+
+if args.get("show_ver"):
+	print(title)
+	sys.exit(0)
 
 if args.get("workdir"):
 	os.chdir(args.get("workdir"))
