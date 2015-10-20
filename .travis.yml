@@ -29,7 +29,6 @@ script:
   - coverage run --source=.. --omit=tests.py tests.py --compiler gcc --ninja ninja_14
   - coverage combine
   - python deploy.py
-  - chmod +x bf
-  - ./bf --selftest
+  - python __init__.py --selftest
 after_success:
   coveralls
