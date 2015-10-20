@@ -23,3 +23,5 @@ build out8/**/*.obj: cxx "out1/*!(b|c)/*.obj"
 
 excluded_dirs = b c
 build out9/**/*.obj: cxx "src/rec/**/!(2).cpp"
+
+build **/*.obj: cxx "src/rec/a/**/!(2).cpp"

@@ -82,3 +82,8 @@ build suite/out9/a/1.obj: cxx suite/src/rec/a/1.cpp
 build suite/out9/a/3.obj: cxx suite/src/rec/a/3.cpp
 build suite/out9/a/zz/a/1.obj: cxx suite/src/rec/a/zz/a/1.cpp
 build suite/out9/a/zz/a/3.obj: cxx suite/src/rec/a/zz/a/3.cpp
+
+build suite/1.obj: cxx suite/src/rec/a/1.cpp
+build suite/3.obj: cxx suite/src/rec/a/3.cpp
+build suite/zz/a/1.obj: cxx suite/src/rec/a/zz/a/1.cpp
+build suite/zz/a/3.obj: cxx suite/src/rec/a/zz/a/3.cpp
