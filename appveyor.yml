@@ -9,12 +9,14 @@ install:
   - pip install coveralls
 
   # TODO cinst is very slow, so we need to use powershell to download and unzip ninja
-  - cinst wget -x86
-  - cinst 7zip.commandline -x86
+  #- cinst wget -x86
+  #- cinst 7zip.commandline -x86
   - mkdir -p .bins
   - cd .bins
-  - wget -q --no-check-certificate https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip -O ninja.zip
-  - 7z x ninja.zip -o. -y > nul
+  #- wget -q --no-check-certificate https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip -O ninja.zip
+  #- 7z x ninja.zip -o. -y > nul
+  - powershell "(New-Object Net.WebClient).DownloadFile('https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip','ninja.zip')"
+  - powershell "(New-Object -com shell.application).namespace('.').CopyHere((new-object -com shell.application).namespace('ninja.zip').Items(),16)"
   - dir
   - ninja --version
   - cd ..
