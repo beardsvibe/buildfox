@@ -28,9 +28,9 @@
 import os
 import re
 import sys
-import glob
-import uuid
 import copy
+import uuid
+import glob
 import shutil
 import argparse
 import platform
@@ -763,27 +763,6 @@ def which(cmd, mode = os.F_OK | os.X_OK, path = None):
 						return name
 		return None
 
-MAJOR = 0
-MINOR = 1
-VERSION = "%d.%d" % (MAJOR, MINOR)
-
-# Simple major.minor matcher
-re_version = re.compile(r"^(\d+)\.(\d+)$")
-
-def version_check(required_version):
-	match = re_version.match(required_version)
-
-	if match:
-		required_major = int(match.group(1))
-		required_minor = int(match.group(2))
-	else:
-		raise ValueError("Specified required version (%s) has incorrect format." % required_version)
-
-	if MAJOR > required_major:
-		print("WARNING: BuildFox executable major version (%s) is greater than 'buildfox_required_version' (%s).\nVersions may be incompatible." % (VERSION, required_version))
-	elif (required_major == MAJOR and required_minor > MINOR) or required_major > MAJOR:
-		raise RuntimeError("BuildFox version (%s) is incompatible with the version required (%s)." % (VERSION, required_version))
-
 if sys.version_info[0] < 3:
 	string_types = basestring
 else:
@@ -1458,6 +1437,27 @@ def gen_vs(all_files, defines, includedirs, prj_name):
 	with open(flt_file, "w") as f:
 		f.write(flt_text)
 
+MAJOR = 0
+MINOR = 1
+VERSION = "%d.%d" % (MAJOR, MINOR)
+
+# Simple major.minor matcher
+re_version = re.compile(r"^(\d+)\.(\d+)$")
+
+def version_check(required_version):
+	match = re_version.match(required_version)
+
+	if match:
+		required_major = int(match.group(1))
+		required_minor = int(match.group(2))
+	else:
+		raise ValueError("Specified required version (%s) has incorrect format." % required_version)
+
+	if MAJOR > required_major:
+		print("WARNING: BuildFox executable major version (%s) is greater than 'buildfox_required_version' (%s).\nVersions may be incompatible." % (VERSION, required_version))
+	elif (required_major == MAJOR and required_minor > MINOR) or required_major > MAJOR:
+		raise RuntimeError("BuildFox version (%s) is incompatible with the version required (%s)." % (VERSION, required_version))
+
 # core definitions -----------------------------------------------------------
 
 fox_core = r"""
@@ -1713,7 +1713,8 @@ filter toolset: r"gcc|clang"
 
 # main app -----------------------------------------------------------
 
-argsparser = argparse.ArgumentParser(description = "buildfox ninja generator")
+title = "buildfox ninja generator %s" % VERSION
+argsparser = argparse.ArgumentParser(description = title)
 argsparser.add_argument("-i", "--in", help = "input file", default = "build.fox")
 argsparser.add_argument("-o", "--out", help = "output file", default = "build.ninja")
 argsparser.add_argument("-w", "--workdir", help = "working directory")
@@ -1727,7 +1728,13 @@ argsparser.add_argument("--no-env", action = "store_false",
 	help = "disable environment discovery", default = True, dest = "env")
 argsparser.add_argument("--selftest", action = "store_true",
 	help = "run self test", default = False, dest = "selftest")
+argsparser.add_argument("--ver,--version", action = "store_true",
+	help = "shows version", default = False, dest = "show_ver")
 args = vars(argsparser.parse_args())
+
+if args.get("show_ver"):
+	print(title)
+	sys.exit(0)
 
 if args.get("workdir"):
 	os.chdir(args.get("workdir"))
