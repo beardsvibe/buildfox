@@ -5,9 +5,12 @@ import re
 import sys
 import shutil
 
-re_folder_part = re.compile(r"^((?:\(\.\*\)\(\.\*\)|(?:[^\r\n(\[\"\\]|\\.))+)(\\\/|\/|\\).*$") # match folder part in filename regex
+re_folder_part = re.compile(r"^((?:\(\[\^\\\/\]\*\)(?:\(\?\![\w\|]+\))?\(\[\^\\\/\]\*\)|(?:[^\r\n(\[\"\\]|\\.))+)(\\\/|\/|\\).*$") # match folder part in filename regex
 re_non_escaped_char = re.compile(r"(?<!\\)\\(.)") # looking for not escaped \ with char
 re_capture_group_ref = re.compile(r"(?<!\\)\\(\d)") # match regex capture group reference
+re_pattern_split = re.compile(r"(?<!\[\^)\/")
+re_recursive_glob = re.compile(r"\(\[\^\\\/\]\*\)(\(\?\![\w\|]+\))?\(\[\^\\\/\]\*\)\\\/")
+re_recursive_glob_noslash = re.compile(r"\(\[\^\/\]\*\)(\(\?\![\w\|]+\))?\(\[\^\/\]\*\)")
 
 # return relative path to current work dir
 def rel_dir(filename):
@@ -21,41 +24,56 @@ def rel_dir(filename):
 def wildcard_regex(filename, replace_groups = False, rec_capture_groups = set()):
 	if filename.startswith("r\""):
 		return filename[2:-1] # strip r" and "
-	elif "*" in filename or "?" in filename or "[" in filename:
+
+	if filename.startswith("\""):
+		filename = filename[1:-1] # strip " and "
+
+	if "!" in filename or "*" in filename or "?" in filename or "[" in filename:
 		# based on fnmatch.translate with each wildcard is a capture group
 		i, n = 0, len(filename)
 		groups = 1
 		res = ""
 		while i < n:
 			c = filename[i]
-			cn = filename[i + 1] if i + 1 < n else ""
 			i = i + 1
-			if c == "*" and cn == "*":
-				if replace_groups:
-					res = res + "\\" + str(groups)
+			if c == "*":
+				if i < n and filename[i] == "*":
+					if replace_groups:
+						res += "\\" + str(groups)
+					else:
+						res += "([^\/]*)([^\/]*)"
+						rec_capture_groups.add(groups)
+					i = i + 1
 				else:
-					res = res + "(.*)(.*)"
-					rec_capture_groups.add(groups)
-				groups += 1
-				i = i + 1
-			elif c == "*":
-				if replace_groups:
-					# if inputs have recursive capture groups and output don't use them
-					# then just switch to next non recursive capture group
-					while groups in rec_capture_groups:
-						groups += 1
-					res = res + "\\" + str(groups)
-				else:
-					res = res + "(.*)"
+					if replace_groups:
+						# if inputs have recursive capture groups and output don't use them
+						# then just switch to next non recursive capture group
+						while groups in rec_capture_groups:
+							groups += 1
+						res += "\\" + str(groups)
+					else:
+						res += "([^\/]*)"
 				groups += 1
 			elif c == "?":
 				if replace_groups:
-					res = res + "\\" + str(groups)
+					res += "\\" + str(groups)
 				else:
-					res = res + "(.)"
+					res += "([^\/])"
 				groups += 1
 			elif replace_groups:
-				res = res + c
+				res += c
+			elif c == "!":
+				j = i
+				if j < n and filename[j] == "(":
+					j = j + 1
+				while j < n and filename[j] != ")":
+					j = j + 1
+				if j >= n:
+					res += "\!"
+				else:
+					stuff = filename[i + 1: j].replace("\\", "\\\\")
+					i = j + 1
+					res += "(?!%s)([^\/]*)" % stuff
 			elif c == "[":
 				j = i
 				if j < n and filename[j] == "!":
@@ -65,7 +83,7 @@ def wildcard_regex(filename, replace_groups = False, rec_capture_groups = set())
 				while j < n and filename[j] != "]":
 					j = j + 1
 				if j >= n:
-					res = res + "\\["
+					res += "\\["
 				else:
 					stuff = filename[i:j].replace("\\", "\\\\")
 					i = j + 1
@@ -75,7 +93,7 @@ def wildcard_regex(filename, replace_groups = False, rec_capture_groups = set())
 						stuff = "\\" + stuff
 					res = "%s([%s])" % (res, stuff)
 			else:
-				res = res + re.escape(c)
+				res += re.escape(c)
 		if replace_groups:
 			return res
 		else:
@@ -86,25 +104,28 @@ def wildcard_regex(filename, replace_groups = False, rec_capture_groups = set())
 # return list of folders (always ends with /) that match provided pattern
 # please note that some result folders may point into non existing location
 # because it's too costly here to check if they exist
-def glob_folders(pattern, base_path, generated):
+def glob_folders(pattern, base_path, generated, excluded_dirs):
 	if not pattern.endswith("/"): # this shouldn't fail
 		raise ValueError("pattern should always end with \"/\", but got \"%s\"" % pattern)
 
 	real_folders = [base_path.rstrip("/")]
 	gen_folders = [base_path.rstrip("/")]
 
-	# temporary solution
-	exclude_dirs = set([".git", ".hg"])
-
 	pattern = pattern[2:] if pattern.startswith("./") else pattern
 
-	for folder in pattern.split("/"):
-		if folder == "(.*)(.*)":
+	for folder in re_pattern_split.split(pattern):
+		recursive_match = re_recursive_glob_noslash.match(folder)
+		if recursive_match:
+			regex_filter = recursive_match.group(1)
+			re_regex_filter = re.compile("^%s.*$" % regex_filter) if regex_filter else None
+
 			new_real_folders = []
 			for real_folder in real_folders:
 				new_real_folders.append(real_folder)
 				for root, dirs, filenames in os.walk(real_folder, topdown = True): # TODO this is slow, optimize
-					dirs[:] = [dir for dir in dirs if dir not in exclude_dirs]
+					dirs[:] = [dir for dir in dirs if dir not in excluded_dirs]
+					if re_regex_filter:
+						dirs[:] = [dir for dir in dirs if re_regex_filter.match(dir)]
 					for dir in dirs:
 						result = os.path.join(root, dir).replace("\\", "/")
 						new_real_folders.append(result)
@@ -126,6 +147,10 @@ def glob_folders(pattern, base_path, generated):
 						# walk through directories in similar fashion with os.walk
 						new_gen_folders.append("./%s" % root if prepend_dot else root)
 						for subfolder in sub_folders.split("/"): 
+							if subfolder in excluded_dirs:
+								break
+							if re_regex_filter and not re_regex_filter.match(subfolder):
+								break
 							root += "/%s" % subfolder
 							new_gen_folders.append("./%s" % root if prepend_dot else root)
 			gen_folders = list(set(new_gen_folders))
@@ -137,7 +162,7 @@ def glob_folders(pattern, base_path, generated):
 
 # input can be string or list of strings
 # outputs are always lists
-def find_files(inputs, outputs = None, rel_path = "", generated = None):
+def find_files(inputs, outputs = None, rel_path = "", generated = None, excluded_dirs = set()):
 	# rename regex back to readable form
 	def replace_non_esc(match_group):
 		return match_group.group(1)
@@ -158,7 +183,7 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 					base_folder = re_non_escaped_char.sub(replace_non_esc, base_folder)
 					if "\\" in base_folder:
 						raise ValueError("please only use forward slashes in path \"%s\"" % input)
-					real_folders, gen_folders = glob_folders(base_folder, lookup_path, generated)
+					real_folders, gen_folders = glob_folders(base_folder, lookup_path, generated, excluded_dirs)
 
 				# look for files
 				fs_files = set()
@@ -188,7 +213,9 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 
 				# while capturing ** we want just to capture */ optionally
 				# so we can match files in root folder as well
-				regex = regex.replace("(.*)(.*)\/", "(?:(.*)\/)?")
+				# please note that result regex will not have folder ignore semantic
+				# we rely on glob_folders to filter all ignored folders
+				regex = re_recursive_glob.sub("(?:(.*)\/)?", regex)
 
 				# if you want to match something in local folder
 				# then you may write wildcard/regex that starts as ./
@@ -224,7 +251,7 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None):
 					file = re_non_escaped_char.sub(replace_non_esc, file)
 					# in case of **/* mask in output, input capture group
 					# for ** can be empty, so we get // in output, so just fix it here
-					file = file.replace("//", "/")
+					file = file.replace("//", "/").lstrip("/")
 
 					result.append(rel_path + file)
 			else:

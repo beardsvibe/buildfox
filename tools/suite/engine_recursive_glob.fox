@@ -17,3 +17,11 @@ build out3/test2.exe: link ./out3/**/*.obj
 build out4/**_**_*.obj: cxx src/rec/**/zz/**/*.cpp
 build out5/**_**_*.obj: cxx src/rec/**/zz/**/a/*.cpp
 build out6/*_*.obj: cxx src/rec/**/*/**/a/*.cpp
+
+build out7/**/*.obj: cxx "src/rec/*!(b|c)/!(2).cpp"
+build out8/**/*.obj: cxx "out1/*!(b|c)/*.obj"
+
+excluded_dirs = b c
+build out9/**/*.obj: cxx "src/rec/**/!(2).cpp"
+
+build **/*.obj: cxx "src/rec/a/**/!(2).cpp"

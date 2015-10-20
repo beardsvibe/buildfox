@@ -246,6 +246,27 @@ Every path in BuildFox can be one of three types : normal path, regex, wildcard.
 	
 	# wildcard and regexes are interchangeable
 	build r"obj_\2_\1.obj": cxx *_*.cpp
+	
+	# any file except for specified name
+	build *.obj: cxx "!(name|another_name).cpp"
+	
+	# recursive glob
+	build **/*.obj: cxx **/*.cxx
+	
+	# recursive glob with concatenation in output
+	build **_*.obj: cxx **/*.cxx
+	
+	# recursive glob without path in output
+	build *.obj: cxx **/*.cxx
+	
+	# advanced recursive glob
+	build **/**/*.obj: cxx **/test/**/*.cxx
+	
+	# recursive glob with folder filtering
+	build **/*.obj: cxx "*!(folder|another_folder)/*.cxx"
+	
+	# recursive glob with folder filtering
+	build **/*.obj: cxx "*!(folder|another_folder)/*.cxx"
 
 #### Filters
 
@@ -532,5 +553,6 @@ BuildFox have some special variables that are processed differently from others.
 
 Name                      | Possible Values       | Description
 ------------------------- | --------------------- | --------------------------------------------
-rel_path                  | path that ends with / | relative path from cwd to location of current fox file, updated at runtime
 buildfox_required_version | 0.1, etc              | sets required version of BuildFox from fox file
+excluded_dirs             | .git .svn etc         | space separated list of ignored folders for recursive glob
+rel_path                  | path that ends with / | relative path from cwd to location of current fox file, updated at runtime
