@@ -176,7 +176,7 @@ class Engine:
 			# if everything match - return rule name and variables
 			return rule_name, auto[2]
 		# if no rule found then just fail and optionally return None 
-		raise ValueError("unable to deduce auto rule in '%s' (%s:%i)" % (
+		raise ValueError("unable to deduce auto rule in '%s', please check if your file extensions are supported by current toolchain (%s:%i)" % (
 			self.current_line,
 			self.filename,
 			self.current_line_i,
@@ -319,7 +319,7 @@ class Engine:
 
 		# you probably want to match some files
 		def warn_no_files(type):
-			print("no %s input files matched for '%s' (%s:%i)" % (
+			print("Warning, no %s input files matched for '%s' (%s:%i)" % (
 				type,
 				self.current_line,
 				self.filename,
