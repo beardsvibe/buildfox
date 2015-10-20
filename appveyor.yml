@@ -16,7 +16,7 @@ install:
   #- wget -q --no-check-certificate https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip -O ninja.zip
   #- 7z x ninja.zip -o. -y > nul
   - powershell "(New-Object Net.WebClient).DownloadFile('https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip','ninja.zip')"
-  - powershell "(New-Object -com shell.application).namespace('.').CopyHere((new-object -com shell.application).namespace('ninja.zip').Items(),16)"
+  - powershell "(new-object -com shell.application).namespace('.').CopyHere((new-object -com shell.application).namespace('ninja.zip').Items(),16)"
   - dir
   - ninja --version
   - cd ..
