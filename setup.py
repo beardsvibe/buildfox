@@ -34,4 +34,4 @@ setup(
 	zip_safe=True,
 	install_requires=[],
 	tests_require=["unittest2"],
-	entry_points={'console_scripts': ['buildfox=buildfox:main']})
+	entry_points={'console_scripts': ['bf=buildfox:main']})
