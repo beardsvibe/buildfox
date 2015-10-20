@@ -24,6 +24,9 @@ fox_core = r"""
 # then requirement will raise up to ninja v1.6 because we depend on scoped rules
 ninja_required_version = 1.3
 
+# some basic ignore folders
+excluded_dirs = .git .hg .svn
+
 filter toolset:msc
 	# msc support
 	cc = cl
