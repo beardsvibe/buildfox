@@ -5,19 +5,11 @@ environment:
 install:
   - set PATH=%cd%/.bins;%PYTHON%;%PYTHON%/Scripts;%PATH%
   - python --version
-  - pip install deepdiff
-  - pip install coveralls
-
-  # TODO cinst is very slow, so we need to use powershell to download and unzip ninja
-  #- cinst wget -x86
-  #- cinst 7zip.commandline -x86
+  - pip install deepdiff coveralls
   - mkdir -p .bins
   - cd .bins
-  #- wget -q --no-check-certificate https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip -O ninja.zip
-  #- 7z x ninja.zip -o. -y > nul
   - powershell "(New-Object Net.WebClient).DownloadFile('https://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip','ninja.zip')"
-  - powershell "(new-object -com shell.application).namespace('.').CopyHere((new-object -com shell.application).namespace('ninja.zip').Items(),16)"
-  - dir
+  - powershell "(new-object -com shell.application).namespace($pwd.Path).CopyHere((new-object -com shell.application).namespace(\"$pwd\ninja.zip\").Items(),16)"
   - ninja --version
   - cd ..
 build: off
