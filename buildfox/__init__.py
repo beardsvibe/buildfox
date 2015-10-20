@@ -25,12 +25,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import os
 import re
+import os
 import sys
-import glob
 import copy
 import uuid
+import glob
 import shutil
 import platform
 import argparse
@@ -1743,9 +1743,9 @@ def main(*argv, **kwargs):
 	engine = Engine()
 
 	if args.get("env"):
-		vars = discover()
-		for name in sorted(vars.keys()):
-			engine.on_assign((name, vars.get(name), "="))
+		env = discover()
+		for name in sorted(env.keys()):
+			engine.on_assign((name, env.get(name), "="))
 
 	for var in args.get("variables"):
 		parts = var.split("=")
