@@ -28,6 +28,7 @@ Generating MSVS solution
 - Get [ninja](https://martine.github.io/ninja/) (v1.3+ is supported, v1.6 is recommended)
 - Get [python](https://www.python.org/) (v2.7+ is supported, v3.5 is recommended)
 - Run ```pip install buildfox```
+- If pip installs locally (for example on Ubuntu) you need to add ```export PATH=$PATH:/home/$USER/.local/bin/``` to .bashrc
 - Run ```bf --selftest``` to make sure everything is ok
 - Done!
 
