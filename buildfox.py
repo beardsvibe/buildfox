@@ -12,6 +12,7 @@ import subprocess
 from lib_engine import Engine
 from lib_environment import discover
 from lib_selftest import selftest_setup, selftest_wipe
+from lib_util import cxx_defines, cxx_includedirs
 from lib_ide_vs import gen_vs
 from lib_version import VERSION
 
@@ -334,8 +335,8 @@ def main(*argv, **kwargs):
 
 		if args.get("ide") in ["vs", "vs2013"]:
 			gen_vs(engine.context.all_files,
-				engine.variables.get("defines", ""),
-				engine.variables.get("includedirs", ""),
+				cxx_defines(engine.variables.get("defines", "")),
+				cxx_includedirs(engine.variables.get("includedirs", "")),
 				args.get("ide_prj"))
 
 if __name__ == "__main__":
