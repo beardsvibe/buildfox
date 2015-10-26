@@ -116,19 +116,25 @@ def gen_vs(all_files, defines, includedirs, prj_name):
 	if includedirs:
 		includedirs += ";"
 
+	# find common folder
+	prefix = os.path.commonprefix([os.path.abspath(folder) for folder in interest_src_files.keys()])
+	prefix = os.path.dirname(prefix)
+	prefix_len = len(prefix)
+	if prefix_len:
+		prefix_len += 1 # and add slash to it
+
 	flt_filters = []
 	flt_items = []
 	for folder, files in interest_src_files.items():
-		if folder == ".\\":
-			continue
-		folder_guid = "{%s}" % str(uuid.uuid5(uuid.NAMESPACE_URL, folder)).lower()
-		filter_folder  = "		<Filter Include=\"%s\">\n" % folder[:-1]
+		filter_path = os.path.abspath(folder).replace("/", "\\")[prefix_len:]
+		folder_guid = "{%s}" % str(uuid.uuid5(uuid.NAMESPACE_URL, filter_path)).lower()
+		filter_folder  = "		<Filter Include=\"%s\">\n" % filter_path
 		filter_folder += "			<UniqueIdentifier>%s</UniqueIdentifier>\n" % folder_guid
 		filter_folder += "		</Filter>"
 		flt_filters.append(filter_folder)
 		for name in files:
 			item  = "		<ClCompile Include=\"%s%s\">\n" % (folder, name)
-			item += "			<Filter>%s</Filter>\n" % folder[:-1]
+			item += "			<Filter>%s</Filter>\n" % filter_path
 			item += "		</ClCompile>"
 			flt_items.append(item)
 	flt_filters = "\n".join(flt_filters)
