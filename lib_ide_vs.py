@@ -1,6 +1,5 @@
 # BuildFox ninja generator
 
-from pprint import pprint
 import os
 import uuid
 
@@ -108,13 +107,8 @@ def gen_vs(all_files, defines, includedirs, prj_name):
 	items = "\n".join(["		<ClCompile Include=\"%s%s\"/>" % (folder, name)
 		for folder, files in interest_src_files.items() for name in files])
 
-	defines = defines.replace("/D", "").replace(" ", ";") # this one is probably wrong
-	if defines:
-		defines += ";"
-
-	includedirs = includedirs.replace("/I", "").replace(" ", ";") # this one is probably wrong
-	if includedirs:
-		includedirs += ";"
+	defines = ";".join(defines) + ";" if defines else ""
+	includedirs = ";".join(includedirs) + ";" if includedirs else ""
 
 	# find common folder
 	prefix = os.path.commonprefix([os.path.abspath(folder) for folder in interest_src_files.keys()])

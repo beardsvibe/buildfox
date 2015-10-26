@@ -3,6 +3,7 @@
 import os
 import re
 import sys
+import shlex
 import shutil
 
 re_folder_part = re.compile(r"^((?:\(\[\^\\\/\]\*\)(?:\(\?\![\w\|]+\))?\(\[\^\\\/\]\*\)|(?:[^\r\n(\[\"\\]|\\.))+)(\\\/|\/|\\).*$") # match folder part in filename regex
@@ -309,3 +310,17 @@ def which(cmd, mode = os.F_OK | os.X_OK, path = None):
 					if _access_check(name, mode):
 						return name
 		return None
+
+# parses string of generic cxx defines and return list of strings
+def cxx_defines(defines):
+	dirs = shlex.split(defines)
+	dirs = [dir[2:] if dir.startswith("/D") or dir.startswith("-D") else dir for dir in dirs]
+	dirs = filter(lambda d: len(d), dirs)
+	return list(dirs)
+
+# parses string of generic cxx include dirs and return list of strings
+def cxx_includedirs(includedirs):
+	dirs = shlex.split(includedirs)
+	dirs = [dir[2:] if dir.startswith("/I") or dir.startswith("-I") else dir for dir in dirs]
+	dirs = filter(lambda d: len(d), dirs)
+	return list(dirs)
