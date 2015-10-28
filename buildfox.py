@@ -15,6 +15,7 @@ from lib_selftest import selftest_setup, selftest_wipe
 from lib_util import cxx_defines, cxx_includedirs
 from lib_ide_vs import gen_vs
 from lib_ide_make import gen_make
+from lib_ide_qtcreator import gen_qtcreator
 from lib_version import VERSION
 
 # core definitions -----------------------------------------------------------
@@ -343,6 +344,11 @@ def main(*argv, **kwargs):
 				args.get("ide_prj"))
 		elif ide in ["make"]:
 			gen_make()
+		elif ide in ["qtcreator"]:
+			gen_qtcreator(engine.context.all_files,
+				cxx_defines(engine.variables.get("defines", "")),
+				cxx_includedirs(engine.variables.get("includedirs", "")),
+				args.get("ide_prj"))
 
 if __name__ == "__main__":
 	main()
