@@ -348,7 +348,8 @@ def main(*argv, **kwargs):
 			gen_qtcreator(engine.context.all_files,
 				cxx_defines(engine.variables.get("defines", "")),
 				cxx_includedirs(engine.variables.get("includedirs", "")),
-				args.get("ide_prj"))
+				args.get("ide_prj"),
+				args.get("in"))
 
 if __name__ == "__main__":
 	main()

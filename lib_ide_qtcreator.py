@@ -4,20 +4,15 @@ from lib_ide_make import gen_make
 
 qtcreator_ext_of_interest_src = (".c", ".cpp", ".cxx", ".c++", ".cc", ".h", ".hpp", ".hxx")
 
-def gen_qtcreator(all_files, defines, includedirs, prj_name):
+def gen_qtcreator(all_files, defines, includedirs, prj_name, buildfox_name):
 	gen_make()
 
 	all_files = ["%s%s" % ("" if folder == "./" else folder, name)
 		for folder, names in all_files.items()
 			for name in names
 				if name.lower().endswith(qtcreator_ext_of_interest_src)]
-	all_files = ["Makefile", "build.fox"] + all_files
+	all_files = ["Makefile", buildfox_name] + all_files
 	includedirs = ["."] + includedirs
-
-	from pprint import pprint
-	pprint(all_files)
-	pprint(defines)
-	pprint(includedirs)
 
 	with open("%s.creator" % prj_name, "w") as f:
 		f.write("[General]\n")
