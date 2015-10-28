@@ -14,6 +14,8 @@ from lib_environment import discover
 from lib_selftest import selftest_setup, selftest_wipe
 from lib_util import cxx_defines, cxx_includedirs
 from lib_ide_vs import gen_vs
+from lib_ide_make import gen_make
+from lib_ide_qtcreator import gen_qtcreator
 from lib_version import VERSION
 
 # core definitions -----------------------------------------------------------
@@ -333,11 +335,21 @@ def main(*argv, **kwargs):
 		engine.load(args.get("in"))
 		engine.save(args.get("out"))
 
-		if args.get("ide") in ["vs", "vs2013"]:
+		ide = args.get("ide")
+
+		if ide in ["vs", "vs2013"]:
 			gen_vs(engine.context.all_files,
 				cxx_defines(engine.variables.get("defines", "")),
 				cxx_includedirs(engine.variables.get("includedirs", "")),
 				args.get("ide_prj"))
+		elif ide in ["make"]:
+			gen_make()
+		elif ide in ["qtcreator"]:
+			gen_qtcreator(engine.context.all_files,
+				cxx_defines(engine.variables.get("defines", "")),
+				cxx_includedirs(engine.variables.get("includedirs", "")),
+				args.get("ide_prj"),
+				args.get("in"))
 
 if __name__ == "__main__":
 	main()
