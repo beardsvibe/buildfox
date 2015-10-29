@@ -81,20 +81,16 @@ vs_reference_prj = r"""<?xml version="1.0" encoding="utf-8"?>
 </Project>"""
 
 vs_reference_flt = r"""<?xml version="1.0" encoding="utf-8"?>
-	<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-	<ItemGroup>
-%%%filters%%%
-	</ItemGroup>
-	<ItemGroup>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 %%%items%%%
-	</ItemGroup>
+%%%filters%%%
 </Project>"""
 
 def gen_vs(all_files, defines, includedirs, prj_name):
 	interest_src_files = {}
 	interest_bin_files = {}
 	for folder, files in all_files.items():
-		folder = os.path.relpath(folder).replace("/", "\\") + "\\"
+		folder = os.path.abspath(folder).replace("/", "\\") + "\\"
 		interest_src = set(filter(lambda n: n.lower().endswith(vs_ext_of_interest_src), files))
 		interest_bin = set(filter(lambda n: n.lower().endswith(vs_ext_of_interest_bin), files))
 		if interest_src:
@@ -114,24 +110,36 @@ def gen_vs(all_files, defines, includedirs, prj_name):
 	prefix = os.path.commonprefix([os.path.abspath(folder) for folder in interest_src_files.keys()])
 	prefix = os.path.dirname(prefix)
 	prefix_len = len(prefix)
-	if prefix_len:
+	if prefix_len and prefix[-1] != "\\":
 		prefix_len += 1 # and add slash to it
 
 	flt_filters = []
 	flt_items = []
-	for folder, files in interest_src_files.items():
-		filter_path = os.path.abspath(folder).replace("/", "\\")[prefix_len:]
+	all_folder_filters = set()
+	for folder in interest_src_files.keys():
+		folder = folder[prefix_len:-1]
+		path = None
+		for subfolder in folder.split("\\"):
+			path = "%s\\%s" % (path, subfolder) if path else subfolder
+			all_folder_filters.add(path)
+
+	for filter_path in all_folder_filters:
 		folder_guid = "{%s}" % str(uuid.uuid5(uuid.NAMESPACE_URL, filter_path)).lower()
 		filter_folder  = "		<Filter Include=\"%s\">\n" % filter_path
 		filter_folder += "			<UniqueIdentifier>%s</UniqueIdentifier>\n" % folder_guid
 		filter_folder += "		</Filter>"
 		flt_filters.append(filter_folder)
+
+	for folder, files in interest_src_files.items():
+		filter_path = folder[prefix_len:-1]
+		flt_items.append("\t<ItemGroup>")
 		for name in files:
 			item  = "		<ClCompile Include=\"%s%s\">\n" % (folder, name)
 			item += "			<Filter>%s</Filter>\n" % filter_path
 			item += "		</ClCompile>"
 			flt_items.append(item)
-	flt_filters = "\n".join(flt_filters)
+		flt_items.append("\t</ItemGroup>")
+	flt_filters = "\t<ItemGroup>\n%s\n\t</ItemGroup>\n" % "\n".join(flt_filters)
 	flt_items = "\n".join(flt_items)
 
 	prj_file = "%s.vcxproj" % prj_name
