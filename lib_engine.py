@@ -126,9 +126,9 @@ class Engine:
 		if not files:
 			return
 		for file in files:
-			dir = os.path.dirname(file)
+			dir, name = os.path.split(file)
 			dir = dir + "/" if dir else "./"
-			self.context.all_files[dir].add(os.path.basename(file))
+			self.context.all_files[dir].add(name)
 
 	def add_generated_files(self, files):
 		if not files:
