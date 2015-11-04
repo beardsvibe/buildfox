@@ -104,11 +104,13 @@ class Engine:
 				else:
 					default = "$%s" % name
 				return prefix + self.variables.get(name, default)
-			text = re_var.sub(repl, text)
 
-			# and finally fix escaped $ but escaped variables
-			if not raw:
-				text = text.replace("$$", "$")
+			if "$" in text:
+				text = re_var.sub(repl, text)
+
+				# and finally fix escaped $ but escaped variables
+				if not raw:
+					text = text.replace("$$", "$")
 
 			return text
 		else:
