@@ -215,7 +215,8 @@ class Engine:
 				name = matchobj.group(2)
 				value = matchobj.group(3)
 				return prefix + self.eval_transform(name, value, eval = False)
-			value = re_path_transform.sub(path_transform, value)
+			if "(" in value:
+				value = re_path_transform.sub(path_transform, value)
 			return self.eval(value)
 		else:
 			return [self.eval_path_transform(str) for str in value]
