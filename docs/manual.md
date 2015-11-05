@@ -540,6 +540,7 @@ Name            | Possible Values       | Description
 --------------- | --------------------- | --------------------------------------------
 variation       | debug                 | build variation, by default is always debug
 toolset_msc     | true or not set       | true if msc toolset is available
+toolset_msc_ver | 2012, 2013 or 2015    | version of msc toolset if it's available
 toolset_clang   | true or not set       | true if clang toolset is available
 toolset_gcc     | true or not set       | true if gcc toolset is available
 toolset         | msc or clang or gcc   | preferred toolset to use, preferences : msc > clang > gcc
