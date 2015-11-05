@@ -6,8 +6,8 @@ import uuid
 vs_ext_of_interest_src = (".c", ".cpp", ".cxx", ".c++", ".cc", ".h", ".hpp", ".hxx")
 vs_ext_of_interest_bin = (".exe")
 
-vs_reference_sln = r"""Microsoft Visual Studio Solution File, Format Version 13.00
-# Visual Studio 2013
+vs_reference_sln = r"""Microsoft Visual Studio Solution File, Format Version %%%format_version%%%.00
+# Visual Studio %%%studio_version%%%
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "%%%name%%%", "%%%file%%%", "%%%guid%%%"
 EndProject
 Global
@@ -17,7 +17,7 @@ Global
 EndGlobal"""
 
 vs_reference_prj = r"""<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="%%%tools_version%%%.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<ItemGroup Label="ProjectConfigurations">
 		<ProjectConfiguration Include="Debug|Win32">
 			<Configuration>Debug</Configuration>
@@ -37,12 +37,12 @@ vs_reference_prj = r"""<?xml version="1.0" encoding="utf-8"?>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
 		<ConfigurationType>Makefile</ConfigurationType>
 		<UseDebugLibraries>true</UseDebugLibraries>
-		<PlatformToolset>v120</PlatformToolset>
+		<PlatformToolset>v%%%platform_version%%%0</PlatformToolset>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
 		<ConfigurationType>Makefile</ConfigurationType>
 		<UseDebugLibraries>false</UseDebugLibraries>
-		<PlatformToolset>v120</PlatformToolset>
+		<PlatformToolset>v%%%platform_version%%%0</PlatformToolset>
 	</PropertyGroup>
 	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
 	<ImportGroup Label="ExtensionSettings">
@@ -86,7 +86,7 @@ vs_reference_flt = r"""<?xml version="1.0" encoding="utf-8"?>
 %%%filters%%%
 </Project>"""
 
-def gen_vs(all_files, defines, includedirs, prj_name):
+def gen_vs(all_files, defines, includedirs, prj_name, ide):
 	interest_src_files = {}
 	interest_bin_files = {}
 	for folder, files in all_files.items():
@@ -142,6 +142,31 @@ def gen_vs(all_files, defines, includedirs, prj_name):
 	flt_filters = "\t<ItemGroup>\n%s\n\t</ItemGroup>\n" % "\n".join(flt_filters)
 	flt_items = "\n".join(flt_items)
 
+	toolset_ver = {
+		"vs": "12",
+		"vs2012": "4",
+		"vs2013": "12",
+		"vs2015": "14"
+	}
+	platform_ver = {
+		"vs": "12",
+		"vs2012": "11",
+		"vs2013": "12",
+		"vs2015": "14"
+	}
+	format_ver = {
+		"vs": "13",
+		"vs2012": "12",
+		"vs2013": "13",
+		"vs2015": "14"
+	}
+	studio_ver = {
+		"vs": "2013",
+		"vs2012": "2012",
+		"vs2013": "2013",
+		"vs2015": "2015"
+	}
+
 	prj_file = "%s.vcxproj" % prj_name
 	prj_guid = "{%s}" % str(uuid.uuid4()).upper()
 	prj_text = vs_reference_prj
@@ -151,12 +176,16 @@ def gen_vs(all_files, defines, includedirs, prj_name):
 	prj_text = prj_text.replace("%%%defines%%%", defines)
 	prj_text = prj_text.replace("%%%includedirs%%%", includedirs)
 	prj_text = prj_text.replace("%%%item_groups%%%", items)
+	prj_text = prj_text.replace("%%%tools_version%%%", toolset_ver.get(ide))
+	prj_text = prj_text.replace("%%%platform_version%%%", platform_ver.get(ide))
 
 	sln_file = "%s.sln" % prj_name
 	sln_text = vs_reference_sln
 	sln_text = sln_text.replace("%%%name%%%", prj_name)
 	sln_text = sln_text.replace("%%%file%%%", prj_file)
 	sln_text = sln_text.replace("%%%guid%%%", prj_guid)
+	sln_text = sln_text.replace("%%%format_version%%%", format_ver.get(ide))
+	sln_text = sln_text.replace("%%%studio_version%%%", studio_ver.get(ide))
 
 	flt_file = "%s.vcxproj.filters" % prj_name
 	flt_text = vs_reference_flt
