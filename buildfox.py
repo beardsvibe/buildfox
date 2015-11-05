@@ -40,13 +40,13 @@ filter toolset:msc
 	rule cc
 		command = $cc $cxxflags $defines $includedirs $disable_warnings /nologo /showIncludes -c $in /Fo$out
 		description = cc $in
-		deps = msvc # ninja call msc as msvc
+		deps = msvc
 		expand = true
 
 	rule cxx
 		command = $cxx $cxxflags $defines $includedirs $disable_warnings /nologo /showIncludes -c $in /Fo$out
 		description = cxx $in
-		deps = msvc # ninja call msc as msvc
+		deps = msvc
 		expand = true
 
 	rule link
@@ -92,7 +92,8 @@ filter toolset:msc
 
 	# code generation
 	cxx_exceptions = /EHsc
-	cxx_no_exceptions = /EHsc- # TODO not sure about this one
+	# TODO not sure about this one
+	cxx_no_exceptions = /EHsc-
 	cxx_seh_exceptions = /EHa
 	cxx_whole_program_optimizations = /GL
 	cxx_rtti = /GR
@@ -256,12 +257,14 @@ filter toolset: r"gcc|clang"
 	transformer libs: -l${param}
 	filter system: Darwin
 		transformer frameworks: -framework ${param}
-	filter system: r"^(?i)(?!darwin).*$" # don't enable this with gcc/clang on non Darwins
+	filter system: r"^(?i)(?!darwin).*$"
+		# don't enable this with gcc/clang on non Darwins
 		transformer frameworks:
 
 	# main flags
 	cxxflags =
-	filter system: r"^(?i)(?!windows).*$" # don't enable this with gcc/clang on Windows
+	filter system: r"^(?i)(?!windows).*$"
+		# don't enable this with gcc/clang on Windows
 		# TODO: We shouldn't have it enabled for every object file.
 		# But we need it to build object files of the shared libraries.
 		cxxflags = -fPIC

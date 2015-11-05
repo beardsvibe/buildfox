@@ -122,10 +122,10 @@ If you develop shared libraries for Windows then you also need to mark symbols f
 
 #### Comments
 
-Comments can be on empty line or in the end of line.
+Comments can be only on empty lines.
 
 	# comment
-	a = 1 # another comment
+	a = 1
 
 #### Print
 
@@ -225,7 +225,8 @@ To build target (outputs) from inputs we use build commands.
 	#   but we know that targets should be build after this file are built
 	#   targets will not be rebuild if order only inputs change
 	build a.txt b.txt | c.txt d.txt: example2 e.txt f.txt | g.txt h.txt || i.txt j.txt
-		somevar = 1 # you can shadow rule variables from build command
+		# you can shadow rule variables from build command
+		somevar = 1
 		somevar2 = 2
 
 Every path in BuildFox can be one of three types : normal path, regex, wildcard.
@@ -296,7 +297,8 @@ Filter allow us to evaluate scope depending on variable state.
 		result = $test
 	filter test: ?oo
 		result += works
-	print $result # should print foo works
+	# should print foo works
+	print $result
 	
 	# you can filter all other operations like build, rules, etc
 	filter c: 2
@@ -311,8 +313,11 @@ Rules define executable command, form arguments and process dependency informati
 		# values of this variables are not evaluated in BuildFox (except for expand)
 		# instead they are evaluated by ninja on moment when rule in triggered
 		# by build command
-		command = some_app $in $out # command is required variable
-		description = building $out # optional description for build log
+		
+		# command is required variable
+		command = some_app $in $out
+		# optional description for build log
+		description = building $out
 	
 	# in case of cpp related rules we have depfile and deps commands
 	rule cxx
@@ -323,7 +328,7 @@ Rules define executable command, form arguments and process dependency informati
 		
 		# gcc provides dependency information through dependecy file (.d)
 		# this line asks ninja to remove this file after the command is finished
-		depfile = $out.d # this will remove
+		depfile = $out.d
 	
 	# for Windows we have commands to use response file
 	rule lib
@@ -389,7 +394,8 @@ By default ninja will start building all targets that are not appear as inputs t
 	build bar.exe: auto bar/*.obj
 	
 	# and we specify default
-	default foo.exe # multiple defaults are also possible
+	# multiple defaults are also possible
+	default foo.exe
 	
 	# now when we run ninja it will only build foo.exe
 	# and too built bar.exe we need to run "ninja bar.exe"
