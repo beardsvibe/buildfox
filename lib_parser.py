@@ -374,17 +374,22 @@ class Parser:
 			while newline_escaped and (self.line_i < len(self.lines)):
 				self.line += self.lines[self.line_i]
 				self.line_i += 1
-				newline_escaped = re_newline_escaped.search(self.line)
-				# TODO replace with proper regex !
-				if newline_escaped:
-					l, r = newline_escaped.span()
-					# in some cases we can have $$, $$$$, etc in the end
-					# which are escaped $ combinations, and they don't escape newline
-					if (r - l) % 2:
-						# in case if they do $, $$$, etc, we need to strip last one
-						self.line = self.line[:-1]
-					else:
-						newline_escaped = None
+				if self.line.endswith("$"):
+					# TODO rewrite this
+					newline_escaped = re_newline_escaped.search(self.line)
+					#newline_escaped = None
+					# TODO replace with proper regex !
+					if newline_escaped:
+						l, r = newline_escaped.span()
+						# in some cases we can have $$, $$$$, etc in the end
+						# which are escaped $ combinations, and they don't escape newline
+						if (r - l) % 2:
+							# in case if they do $, $$$, etc, we need to strip last one
+							self.line = self.line[:-1]
+						else:
+							newline_escaped = None
+				else:
+					newline_escaped = None
 
 			# line is ready for processing
 			self.line_stripped = self.line.strip()
@@ -403,11 +408,12 @@ class Parser:
 				continue
 
 			# slower strip comments
-			comment_eol = re_comment.search(self.line_stripped)
-			if comment_eol:
-				if preserve_comments:
-					self.comments.append(comment_eol.group(1))
-				self.line_stripped = self.line_stripped[:comment_eol.span()[0]].strip()
+			if "#" in self.line_stripped:
+				comment_eol = re_comment.search(self.line_stripped)
+				if comment_eol:
+					if preserve_comments:
+						self.comments.append(comment_eol.group(1))
+					self.line_stripped = self.line_stripped[:comment_eol.span()[0]].strip()
 
 		# if we can't skip empty lines, than just return failure
 		if not self.line_stripped:
