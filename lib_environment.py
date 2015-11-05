@@ -11,6 +11,12 @@ def discover():
 
 	if which("cl") and which("link") and which("lib"):
 		vars["toolset_msc"] = "true"
+		if os.environ.get("VS140COMNTOOLS"):
+			vars["toolset_msc_ver"] = "2015"
+		elif os.environ.get("VS130COMNTOOLS"):
+			vars["toolset_msc_ver"] = "2013"
+		elif os.environ.get("VS120COMNTOOLS"):
+			vars["toolset_msc_ver"] = "2012"
 
 	if which("clang"):
 		vars["toolset_clang"] = "true"
