@@ -7,7 +7,6 @@ keywords = ["rule", "build", "default", "pool", "include", "subninja",
 
 # parser regexes
 re_newline_escaped = re.compile("\$+$")
-re_comment = re.compile("(?<!\$)(?:\$\$)*\#(.*)$") # looking for not escaped #
 re_identifier = re.compile("[a-zA-Z0-9\${}_.-]+")
 re_path = re.compile(r"(r?\"(?:\\\"|.)*?\")|((\$\||\$ |\$:|[^ :|\n])+)")
 
@@ -400,20 +399,12 @@ class Parser:
 					self.empty_lines += 1
 				continue
 
-			# fast strip comment
+			# strip comment
 			if self.line_stripped and self.line_stripped[0] == "#":
 				if preserve_comments:
 					self.comments.append(self.line_stripped[1:])
 				self.line_stripped = ""
 				continue
-
-			# slower strip comments
-			if "#" in self.line_stripped:
-				comment_eol = re_comment.search(self.line_stripped)
-				if comment_eol:
-					if preserve_comments:
-						self.comments.append(comment_eol.group(1))
-					self.line_stripped = self.line_stripped[:comment_eol.span()[0]].strip()
 
 		# if we can't skip empty lines, than just return failure
 		if not self.line_stripped:

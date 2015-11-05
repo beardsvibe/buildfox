@@ -6,9 +6,6 @@
 		"comment": " test comment"
 	},
 	{
-		"comment": " test inline comment"
-	},
-	{
 		"assign": ["a", "1", "="]
 	},
 	{

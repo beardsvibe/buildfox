@@ -2,7 +2,6 @@ rel_path = suite/
 
 
 # test comment
-# test inline comment
 a = 1
 b = some text with escaped newline
 
