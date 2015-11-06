@@ -2,9 +2,6 @@
 
 import re
 
-keywords = ["rule", "build", "default", "pool", "include", "subninja",
-	"subfox", "filter", "auto", "print", "transformer"]
-
 # parser regexes
 re_newline_escaped = re.compile("\$+$")
 re_identifier = re.compile("[a-zA-Z0-9\${}_.-]+")
@@ -255,13 +252,6 @@ class Parser:
 
 	def read_nested_assign(self):
 		name = self.read_identifier()
-		if name in keywords:
-			raise ValueError("unexpected keyword token '%s' in '%s' (%s:%i)" % (
-				name,
-				self.line,
-				self.filename,
-				self.line_num
-			))
 		op = self.read_assign_op()
 		value = self.line_stripped
 		return (name, value, op)
