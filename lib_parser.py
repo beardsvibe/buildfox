@@ -302,15 +302,57 @@ class Parser:
 				))
 
 	def read_path(self):
-		path = re_path.match(self.line_stripped)
-		if not path:
+		i, n = 0, len(self.line_stripped)
+		i_start = None
+		i_end = None
+		raw = False
+		while i < n:
+			c = self.line_stripped[i]
+			if i_start is None:
+				if c == " " or c == "\t":
+					i = i + 1
+				else:
+					i_start = i
+					if c == "r":
+						i = i + 1
+						if i < n and self.line_stripped[i] == "\"":
+							i = i + 1
+							raw = True
+					elif c == "\"":
+						i = i + 1
+						raw = True
+			elif raw:
+				if c == "\\":
+					i = i + 1
+					if i < n and self.line_stripped[i] == "\"":
+						i = i + 1
+				elif c == "\"":
+					i_end = i
+					break
+				else:
+					i = i + 1
+			else:
+				if c == "$":
+					i = i + 1
+					if i < n and self.line_stripped[i] in ["|", " ", ":"]:
+						i = i + 1
+				elif c in [" ", ":", "|", "\n"]:
+					i_end = i - 1
+					break
+				else:
+					i = i + 1
+
+		if i_start is None:
 			raise ValueError("expected token 'path' in '%s' (%s:%i)" % (
 				self.line_stripped,
 				self.filename,
 				self.line_num
 			))
-		self.line_stripped = self.line_stripped[path.span()[1]:].strip()
-		return path.group()
+		if not i_end:
+			i_end = n - i_start
+		path = self.line_stripped[i_start:i_end + 1]
+		self.line_stripped = self.line_stripped[i_end + 1:].lstrip()
+		return path
 
 	def read_eol(self):
 		if self.line_stripped:
