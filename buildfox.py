@@ -15,6 +15,7 @@ from lib_selftest import selftest_setup, selftest_wipe
 from lib_util import cxx_defines, cxx_includedirs
 from lib_ide_vs import gen_vs
 from lib_ide_make import gen_make
+from lib_ide_cmake import gen_cmake
 from lib_ide_qtcreator import gen_qtcreator
 from lib_version import VERSION
 
@@ -349,10 +350,15 @@ def main(*argv, **kwargs):
 				args.get("ide_prj"),
 				ide)
 		elif ide in ["make"]:
-			gen_make()
+			gen_make(args.get("in"))
 		elif ide in ["qtcreator"]:
 			gen_qtcreator(engine.context.all_files,
 				cxx_defines(engine.variables.get("defines", "")),
+				cxx_includedirs(engine.variables.get("includedirs", "")),
+				args.get("ide_prj"),
+				args.get("in"))
+		elif ide in ["cmake"]:
+			gen_cmake(engine.context.all_files,
 				cxx_includedirs(engine.variables.get("includedirs", "")),
 				args.get("ide_prj"),
 				args.get("in"))
