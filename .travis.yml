@@ -1,18 +1,24 @@
 language: python
-python:
-  - "2.7"
-  - "3.3"
-  - "3.5"
+matrix:
+  include:
+    - python: 2.7
+    - python: 3.3
+    - python: 3.5
+    - language: generic
+      os: osx
 install:
+  - echo building on $TRAVIS_OS_NAME
+  - if [ "$TRAVIS_OS_NAME" == "osx" ] ; then brew install python ; fi
   - pip install deepdiff
   - pip install coveralls
   - mkdir -p .bins
   - cd .bins
-  - wget https://github.com/martine/ninja/releases/download/v1.4.0/ninja-linux.zip -O ninja-linux-14.zip
-  - wget https://github.com/martine/ninja/releases/download/v1.6.0/ninja-linux.zip -O ninja-linux-16.zip
-  - unzip ninja-linux-14.zip
+  - if [ "$TRAVIS_OS_NAME" == "osx" ] ; then NINJA_ZIP=mac ; else NINJA_ZIP=linux ; fi
+  - wget https://github.com/martine/ninja/releases/download/v1.4.0/ninja-${NINJA_ZIP}.zip -O ninja-14.zip
+  - wget https://github.com/martine/ninja/releases/download/v1.6.0/ninja-${NINJA_ZIP}.zip -O ninja-16.zip
+  - unzip ninja-14.zip
   - mv ninja ninja_14
-  - unzip ninja-linux-16.zip
+  - unzip ninja-16.zip
   - mv ninja ninja_16
   - chmod +x ninja_14
   - chmod +x ninja_16
@@ -31,4 +37,4 @@ script:
   - python deploy.py
   - python __init__.py --selftest
 after_success:
-  coveralls
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then coveralls ; fi
