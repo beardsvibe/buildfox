@@ -324,3 +324,11 @@ def cxx_includedirs(includedirs):
 	dirs = [dir[2:] if dir.startswith("/I") or dir.startswith("-I") else dir for dir in dirs]
 	dirs = filter(lambda d: len(d), dirs)
 	return list(dirs)
+
+# find files of intereset in provided all files dict
+def cxx_findfiles(all_files):
+	ext_of_interest_src = (".c", ".cpp", ".cxx", ".c++", ".cc", ".h", ".hpp", ".hxx")
+	return ["%s%s" % ("" if folder == "./" else folder, name)
+			for folder, names in all_files.items()
+				for name in names
+					if name.lower().endswith(ext_of_interest_src)]
