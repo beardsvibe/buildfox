@@ -37,4 +37,4 @@ script:
   - python deploy.py
   - python __init__.py --selftest
 after_success:
-  - if [ "$TRAVIS_OS_NAME" == "osx" ] ; then coveralls ; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then coveralls ; fi
