@@ -291,6 +291,8 @@ def main(*argv, **kwargs):
 		help = "disable parsing fox core definitions", default = True, dest = "core")
 	argsparser.add_argument("--no-env", action = "store_false",
 		help = "disable environment discovery", default = True, dest = "env")
+	argsparser.add_argument("-n", "--ninja-ide-gen", action = "store_true",
+		help = "enables ninja ide generator mode (equal to --no-core --no-env)", default = False, dest = "ninja_ide_gen")
 	argsparser.add_argument("--selftest", action = "store_true",
 		help = "run self test", default = False, dest = "selftest")
 	argsparser.add_argument("--ver,--version", action = "store_true",
@@ -300,6 +302,12 @@ def main(*argv, **kwargs):
 	if args.get("show_ver"):
 		print(title)
 		sys.exit(0)
+
+	if args.get("ninja_ide_gen"):
+		args["core"] = False
+		args["env"] = False
+		args["in"] = "build.ninja" if args.get("in") == "build.fox" else args.get("in")
+		args["out"] = ""
 
 	if args.get("workdir"):
 		os.chdir(args.get("workdir"))
@@ -337,7 +345,8 @@ def main(*argv, **kwargs):
 			sys.exit(1)
 	else:
 		engine.load(args.get("in"))
-		engine.save(args.get("out"))
+		if len(args.get("out")):
+			engine.save(args.get("out"))
 
 		ide = args.get("ide")
 
@@ -350,7 +359,7 @@ def main(*argv, **kwargs):
 				args.get("ide_prj"),
 				ide)
 		elif ide in ["make"]:
-			gen_make(args.get("in"))
+			gen_make(args.get("in"), args.get("ninja_ide_gen"))
 		elif ide in ["qtcreator"]:
 			gen_qtcreator(engine.context.all_files,
 				cxx_defines(engine.variables.get("defines", "")),
