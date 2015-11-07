@@ -1,18 +1,23 @@
 language: python
-python:
-  - "2.7"
-  - "3.3"
-  - "3.5"
+env: NINJA_ZIP=linux
+matrix:
+  include:
+    #- python: 2.7
+    #- python: 3.3
+    #- python: 3.5
+    - language: generic
+      os: osx
+      env: NINJA_ZIP=mac
 install:
   - pip install deepdiff
   - pip install coveralls
   - mkdir -p .bins
   - cd .bins
-  - wget https://github.com/martine/ninja/releases/download/v1.4.0/ninja-linux.zip -O ninja-linux-14.zip
-  - wget https://github.com/martine/ninja/releases/download/v1.6.0/ninja-linux.zip -O ninja-linux-16.zip
-  - unzip ninja-linux-14.zip
+  - wget https://github.com/martine/ninja/releases/download/v1.4.0/ninja-${NINJA_ZIP}.zip -O ninja-14.zip
+  - wget https://github.com/martine/ninja/releases/download/v1.6.0/ninja-${NINJA_ZIP}.zip -O ninja-16.zip
+  - unzip ninja-14.zip
   - mv ninja ninja_14
-  - unzip ninja-linux-16.zip
+  - unzip ninja-16.zip
   - mv ninja ninja_16
   - chmod +x ninja_14
   - chmod +x ninja_16
