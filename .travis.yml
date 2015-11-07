@@ -1,12 +1,13 @@
 language: python
 matrix:
   include:
-    #- python: 2.7
-    #- python: 3.3
-    #- python: 3.5
+    - python: 2.7
+    - python: 3.3
+    - python: 3.5
     - language: generic
       os: osx
 install:
+  - echo building on $TRAVIS_OS_NAME
   - if [ "$TRAVIS_OS_NAME" == "osx" ] ; then brew install python ; fi
   - pip install deepdiff
   - pip install coveralls
@@ -36,4 +37,4 @@ script:
   - python deploy.py
   - python __init__.py --selftest
 after_success:
-  coveralls
+  - if [ "$TRAVIS_OS_NAME" == "osx" ] ; then coveralls ; fi
