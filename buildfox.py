@@ -346,7 +346,7 @@ def main(*argv, **kwargs):
 	else:
 		engine.load(args.get("in"))
 		if len(args.get("out")):
-		engine.save(args.get("out"))
+			engine.save(args.get("out"))
 
 		ide = args.get("ide")
 
@@ -359,7 +359,7 @@ def main(*argv, **kwargs):
 				args.get("ide_prj"),
 				ide)
 		elif ide in ["make"]:
-			gen_make(args.get("in"))
+			gen_make(args.get("in"), args.get("ninja_ide_gen"))
 		elif ide in ["qtcreator"]:
 			gen_qtcreator(engine.context.all_files,
 				cxx_defines(engine.variables.get("defines", "")),
