@@ -9,7 +9,7 @@ project(%s)
 include_directories("%s")
 add_custom_target(
   build
-  ALL bf%s && ninja
+  ALL ninja
   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   SOURCES "%s"
 )
@@ -26,6 +26,5 @@ add_custom_target(
 		f.write(text % (
 			prj_name,
 			";".join(includedirs),
-			" -i " + buildfox_name if buildfox_name != "build.fox" else "",
 			";".join(all_files)
 		))
