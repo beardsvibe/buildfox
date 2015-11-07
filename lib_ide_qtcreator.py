@@ -5,7 +5,7 @@ from lib_ide_make import gen_make
 qtcreator_ext_of_interest_src = (".c", ".cpp", ".cxx", ".c++", ".cc", ".h", ".hpp", ".hxx")
 
 def gen_qtcreator(all_files, defines, includedirs, prj_name, buildfox_name):
-	gen_make()
+	gen_make(buildfox_name)
 
 	all_files = ["%s%s" % ("" if folder == "./" else folder, name)
 		for folder, names in all_files.items()

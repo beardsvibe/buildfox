@@ -349,7 +349,7 @@ def main(*argv, **kwargs):
 				args.get("ide_prj"),
 				ide)
 		elif ide in ["make"]:
-			gen_make()
+			gen_make(args.get("in"))
 		elif ide in ["qtcreator"]:
 			gen_qtcreator(engine.context.all_files,
 				cxx_defines(engine.variables.get("defines", "")),
