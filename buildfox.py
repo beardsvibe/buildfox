@@ -359,7 +359,6 @@ def main(*argv, **kwargs):
 				args.get("in"))
 		elif ide in ["cmake"]:
 			gen_cmake(engine.context.all_files,
-				cxx_defines(engine.variables.get("defines", "")),
 				cxx_includedirs(engine.variables.get("includedirs", "")),
 				args.get("ide_prj"),
 				args.get("in"))
