@@ -327,7 +327,7 @@ def cxx_includedirs(includedirs):
 
 # find files of intereset in provided all files dict
 def cxx_findfiles(all_files):
-	ext_of_interest_src = (".c", ".cpp", ".cxx", ".c++", ".cc", ".h", ".hpp", ".hxx")
+	ext_of_interest_src = (".c", ".cpp", ".cxx", ".c++", ".cc", ".h", ".hpp", ".hxx", ".in")
 	return ["%s%s" % ("" if folder == "./" else folder, name)
 			for folder, names in all_files.items()
 				for name in names
