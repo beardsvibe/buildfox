@@ -5,8 +5,8 @@ from lib_util import cxx_findfiles
 
 qtcreator_ext_of_interest_src = (".c", ".cpp", ".cxx", ".c++", ".cc", ".h", ".hpp", ".hxx")
 
-def gen_qtcreator(all_files, defines, includedirs, prj_name, buildfox_name):
-	gen_make(buildfox_name)
+def gen_qtcreator(all_files, defines, includedirs, prj_name, buildfox_name, ninja_gen_mode):
+	gen_make(buildfox_name, ninja_gen_mode)
 
 	all_files = ["Makefile", buildfox_name] + cxx_findfiles(all_files)
 	includedirs = ["."] + includedirs

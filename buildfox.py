@@ -353,21 +353,27 @@ def main(*argv, **kwargs):
 		if ide in ["vs", "vs2012", "vs2013", "vs2015"]:
 			if ide == "vs":
 				ide = "vs" + engine.variables.get("toolset_msc_ver", "")
-			gen_vs(engine.context.all_files,
+			gen_vs(
+				engine.context.all_files,
 				cxx_defines(engine.variables.get("defines", "")),
 				cxx_includedirs(engine.variables.get("includedirs", "")),
 				args.get("ide_prj"),
 				ide)
 		elif ide in ["make"]:
-			gen_make(args.get("in"), args.get("ninja_ide_gen"))
+			gen_make(
+				args.get("in"),
+				args.get("ninja_ide_gen"))
 		elif ide in ["qtcreator"]:
-			gen_qtcreator(engine.context.all_files,
+			gen_qtcreator(
+				engine.context.all_files,
 				cxx_defines(engine.variables.get("defines", "")),
 				cxx_includedirs(engine.variables.get("includedirs", "")),
 				args.get("ide_prj"),
-				args.get("in"))
+				args.get("in"),
+				args.get("ninja_ide_gen"))
 		elif ide in ["cmake"]:
-			gen_cmake(engine.context.all_files,
+			gen_cmake(
+				engine.context.all_files,
 				cxx_includedirs(engine.variables.get("includedirs", "")),
 				args.get("ide_prj"),
 				args.get("in"))
