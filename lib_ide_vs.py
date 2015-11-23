@@ -98,8 +98,11 @@ def gen_vs(all_files, defines, includedirs, prj_name, ide):
 		if interest_bin:
 			interest_bin_files[folder] = interest_bin
 
-	output = ", ".join(["%s%s" % (folder, name)
-		for folder, files in interest_bin_files.items() for name in files])
+	output = ["%s%s" % (folder, name)
+		for folder, files in interest_bin_files.items() for name in files]
+	if len(output) > 1:
+		print("more then one generated file is present, so we are choosing '%s' from all generated files :\n%s" % (output[0], "\n".join(output)))
+		output = output[0]
 	items = "\n".join(["		<ClCompile Include=\"%s%s\"/>" % (folder, name)
 		for folder, files in interest_src_files.items() for name in files])
 
