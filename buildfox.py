@@ -377,6 +377,8 @@ def main(*argv, **kwargs):
 				cxx_includedirs(engine.variables.get("includedirs", "")),
 				args.get("ide_prj"),
 				args.get("in"))
+		else:
+			raise ValueError("unknown ide '%s'" % ide)
 
 if __name__ == "__main__":
 	#import cProfile, pstats, io
