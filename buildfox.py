@@ -377,7 +377,7 @@ def main(*argv, **kwargs):
 				cxx_includedirs(engine.variables.get("includedirs", "")),
 				args.get("ide_prj"),
 				args.get("in"))
-		else:
+		elif ide is not None:
 			raise ValueError("unknown ide '%s'" % ide)
 
 if __name__ == "__main__":
