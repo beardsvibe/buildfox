@@ -383,7 +383,7 @@ def main(*argv, **kwargs):
 				args.get("in"),
 				args.get("ide_env"))
 		elif ide is not None:
-			raise ValueError("unknown ide '%s'" % ide)
+			raise ValueError("unknown ide '%s', available ide's : vs, vs2012, vs2013, vs2015, make, qtcreator, cmake" % ide)
 
 if __name__ == "__main__":
 	#import cProfile, pstats, io

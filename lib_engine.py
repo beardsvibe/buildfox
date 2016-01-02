@@ -140,7 +140,7 @@ class Engine:
 			dir = dir + "/" if dir else "./"
 			name = os.path.basename(file)
 			if name in self.context.generated[dir]:
-				raise ValueError("two or more commands generate '%s' in '%s' (%s:%i)" % (
+				raise ValueError("two or more commands generate target '%s' in '%s' (%s:%i), each target must be generated only once" % (
 					file,
 					self.current_line,
 					self.filename,
@@ -178,10 +178,14 @@ class Engine:
 			# if everything match - return rule name and variables
 			return rule_name, auto[2]
 		# if no rule found then just fail and optionally return None 
-		raise ValueError("unable to deduce auto rule in '%s', please check if your file extensions are supported by current toolchain (%s:%i)" % (
+		raise ValueError(("unable to deduce auto rule in '%s', " +
+			"please check if your file extensions are supported by current toolchain (%s:%i) " +
+			"please also mind that file extensions like object files ('.o' and '.obj') and " + 
+			"executables may differ between platforms, so you should use transforms to make them work, " +
+			"for example 'build obj(*): auto *.cpp' instead of 'build *.obj: auto *.cpp'") % (
 			self.current_line,
 			self.filename,
-			self.current_line_i,
+			self.current_line_i
 		))
 		return None, None
 
@@ -313,11 +317,12 @@ class Engine:
 
 		# rule should exist
 		if rule_name != "phony" and rule_name not in self.rules:
-			raise ValueError("unknown rule %s at '%s' (%s:%i)" % (
+			raise ValueError("unknown rule %s at '%s' (%s:%i), available rules : %s" % (
 				rule_name,
 				self.current_line,
 				self.filename,
 				self.current_line_i,
+				" ".join(list(self.rules.keys()) + ["auto", "phony"])
 			))
 
 		# you probably want to match some files
@@ -342,7 +347,7 @@ class Engine:
 			# TODO probably this expand implementation is not enough
 
 			if len(targets_explicit) != len(inputs_explicit):
-				raise ValueError("cannot expand rule %s because of different amount of targets and inputs at '%s' (%s:%i)" % (
+				raise ValueError("cannot expand rule %s because of different amount of explicit generated targets and explicit inputs at '%s' (%s:%i), to expand this rule build command must have equal amounts of explicit targets and explicit inputs, for example \"build a b c: rule i j k\"" % (
 					rule_name,
 					self.current_line,
 					self.filename,
