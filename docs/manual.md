@@ -46,6 +46,11 @@ So the simplest way to build a simple application with BuildFox is just this :
 
 First line is compiling object files from .cpp files, and second line is linking final application from object files. ```obj(*)``` is equal to ```*.obj``` on Windows and ```*.o``` on others machines. ```app(helloworld)``` is equal to ```helloworld.exe``` on Windows and ```helloworld``` on others machines. ```auto``` is a name of a rule which will build our output files (object or application) from inputs files (cpp or object) by calling required compiler executables.
 
+**Please mind that this one is incorrect :**
+
+	build *.obj: auto *.cpp # will fail on non Windows machines or non MSC compiler
+	build helloworld.exe: auto *.obj
+
 What if we want to compile static library for target "lib" and dynamic library for target "sharedlib" ? Then we use filters :
 
 	# building objects
