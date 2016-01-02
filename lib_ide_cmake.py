@@ -11,7 +11,7 @@ add_custom_target(
   build
   ALL %s
   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-  SOURCES "%s"
+  %s
   VERBATIM
 )
 """
@@ -21,7 +21,7 @@ add_custom_target(
 			cmd_env = cmd_env.replace(chr, "\\" + chr)
 		cmd_env = cmd_env.replace("$", "\\$")
 
-	all_files = cxx_findfiles(all_files)
+	all_files = ["\"%s\"" % file for file in cxx_findfiles(all_files)]
 	includedirs = ["."] + includedirs
 
 	with open(filename, "w") as f:
@@ -29,5 +29,5 @@ add_custom_target(
 			prj_name,
 			";".join(includedirs),
 			cmd_env + " COMMAND ninja" if cmd_env else "ninja",
-			";".join(all_files)
+			"SOURCES" + " ".join(all_files) if all_files else ""
 		))
