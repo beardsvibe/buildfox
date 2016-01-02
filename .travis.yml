@@ -42,12 +42,12 @@ script:
   - python __init__.py --selftest
   - cd ../examples/console_app/simple
   - ls -al
-  - bf --ide make --ide-env "touch _test.txt"
+  - bf --ide make --ide-env \"touch _test.txt\"
   - ls -al
   - make
   - if [ ! -f "_test.txt" ] ; then exit 1 ; fi
   - cd ../includepath
-  - bf --ide cmake --ide-env "touch _test2.txt"
+  - bf --ide cmake --ide-env \"touch _test2.txt\"
   - cmake -G "Unix Makefiles"
   - make
   - if [ ! -f "_test2.txt" ] ; then exit 1 ; fi
