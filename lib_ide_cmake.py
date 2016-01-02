@@ -9,11 +9,20 @@ project(%s)
 include_directories("%s")
 add_custom_target(
   build
-  ALL ninja
+  ALL %s
   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   SOURCES "%s"
+  VERBATIM
 )
 """
+
+	#cmd_env = "echo asd ${test} asd"
+	cmd_env = None
+	if cmd_env:
+		for chr in ["\\", "\"", "(", ")", "#", "^"]:
+			cmd_env = cmd_env.replace(chr, "\\" + chr)
+		cmd_env = cmd_env.replace("$", "\\$")
+
 	all_files = [buildfox_name] + cxx_findfiles(all_files)
 	includedirs = ["."] + includedirs
 
@@ -21,5 +30,6 @@ add_custom_target(
 		f.write(text % (
 			prj_name,
 			";".join(includedirs),
+			cmd_env + " COMMAND ninja" if cmd_env else "ninja",
 			";".join(all_files)
 		))

@@ -2,6 +2,7 @@
 
 import os
 import uuid
+from xml.sax import saxutils
 
 vs_ext_of_interest_src = (".c", ".cpp", ".cxx", ".c++", ".cc", ".h", ".hpp", ".hxx")
 vs_ext_of_interest_bin = (".exe")
@@ -55,18 +56,18 @@ vs_reference_prj = r"""<?xml version="1.0" encoding="utf-8"?>
 	</ImportGroup>
 	<PropertyGroup Label="UserMacros" />
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-		<NMakeBuildCommandLine>ninja</NMakeBuildCommandLine>
+		<NMakeBuildCommandLine>%%%nmake_build%%%</NMakeBuildCommandLine>
 		<NMakeOutput>%%%output%%%</NMakeOutput>
-		<NMakeCleanCommandLine>ninja -t clean</NMakeCleanCommandLine>
-		<NMakeReBuildCommandLine>ninja -t clean &amp;&amp; ninja</NMakeReBuildCommandLine>
+		<NMakeCleanCommandLine>%%%nmake_clean%%%</NMakeCleanCommandLine>
+		<NMakeReBuildCommandLine>%%%nmake_rebuild%%%</NMakeReBuildCommandLine>
 		<NMakePreprocessorDefinitions>%%%defines%%%$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
 		<NMakeIncludeSearchPath>%%%includedirs%%%$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-		<NMakeBuildCommandLine>ninja</NMakeBuildCommandLine>
+		<NMakeBuildCommandLine>%%%nmake_build%%%</NMakeBuildCommandLine>
 		<NMakeOutput>%%%output%%%</NMakeOutput>
-		<NMakeCleanCommandLine>ninja -t clean</NMakeCleanCommandLine>
-		<NMakeReBuildCommandLine>ninja -t clean &amp;&amp; ninja</NMakeReBuildCommandLine>
+		<NMakeCleanCommandLine>%%%nmake_clean%%%</NMakeCleanCommandLine>
+		<NMakeReBuildCommandLine>%%%nmake_rebuild%%%</NMakeReBuildCommandLine>
 		<NMakePreprocessorDefinitions>%%%defines%%%$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
 		<NMakeIncludeSearchPath>%%%includedirs%%%$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
 	</PropertyGroup>
@@ -87,6 +88,8 @@ vs_reference_flt = r"""<?xml version="1.0" encoding="utf-8"?>
 </Project>"""
 
 def gen_vs(all_files, defines, includedirs, prj_name, ide):
+	cmd_env = "wow # $"
+
 	interest_src_files = {}
 	interest_bin_files = {}
 	for folder, files in all_files.items():
@@ -102,7 +105,7 @@ def gen_vs(all_files, defines, includedirs, prj_name, ide):
 		for folder, files in interest_bin_files.items() for name in files]
 	if len(output) > 1:
 		print("more then one generated file is present, so we are choosing '%s' from all generated files :\n%s" % (output[0], "\n".join(output)))
-		output = output[0]
+	output = output[0]
 	items = "\n".join(["		<ClCompile Include=\"%s%s\"/>" % (folder, name)
 		for folder, files in interest_src_files.items() for name in files])
 
@@ -145,6 +148,8 @@ def gen_vs(all_files, defines, includedirs, prj_name, ide):
 	flt_filters = "\t<ItemGroup>\n%s\n\t</ItemGroup>\n" % "\n".join(flt_filters)
 	flt_items = "\n".join(flt_items)
 
+	cmd_env = cmd_env + " && " if cmd_env else ""
+
 	toolset_ver = {
 		"vs": "12",
 		"vs2012": "4",
@@ -181,6 +186,9 @@ def gen_vs(all_files, defines, includedirs, prj_name, ide):
 	prj_text = prj_text.replace("%%%item_groups%%%", items)
 	prj_text = prj_text.replace("%%%tools_version%%%", toolset_ver.get(ide))
 	prj_text = prj_text.replace("%%%platform_version%%%", platform_ver.get(ide))
+	prj_text = prj_text.replace("%%%nmake_build%%%", saxutils.escape(cmd_env + "ninja"))
+	prj_text = prj_text.replace("%%%nmake_clean%%%", saxutils.escape("ninja -t clean"))
+	prj_text = prj_text.replace("%%%nmake_rebuild%%%", saxutils.escape(cmd_env + "ninja -t clean && ninja"))
 
 	sln_file = "%s.sln" % prj_name
 	sln_text = vs_reference_sln
