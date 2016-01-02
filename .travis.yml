@@ -26,7 +26,7 @@ install:
   - ./ninja_14 --version
   - ./ninja_16 --version
   - ./ninja --version
-  - echo "python $PWD/../buildfox.py" > bf
+  - echo 'python $PWD/../buildfox.py $@' > bf
   - chmod +x bf
   - PATH=$PWD:$PATH
   - cd ..
