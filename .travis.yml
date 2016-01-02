@@ -37,15 +37,10 @@ script:
   - python deploy.py
   - python __init__.py --selftest
   - cd ..
-  - alias bf="python $PWD/buildfox.py"
-  - cd examples/console_app/simple
-  - bf --ide make --ide-env "touch _test.txt"
-  - make
+  - alias bf="python $PWD/buildfox.py" && cd examples/console_app/simple && bf --ide make --ide-env "touch _test.txt" && make
   - if [ ! -f "_test.txt" ] ; then exit 1 ; fi
   - cd ../includepath
-  - bf --ide cmake --ide-env "touch _test2.txt"
-  - cmake -G "Unix Makefiles"
-  - make
+  - alias bf="python $PWD/buildfox.py" && bf --ide cmake --ide-env "touch _test2.txt" && cmake -G "Unix Makefiles" && make
   - if [ ! -f "_test2.txt" ] ; then exit 1 ; fi
 after_success:
   - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then coveralls ; fi
