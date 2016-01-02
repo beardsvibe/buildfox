@@ -21,7 +21,7 @@ add_custom_target(
 			cmd_env = cmd_env.replace(chr, "\\" + chr)
 		cmd_env = cmd_env.replace("$", "\\$")
 
-	all_files = [buildfox_name] + cxx_findfiles(all_files)
+	all_files = cxx_findfiles(all_files)
 	includedirs = ["."] + includedirs
 
 	with open(filename, "w") as f:
