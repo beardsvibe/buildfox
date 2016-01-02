@@ -26,6 +26,8 @@ install:
   - ./ninja_14 --version
   - ./ninja_16 --version
   - ./ninja --version
+  - echo "python $PWD/../buildfox.py" > bf
+  - chmod +x bf
   - PATH=$PWD:$PATH
   - cd ..
 script:
@@ -36,11 +38,14 @@ script:
   - coverage combine
   - python deploy.py
   - python __init__.py --selftest
-  - cd ..
-  - alias bf="python $PWD/buildfox.py" && cd examples/console_app/simple && bf --ide make --ide-env "touch _test.txt" && make
+  - cd ../examples/console_app/simple
+  - bf --ide make --ide-env "touch _test.txt"
+  - make
   - if [ ! -f "_test.txt" ] ; then exit 1 ; fi
   - cd ../includepath
-  - alias bf="python $PWD/buildfox.py" && bf --ide cmake --ide-env "touch _test2.txt" && cmake -G "Unix Makefiles" && make
+  - bf --ide cmake --ide-env "touch _test2.txt"
+  - cmake -G "Unix Makefiles"
+  - make
   - if [ ! -f "_test2.txt" ] ; then exit 1 ; fi
 after_success:
   - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then coveralls ; fi
