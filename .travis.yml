@@ -1,11 +1,11 @@
 language: python
 matrix:
   include:
-    - python: 2.7
-    - python: 3.3
+    #- python: 2.7
+    #- python: 3.3
     - python: 3.5
-    - language: generic
-      os: osx
+    #- language: generic
+    #  os: osx
 install:
   - echo building on $TRAVIS_OS_NAME
   - if [ "$TRAVIS_OS_NAME" == "osx" ] ; then brew install python ; fi
@@ -28,6 +28,8 @@ install:
   - ./ninja --version
   - echo python "$PWD"/../buildfox.py '$@' > bf
   - chmod +x bf
+  - cat bf
+  - ./bf -h
   - PATH=$PWD:$PATH
   - cd ..
 script:
