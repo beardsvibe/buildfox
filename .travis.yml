@@ -36,5 +36,14 @@ script:
   - coverage combine
   - python deploy.py
   - python __init__.py --selftest
+  - cd ../examples/console_app/simple
+  - python ../../../buildfox.py --ide make --ide-env "touch _test.txt"
+  - make
+  - if [ ! -f "_test.txt" ] ; then exit 1 ; fi
+  - cd ../includepath
+  - python ../../../buildfox.py --ide cmake --ide-env "touch _test2.txt"
+  - cmake -G "Unix Makefiles"
+  - make
+  - if [ ! -f "_test2.txt" ] ; then exit 1 ; fi
 after_success:
   - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then coveralls ; fi
