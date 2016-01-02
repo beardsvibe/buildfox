@@ -51,5 +51,6 @@ script:
   - cmake -G "Unix Makefiles"
   - make
   - if [ ! -f "_test2.txt" ] ; then exit 1 ; fi
+  - cd ../../../tools
 after_success:
   - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then coveralls ; fi
