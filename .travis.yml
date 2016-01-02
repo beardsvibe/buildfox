@@ -27,8 +27,6 @@ install:
   - ./ninja_16 --version
   - ./ninja --version
   - PATH=$PWD:$PATH
-  - cd ..
-  - alias bf='python $PWD/buildfox.py'
 script:
   - cd tools
   - coverage run --source=.. --omit=tests.py tests.py --compiler clang --ninja ninja_16
@@ -37,7 +35,9 @@ script:
   - coverage combine
   - python deploy.py
   - python __init__.py --selftest
-  - cd ../examples/console_app/simple
+  - cd ..
+  - alias bf="python $PWD/buildfox.py"
+  - cd examples/console_app/simple
   - bf --ide make --ide-env "touch _test.txt"
   - make
   - if [ ! -f "_test.txt" ] ; then exit 1 ; fi
