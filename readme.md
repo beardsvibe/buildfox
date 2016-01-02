@@ -15,9 +15,15 @@ Building project
 
 	bf && ninja
 
-Generating MSVS solution
+Generating IDE solution
 
-	bf --ide vs
+	bf --ide vs # this will autoselect proper version of vs
+	bf --ide vs2012
+	bf --ide vs2013
+	bf --ide vs2015
+	bf --ide qtcreator
+	bf --ide cmake # for cmake based IDE's
+	bf --ide make # useful in some cases
 
 ### Resources
 

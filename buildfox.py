@@ -287,6 +287,7 @@ def main(*argv, **kwargs):
 	#argsparser.add_argument("-v", "--verbose", action = "store_true", help = "verbose output") # TODO
 	argsparser.add_argument("--ide", help = "generate ide solution (vs, vs2013)", default = None, dest = "ide")
 	argsparser.add_argument("--ide-prj", help = "ide project prefix", default = "build")
+	argsparser.add_argument("--ide-env", help = "run provided command to set required environment before calling ninja from the ide", default = None)
 	argsparser.add_argument("--no-core", action = "store_false",
 		help = "disable parsing fox core definitions", default = True, dest = "core")
 	argsparser.add_argument("--no-env", action = "store_false",
@@ -358,10 +359,12 @@ def main(*argv, **kwargs):
 				cxx_defines(engine.variables.get("defines", "")),
 				cxx_includedirs(engine.variables.get("includedirs", "")),
 				args.get("ide_prj"),
-				ide)
+				ide,
+				args.get("ide_env"))
 		elif ide in ["make"]:
 			gen_make(
 				args.get("in"),
+				args.get("ide_env"),
 				args.get("ninja_ide_gen"))
 		elif ide in ["qtcreator"]:
 			gen_qtcreator(
@@ -370,13 +373,15 @@ def main(*argv, **kwargs):
 				cxx_includedirs(engine.variables.get("includedirs", "")),
 				args.get("ide_prj"),
 				args.get("in"),
+				args.get("ide_env"),
 				args.get("ninja_ide_gen"))
 		elif ide in ["cmake"]:
 			gen_cmake(
 				engine.context.all_files,
 				cxx_includedirs(engine.variables.get("includedirs", "")),
 				args.get("ide_prj"),
-				args.get("in"))
+				args.get("in"),
+				args.get("ide_env"))
 		elif ide is not None:
 			raise ValueError("unknown ide '%s'" % ide)
 
