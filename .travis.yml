@@ -27,6 +27,7 @@ install:
   - ./ninja_16 --version
   - ./ninja --version
   - PATH=$PWD:$PATH
+  - cd ..
 script:
   - cd tools
   - coverage run --source=.. --omit=tests.py tests.py --compiler clang --ninja ninja_16
