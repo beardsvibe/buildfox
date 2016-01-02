@@ -20,3 +20,8 @@ test_script:
   - python deploy.py
   - python __init__.py --selftest
   - cd ..
+  - cd examples\console_app\simple
+  - python ..\..\..\buildfox.py --ide vs --ide-env "copy NUL _test1.txt"
+  - msbuild build.vcxproj /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - if not exist _test1.txt "exit 1"
+  - cd ..\..\..
