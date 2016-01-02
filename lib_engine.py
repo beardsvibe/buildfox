@@ -178,10 +178,14 @@ class Engine:
 			# if everything match - return rule name and variables
 			return rule_name, auto[2]
 		# if no rule found then just fail and optionally return None 
-		raise ValueError("unable to deduce auto rule in '%s', please check if your file extensions are supported by current toolchain (%s:%i)" % (
+		raise ValueError(("unable to deduce auto rule in '%s', " +
+			"please check if your file extensions are supported by current toolchain (%s:%i) " +
+			"please also mind that file extensions like object files ('.o' and '.obj') and " + 
+			"executables may differ between platforms, so you should use transforms to make them work, " +
+			"for example 'build obj(*): auto *.cpp' instead of 'build *.obj: auto *.cpp'") % (
 			self.current_line,
 			self.filename,
-			self.current_line_i,
+			self.current_line_i
 		))
 		return None, None
 
