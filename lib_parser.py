@@ -26,7 +26,7 @@ class Parser:
 		while self.next_line():
 			# root objects must have zero whitespace offset
 			if self.whitespace != 0:
-				raise ValueError("unexpected indentation in '%s' (%s:%i)" % (
+				raise ValueError("unexpected indentation in '%s' (%s:%i), root entries must have zero whitespace identation" % (
 					self.line,
 					self.filename,
 					self.line_num

@@ -31,7 +31,7 @@ def discover():
 	elif vars.get("toolset_gcc"):
 		vars["toolset"] = "gcc"
 	else:
-		raise ValueError("Can't find any compiler")
+		raise ValueError("Can't find any compiler, expected cl, clang, gcc executables")
 
 	if not which("ninja"):
 		print("Warning ! Can't find ninja executable")
