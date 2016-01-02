@@ -87,9 +87,7 @@ vs_reference_flt = r"""<?xml version="1.0" encoding="utf-8"?>
 %%%filters%%%
 </Project>"""
 
-def gen_vs(all_files, defines, includedirs, prj_name, ide):
-	cmd_env = "wow # $"
-
+def gen_vs(all_files, defines, includedirs, prj_name, ide, cmd_env):
 	interest_src_files = {}
 	interest_bin_files = {}
 	for folder, files in all_files.items():
