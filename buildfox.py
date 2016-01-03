@@ -282,8 +282,8 @@ filter toolset: r"gcc|clang"
 		cxxflags = -fPIC
 	ldflags = 
 	filter variation:debug
-		cxxflags += cxx_symbols
-		ldflags += cxx_symbols
+		cxxflags += $cxx_symbols
+		ldflags += $cxx_symbols
 """
 
 # main app -----------------------------------------------------------
