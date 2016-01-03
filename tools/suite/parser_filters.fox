@@ -1,0 +1,20 @@
+# test comment
+
+a = 1
+b = 2
+
+filter a: 1 b: 2
+	c = 3
+	filter a: 1 c: 3
+		d = 4
+filter d: 5 a: 1
+	d = 5
+
+rule r1
+	e = 1
+	filter a: 1 b: 2
+		f = 2
+		filter d: 4 c: 3
+			g = 3
+	filter b: 100 c: "nope"
+		g = 4

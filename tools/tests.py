@@ -60,10 +60,16 @@ class EngineMock:
 			"assigns": self.fix_assigns(assigns)
 		})
 
-	def filter(self, obj):
-		self.output.append({
-			"filter": [list(t) for t in obj]
-		})
+	def filter(self, obj, nested_assigns = None):
+		if nested_assigns:
+			self.output.append({
+				"filter": [list(t) for t in obj],
+				"nested_assigns": self.fix_assigns(nested_assigns)
+			})
+		else:
+			self.output.append({
+				"filter": [list(t) for t in obj]
+			})
 
 	def on_auto(self, obj, assigns):
 		self.output.append({
