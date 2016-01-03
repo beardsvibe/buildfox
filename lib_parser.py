@@ -191,7 +191,7 @@ class Parser:
 		self.read_eol()
 		return filters
 
-	def process_filtered(self, need_to_parse):
+	def process_filtered(self, need_to_parse, parse_nested_assigns = False, nested_assigns_list = None):
 		ws_ref = self.whitespace
 		while self.line_i < len(self.lines):
 			start_i = self.line_i
@@ -203,7 +203,10 @@ class Parser:
 				self.line_i = start_i
 				break
 			if need_to_parse: # if we know that filter is disabled, no need to parse then
-				self.parse_line()
+				if parse_nested_assigns:
+					self.read_nested_assign(nested_assigns_list)
+				else:
+					self.parse_line()
 
 	def read_auto(self):
 		self.expect_token()
@@ -247,14 +250,19 @@ class Parser:
 	def read_nested_assigns(self):
 		all = []
 		while self.next_nested():
-			all.append(self.read_nested_assign())
+			self.read_nested_assign(all)
 		return all
 
-	def read_nested_assign(self):
+	def read_nested_assign(self, assign_list):
 		name = self.read_identifier()
-		op = self.read_assign_op()
-		value = self.line_stripped
-		return (name, value, op)
+		if name == "filter" and self.line_stripped and (not self.line_stripped.startswith(("=", "+=", "-="))):
+			obj = self.read_filter()
+			need_to_parse = self.engine.filter(obj, nested_assigns = assign_list)
+			self.process_filtered(need_to_parse, parse_nested_assigns = True, nested_assigns_list = assign_list)
+		else:
+			op = self.read_assign_op()
+			value = self.line_stripped
+			assign_list.append((name, value, op))
 
 	def read_assign_op(self):
 		# TODO make it nicer

@@ -347,7 +347,8 @@ class Engine:
 			# TODO probably this expand implementation is not enough
 
 			if len(targets_explicit) != len(inputs_explicit):
-				raise ValueError("cannot expand rule %s because of different amount of explicit generated targets and explicit inputs at '%s' (%s:%i), to expand this rule build command must have equal amounts of explicit targets and explicit inputs, for example \"build a b c: rule i j k\"" % (
+				raise ValueError(("cannot expand rule %s because of different amount of explicit generated targets and explicit inputs at '%s' (%s:%i), " +
+					"to expand this rule build command must have equal amounts of explicit targets and explicit inputs, for example \"build a b c: rule i j k\"") % (
 					rule_name,
 					self.current_line,
 					self.filename,
@@ -393,9 +394,19 @@ class Engine:
 		self.output.append("pool " + name)
 		self.write_assigns(assigns)
 
-	def filter(self, obj):
+	def filter(self, obj, nested_assigns = None):
+		nested_names = [self.eval(assign[0]) for assign in nested_assigns] if nested_assigns else []
 		for filt in obj:
 			name = self.eval(filt[0])
+			if name in nested_names:
+				raise ValueError(("Warning ! filtering on nested variables ('%s' in this case) is not supported in '%s' (%s:%i), "
+					"instead please only filter on global variables") % (
+					name,
+					self.current_line,
+					self.filename,
+					self.current_line_i,
+				))
+				
 			value = self.eval(filt[1])
 			if not self.eval_filter(name, value):
 				return False

@@ -1,0 +1,13 @@
+rel_path = suite/
+
+# test comment
+a = 1
+b = 2
+
+c = 3
+d = 4
+
+rule r1
+  e = 1
+  f = 2
+  g = 3

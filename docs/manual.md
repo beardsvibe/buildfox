@@ -308,6 +308,19 @@ Filter allow us to evaluate scope depending on variable state.
 	# you can filter all other operations like build, rules, etc
 	filter c: 2
 		print filter on $c
+	
+	# you can also filter nested variables
+	# but in this case filters will only work with global namescope
+	a = 1
+	b = 2
+	rule test
+		filter a: 1
+			b = 2
+			filter a: 2
+				c = 3 # this one is fine
+		d = 4
+		filter d: 4 # this is incorrect, you can only filter based on global namescope
+			e = 5
 
 #### Rules
 
