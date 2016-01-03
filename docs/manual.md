@@ -515,7 +515,7 @@ cxx_multithread_compilation     | /MP                                     | msc 
 cxx_mimimal_rebuild             | /Gm                                     | msc only
 cxx_no_mimimal_rebuild          | /Gm-                                    | msc only
 cxx_floatpoint_fast             | /fp:fast or -funsafe-math-optimizations |
-cxx_floatpoint_strict           | /fp:strict                              | msc only
+cxx_floatpoint_strict           | /fp:strict or -ffloat-store             |
 cxx_cdecl                       | /Gd                                     | msc only
 cxx_fastcall                    | /Gr                                     | msc only
 cxx_stdcall                     | /Gz                                     | msc only
@@ -524,7 +524,10 @@ cxx_avx                         | /arch:AVX or -mavx                      |
 cxx_avx2                        | /arch:AVX2 or -mavx2                    |
 cxx_sse                         | /arch:SSE or -msse                      |
 cxx_sse2                        | /arch:SSE2 or -msse2                    |
-cxx_symbols                     | /Z7                                     | msc only
+cxx_sse3                        | /arch:SSE2 or -msse3                    |
+cxx_ssse3                       | /arch:SSE2 or -mssse3                   |
+cxx_sse4.1                      | /arch:SSE2 or -msse4.1                  |
+cxx_symbols                     | /Z7 or -g                               |
 cxx_omit_default_lib            | /Zl                                     | msc only
 cxx_11                          | empty or -std=c++11                     |
 cxx_14                          | empty or -std=c++14                     |
@@ -537,7 +540,7 @@ cxx_extra_warnings              | /W4 or -Wall -Wextra                    |
 cxx_no_warnings                 | /W0 or -w                               |
 ld_no_incremental_link          | /INCREMENTAL:NO                         | msc only
 ld_no_manifest                  | /MANIFEST:NO                            | msc only
-ld_ignore_default_libs          | /NODEFAULTLIB                           | msc only
+ld_ignore_default_libs          | /NODEFAULTLIB or -nodefaultlibs         |
 ld_symbols                      | /DEBUG                                  | msc only
 ld_shared_lib                   | /DLL                                    | msc only
 
