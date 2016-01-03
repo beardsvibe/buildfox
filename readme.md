@@ -6,8 +6,15 @@ Minimalistic ninja generator
 
 ### Example
 
+Build all files in current folder :
+
 	build obj(*): auto *.cpp
 	build app(helloworld): auto obj(*)
+
+Or build all files recursively :
+
+	build obj(obj/**_*): auto **/*.cpp
+	build app(bin/helloworld): auto obj(obj/*)
 
 ### Usage
 
