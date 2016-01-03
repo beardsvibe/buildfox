@@ -115,6 +115,9 @@ filter toolset:msc
 	cxx_avx2 = /arch:AVX2
 	cxx_sse = /arch:SSE
 	cxx_sse2 = /arch:SSE2
+	cxx_sse3 = /arch:SSE2
+	cxx_ssse3 = /arch:SSE2
+	cxx_sse4.1 = /arch:SSE2
 
 	# language
 	cxx_symbols = /Z7
@@ -183,7 +186,7 @@ filter toolset: r"gcc|clang"
 		expand = true
 
 	rule cxx
-		command = $cxx -o $out -MMD $cxxflags $defines $includedirs -c $in 
+		command = $cxx -o $out -MMD $cxxflags $defines $includedirs -c $in
 		description = cxx $in
 		depfile = $out.d
 		deps = gcc
@@ -232,12 +235,17 @@ filter toolset: r"gcc|clang"
 	cxx_rtti = -frtti
 	cxx_no_rtti = -fno-rtti
 	cxx_floatpoint_fast = -funsafe-math-optimizations
+	cxx_floatpoint_strict = -ffloat-store
 	cxx_avx = -mavx
 	cxx_avx2 = -mavx2
 	cxx_sse = -msse
 	cxx_sse2 = -msse2
+	cxx_sse3 = -msse3
+	cxx_ssse3 = -mssse3
+	cxx_sse4.1 = -msse4.1
 
 	# language
+	cxx_symbols = -g
 	cxx_11 = -std=c++11
 	cxx_14 = -std=c++14
 
@@ -245,6 +253,9 @@ filter toolset: r"gcc|clang"
 	cxx_fatal_warnings = -Werror
 	cxx_extra_warnings = -Wall -Wextra
 	cxx_no_warnings = -w
+
+	# linker flags
+	ld_ignore_default_libs = -nodefaultlibs
 
 	# transformers
 	defines =
@@ -271,8 +282,8 @@ filter toolset: r"gcc|clang"
 		cxxflags = -fPIC
 	ldflags = 
 	filter variation:debug
-		cxxflags += -g
-		ldflags += -g
+		cxxflags += cxx_symbols
+		ldflags += cxx_symbols
 """
 
 # main app -----------------------------------------------------------
