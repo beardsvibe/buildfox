@@ -1,6 +1,6 @@
 filter variation:release
 	defines = RELEASE
 
-build obj(*): auto *.cpp
-build obj(*): auto *.c
-build app(test): auto obj(*)
+build objects(*): auto *.cpp
+build objects(*): auto *.c
+build application(test): auto objects(*)

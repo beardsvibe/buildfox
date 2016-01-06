@@ -2,13 +2,14 @@ out = build/bin_${variation}
 includedirs = test1 test2
 
 # build all
-build obj($out/test1/*): auto test1/*.cpp
+build objects($out/test1/*): auto test1/*.cpp
 	defines += DLL_EXPORT
-build shlib($out/test1) | lib($out/test1): auto obj($out/test1/*)
+build shared_library($out/test1) | library($out/test1): auto objects($out/test1/*)
 
-build obj($out/test2/*): auto test2/*.cpp
+build objects($out/test2/*): auto test2/*.cpp
 	defines += DLL_EXPORT2
-build shlib($out/test2) | lib($out/test2): auto obj($out/test2/*)
+build shared_library($out/test2) | library($out/test2): auto objects($out/test2/*)
 
-build obj($out/*): auto *.cpp
-build app($out/app): auto obj($out/*) shlibdep($out/*)
+build objects($out/*): auto *.cpp
+build application($out/app): auto objects($out/*)
+	libs += $out/test1 $out/test2

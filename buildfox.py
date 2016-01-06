@@ -75,11 +75,10 @@ filter toolset:msc
 	auto r"^(?i).*\.lib$": lib r"^(?i).*\.(obj|lib)$"
 
 	# extensions transformers
-	transformer app: ${param}.exe
-	transformer obj: ${param}.obj
-	transformer lib: ${param}.lib
-	transformer shlib: ${param}.dll
-	transformer shlibdep: ${param}.lib
+	transformer application: ${param}.exe
+	transformer objects: ${param}.obj
+	transformer library: ${param}.lib
+	transformer shared_library: ${param}.dll
 
 	# MSC flags
 	# more info here https://msdn.microsoft.com/en-us/library/19z1t1wy.aspx
@@ -211,11 +210,10 @@ filter toolset: r"gcc|clang"
 	auto r"^(?i).*\.a$": lib r"^(?i).*\.(o|a)$"
 
 	# extensions transformers
-	transformer app: ${param}
-	transformer obj: ${param}.o
-	transformer lib: lib${param}.a
-	transformer shlib: lib${param}.so
-	transformer shlibdep: lib${param}.so
+	transformer application: ${param}
+	transformer objects: ${param}.o
+	transformer library: lib${param}.a
+	transformer shared_library: lib${param}.so
 
 	# Clang flags
 	# more info here http://clang.llvm.org/docs/CommandGuide/clang.html
