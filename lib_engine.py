@@ -182,7 +182,7 @@ class Engine:
 			"please check if your file extensions are supported by current toolchain (%s:%i) " +
 			"please also mind that file extensions like object files ('.o' and '.obj') and " + 
 			"executables may differ between platforms, so you should use transforms to make them work, " +
-			"for example 'build obj(*): auto *.cpp' instead of 'build *.obj: auto *.cpp'") % (
+			"for example 'build objects(*): auto *.cpp' instead of 'build *.obj: auto *.cpp'") % (
 			self.current_line,
 			self.filename,
 			self.current_line_i

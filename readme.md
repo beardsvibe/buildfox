@@ -8,13 +8,13 @@ Minimalistic ninja generator
 
 Build all files in current folder :
 
-	build obj(*): auto *.cpp
-	build app(helloworld): auto obj(*)
+	build objects(*): auto *.cpp
+	build application(helloworld): auto objects(*)
 
 Or build all files recursively :
 
-	build obj(obj/**_*): auto **/*.cpp
-	build app(bin/helloworld): auto obj(obj/*)
+	build objects(obj/**_*): auto **/*.cpp
+	build application(bin/helloworld): auto objects(obj/*)
 
 ### Usage
 
