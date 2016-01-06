@@ -13,4 +13,5 @@ build objects($out/test2/*): auto test2/*.cpp
 build library($out/test2): auto objects($out/test2/*)
 
 build objects($out/*): auto *.cpp
-build application($out/app): auto objects($out/*) library($out/*)
+build application($out/app): auto objects($out/*) | library($out/*)
+	libs += $out/test1 $out/test2
