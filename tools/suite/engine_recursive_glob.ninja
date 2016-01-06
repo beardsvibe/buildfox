@@ -62,9 +62,12 @@ build suite/out4/a_c_3.obj: cxx suite/src/rec/a/zz/c/3.cpp
 build suite/out5/a__1.obj: cxx suite/src/rec/a/zz/a/1.cpp
 build suite/out5/a__2.obj: cxx suite/src/rec/a/zz/a/2.cpp
 build suite/out5/a__3.obj: cxx suite/src/rec/a/zz/a/3.cpp
-build suite/out6/zz_1.obj: cxx suite/src/rec/a/zz/a/1.cpp
-build suite/out6/zz_2.obj: cxx suite/src/rec/a/zz/a/2.cpp
-build suite/out6/zz_3.obj: cxx suite/src/rec/a/zz/a/3.cpp
+build suite/out6/a_zz__1.obj: cxx suite/src/rec/a/zz/a/1.cpp
+build suite/out6/a_zz__2.obj: cxx suite/src/rec/a/zz/a/2.cpp
+build suite/out6/a_zz__3.obj: cxx suite/src/rec/a/zz/a/3.cpp
+build suite/out6b/zz_1.obj: cxx suite/src/rec/a/zz/a/1.cpp
+build suite/out6b/zz_2.obj: cxx suite/src/rec/a/zz/a/2.cpp
+build suite/out6b/zz_3.obj: cxx suite/src/rec/a/zz/a/3.cpp
 
 build suite/out7/a/1.obj: cxx suite/src/rec/a/1.cpp
 build suite/out7/a/3.obj: cxx suite/src/rec/a/3.cpp
