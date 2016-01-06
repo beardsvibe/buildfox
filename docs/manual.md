@@ -194,6 +194,8 @@ In some cases we need to slightly transform values by appending or prepending so
 	# will print very doge very wow
 	# transformer works by splitting input line by spaces
 	# replacing items with template and joining them back with spaces
+	# this one is useful for something like defines or lib variables
+	# which need to prepend/append some extra strings to each item
 	print $test
 	
 	transformer img: ${param}.png
@@ -202,6 +204,13 @@ In some cases we need to slightly transform values by appending or prepending so
 	# also transformers are used to modify file names based on environment
 	# note you can only use this form in path
 	build img(name): some_rule some_files
+	
+	# and if you want to add prefix just use transformer like this :
+	transformer img2: ${path}prefix_${file}.png
+	build img2(somepath/somename): some_rule some_files
+	
+	# please note that you cannot use transformer inside a path
+	build somepath/img2(somename): some_rule some_files # invalid
 
 #### Build commands
 

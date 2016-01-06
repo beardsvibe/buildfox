@@ -19,7 +19,7 @@ re_var = re.compile("(?<!\$)((?:\$\$)*)\$({)?([a-zA-Z0-9_.-]+)(?(2)})")
 re_alphanumeric = re.compile(r"\W+") # match valid parts of filename
 re_subst = re.compile(r"(?<!\$)(?:\$\$)*\$\{(param|path|file)\}")
 re_non_escaped_space = re.compile(r"(?<!\$)(?:\$\$)* +")
-re_path_transform = re.compile(r"(?<!\$)((?:\$\$)*)([a-zA-Z0-9_.-]+)\((.*?)(?<!\$)(?:\$\$)*\)")
+re_path_transform = re.compile(r"^([a-zA-Z0-9_.-]+)\((.*?)(?<!\$)(?:\$\$)*\)$")
 re_base_escaped = re.compile(r"\$([\| :()])")
 
 class Engine:
@@ -215,10 +215,9 @@ class Engine:
 			if value.startswith("r\""):
 				return value
 			def path_transform(matchobj):
-				prefix = matchobj.group(1)
-				name = matchobj.group(2)
-				value = matchobj.group(3)
-				return prefix + self.eval_transform(name, value, eval = False)
+				name = matchobj.group(1)
+				value = matchobj.group(2)
+				return self.eval_transform(name, value, eval = False)
 			if "(" in value:
 				value = re_path_transform.sub(path_transform, value)
 			return self.eval(value)
