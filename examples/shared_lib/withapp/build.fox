@@ -12,4 +12,5 @@ build shared_library($out/test2) | library($out/test2): auto objects($out/test2/
 
 build objects($out/*): auto *.cpp
 build application($out/app): auto objects($out/*) | shared_library($out/*)
-	libs += $out/test1 $out/test2
+	libs += test1 test2
+	libdirs += $out

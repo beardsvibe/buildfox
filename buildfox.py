@@ -212,8 +212,8 @@ filter toolset: r"gcc|clang"
 	# extensions transformers
 	transformer application: ${param}
 	transformer objects: ${param}.o
-	transformer library: lib${param}.a
-	transformer shared_library: lib${param}.so
+	transformer library: ${path}lib${file}.a
+	transformer shared_library: ${path}lib${file}.so
 
 	# Clang flags
 	# more info here http://clang.llvm.org/docs/CommandGuide/clang.html
