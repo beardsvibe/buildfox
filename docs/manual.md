@@ -273,16 +273,11 @@ Every path in BuildFox can be one of three types : normal path, regex, wildcard.
 	build **/*.obj: cxx **/*.cxx
 	
 	# recursive glob with concatenation in output
-	build **_*.obj: cxx **/*.cxx
-	
-	# recursive glob without path in output
+	# so a/b/c.cxx will become a_b_c.obj
 	build *.obj: cxx **/*.cxx
 	
 	# advanced recursive glob
 	build **/**/*.obj: cxx **/test/**/*.cxx
-	
-	# recursive glob with folder filtering
-	build **/*.obj: cxx "*!(folder|another_folder)/*.cxx"
 	
 	# recursive glob with folder filtering
 	build **/*.obj: cxx "*!(folder|another_folder)/*.cxx"
