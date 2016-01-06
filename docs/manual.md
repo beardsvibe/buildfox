@@ -110,7 +110,7 @@ And then to use this library in application we add it to libs and use all libs a
 	
 	build objects(*): auto *.cpp
 	build application(test): auto objects(*) | library(lib/*)
-		libs += library(test)
+		libs += test
 		libdirs += lib
 
 #### Shared libs
@@ -122,7 +122,7 @@ Compiling shared libs is almost the same as static lib, plus you need to add "li
 	
 	build objects(*): auto *.cpp
 	build application(app): auto objects(*) | shared_library(lib/*)
-		libs += library(test1)
+		libs += test1
 		libdirs += lib
 
 If you develop shared libraries for Windows then you also need to mark symbols for export with approach of your choice, one way could be to use [__declspec(dllexport)]( https://msdn.microsoft.com/en-us/library/a90k134d.aspx).
