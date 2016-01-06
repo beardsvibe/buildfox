@@ -8,7 +8,7 @@ import shutil
 
 re_folder_part = re.compile(r"^((?:\(\[\^\\\/\]\*\)(?:\(\?\![\w\|]+\))?\(\[\^\\\/\]\*\)|(?:[^\r\n(\[\"\\]|\\.))+)(\\\/|\/|\\).*$") # match folder part in filename regex
 re_non_escaped_char = re.compile(r"(?<!\\)\\(.)") # looking for not escaped \ with char
-re_capture_group_ref = re.compile(r"(?<!\\)\\(\d+)(p?)") # match regex capture group reference
+re_capture_group_ref = re.compile(r"(?<!\\)\\(p?)(\d+)") # match regex capture group reference
 re_pattern_split = re.compile(r"(?<!\[\^)\/")
 re_recursive_glob = re.compile(r"\(\[\^\\\/\]\*\)(\(\?\![\w\|]+\))?\(\[\^\\\/\]\*\)\\\/")
 re_recursive_glob_noslash = re.compile(r"\(\[\^\/\]\*\)(\(\?\![\w\|]+\))?\(\[\^\/\]\*\)")
@@ -40,7 +40,7 @@ def wildcard_regex(filename, replace_groups = False, rec_capture_groups = set())
 			if c == "*":
 				if i < n and filename[i] == "*":
 					if replace_groups:
-						res += "\\" + str(groups) + "p" # p (path) will mean that it's ok to substitute this group with string that may contain slashes
+						res += "\\p" + str(groups) # p (path) will mean that it's ok to substitute this group with string that may contain slashes
 					else:
 						res += "([^\/]*)([^\/]*)"
 						rec_capture_groups.add(groups)
@@ -244,12 +244,12 @@ def find_files(inputs, outputs = None, rel_path = "", generated = None, excluded
 				for match in matched:
 					# replace \number with data
 					def replace_group(matchobj):
-						index = int(matchobj.group(1)) - 1
+						index = int(matchobj.group(2)) - 1
 						if index >= 0 and index < len(match):
-							if matchobj.group(2) == "p":
+							if matchobj.group(1) == "p":
 								return match[index] # if capture group have p suffix then pass string as is
 							else:
-								return match[index].replace("/", "_") if match[index] else ""
+								return match[index].replace("/", "_") if match[index] else None
 						else:
 							return ""
 					file = re_capture_group_ref.sub(replace_group, regex)
