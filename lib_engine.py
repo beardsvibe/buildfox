@@ -17,9 +17,9 @@ else:
 # match and capture variable and escaping pairs of $$ before variable name
 re_var = re.compile("(?<!\$)((?:\$\$)*)\$({)?([a-zA-Z0-9_.-]+)(?(2)})")
 re_alphanumeric = re.compile(r"\W+") # match valid parts of filename
-re_subst = re.compile(r"(?<!\$)(?:\$\$)*\$\{param\}")
+re_subst = re.compile(r"(?<!\$)(?:\$\$)*\$\{(param|path|file)\}")
 re_non_escaped_space = re.compile(r"(?<!\$)(?:\$\$)* +")
-re_path_transform = re.compile(r"(?<!\$)((?:\$\$)*)([a-zA-Z0-9_.-]+)\((.*?)(?<!\$)(?:\$\$)*\)")
+re_path_transform = re.compile(r"^([a-zA-Z0-9_.-]+)\((.*?)(?<!\$)(?:\$\$)*\)$")
 re_base_escaped = re.compile(r"\$([\| :()])")
 
 class Engine:
@@ -182,7 +182,7 @@ class Engine:
 			"please check if your file extensions are supported by current toolchain (%s:%i) " +
 			"please also mind that file extensions like object files ('.o' and '.obj') and " + 
 			"executables may differ between platforms, so you should use transforms to make them work, " +
-			"for example 'build obj(*): auto *.cpp' instead of 'build *.obj: auto *.cpp'") % (
+			"for example 'build objects(*): auto *.cpp' instead of 'build *.obj: auto *.cpp'") % (
 			self.current_line,
 			self.filename,
 			self.current_line_i
@@ -215,10 +215,9 @@ class Engine:
 			if value.startswith("r\""):
 				return value
 			def path_transform(matchobj):
-				prefix = matchobj.group(1)
-				name = matchobj.group(2)
-				value = matchobj.group(3)
-				return prefix + self.eval_transform(name, value, eval = False)
+				name = matchobj.group(1)
+				value = matchobj.group(2)
+				return self.eval_transform(name, value, eval = False)
 			if "(" in value:
 				value = re_path_transform.sub(path_transform, value)
 			return self.eval(value)
@@ -230,10 +229,17 @@ class Engine:
 		if transformer is None:
 			return self.eval(values) if eval else values
 
+		# transform one value with transformer template
 		def transform_one(value):
 			if not value:
 				return ""
-			value = re_subst.sub(value, transformer)
+			split = os.path.split(value)
+			value_split = {
+				"param": value,
+				"path": (split[0] + "/" if split[0] else ""),
+				"file": split[1]
+			}
+			value = re_subst.sub(lambda mathobj: value_split.get(mathobj.group(1)), transformer)
 			# TODO not sure what effects eval = False give here
 			return self.eval(value) if eval else value
 

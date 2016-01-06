@@ -69,17 +69,16 @@ filter toolset:msc
 		rspfile_content = $in $libs
 
 	auto r"^(?i).*\.obj$": cxx r"^(?i).*\.(cpp|cxx|cc|c\+\+)$"
-	auto r"^(?i).*\.obj$": cc r"^(?i).*\.(c)$"
-	auto r"^(?i).*\.exe$": link r"^(?i).*\.(obj|lib)$"
-	auto r"^(?i).*\.dll$": link_so r"^(?i).*\.(obj|lib)$"
+	auto r"^(?i).*\.obj$": cc r"^(?i).*\.c$"
+	auto r"^(?i).*\.exe$": link r"^(?i).*\.obj$"
+	auto r"^(?i).*\.dll$": link_so r"^(?i).*\.obj$"
 	auto r"^(?i).*\.lib$": lib r"^(?i).*\.(obj|lib)$"
 
 	# extensions transformers
-	transformer app: ${param}.exe
-	transformer obj: ${param}.obj
-	transformer lib: ${param}.lib
-	transformer shlib: ${param}.dll
-	transformer shlibdep: ${param}.lib
+	transformer application: ${param}.exe
+	transformer objects: ${param}.obj
+	transformer library: ${param}.lib
+	transformer shared_library: ${param}.dll
 
 	# MSC flags
 	# more info here https://msdn.microsoft.com/en-us/library/19z1t1wy.aspx
@@ -204,18 +203,27 @@ filter toolset: r"gcc|clang"
 		command = $cxx -shared -fPIC $ldflags $frameworks $libdirs -o $out $in $libs
 		description = cxx $in
 
-	auto r"^(?i).*\.o$": cxx r"^(?i).*\.(cpp|cxx|cc|c\+\+)$"
-	auto r"^(?i).*\.o$": cc r"^(?i).*\.(c)$"
-	auto r"^(.*\/)?[^.\/]+$": link r"^(?i).*\.(o|a|so)$"
-	auto r"^(?i).*\.so$": link_so r"^(?i).*\.(o|so)$"
-	auto r"^(?i).*\.a$": lib r"^(?i).*\.(o|a)$"
-
-	# extensions transformers
-	transformer app: ${param}
-	transformer obj: ${param}.o
-	transformer lib: lib${param}.a
-	transformer shlib: lib${param}.so
-	transformer shlibdep: lib${param}.so
+	# extensions transformers and auto
+	filter system: r"^(?i)(?!windows).*$"
+		auto r"^(?i).*\.o$": cxx r"^(?i).*\.(cpp|cxx|cc|c\+\+)$"
+		auto r"^(?i).*\.o$": cc r"^(?i).*\.c$"
+		auto r"^(.*\/)?[^.\/]+$": link r"^(?i).*\.o$"
+		auto r"^(?i).*\.so$": link_so r"^(?i).*\.o$"
+		auto r"^(?i).*\.a$": lib r"^(?i).*\.(o|a)$"
+		transformer application: ${param}
+		transformer objects: ${param}.o
+		transformer library: ${path}lib${file}.a
+		transformer shared_library: ${path}lib${file}.so
+	filter system: r"^(?i)windows$"
+		auto r"^(?i).*\.o$": cxx r"^(?i).*\.(cpp|cxx|cc|c\+\+)$"
+		auto r"^(?i).*\.o$": cc r"^(?i).*\.c$"
+		auto r"^(?i).*\.exe$": link r"^(?i).*\.o$"
+		auto r"^(?i).*\.dll$": link_so r"^(?i).*\.o$"
+		auto r"^(?i).*\.a$": lib r"^(?i).*\.(o|a)$"
+		transformer application: ${param}.exe
+		transformer objects: ${param}.o
+		transformer library: ${path}lib${file}.a
+		transformer shared_library: ${path}lib${file}.dll
 
 	# Clang flags
 	# more info here http://clang.llvm.org/docs/CommandGuide/clang.html

@@ -1,2 +1,2 @@
-build obj(*): auto *.c
-build lib(app): auto obj(*)
+build objects(*): auto *.c
+build library(app): auto objects(*)

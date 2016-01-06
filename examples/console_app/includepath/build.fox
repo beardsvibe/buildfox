@@ -5,6 +5,6 @@ out = build/bin_${variation}
 includedirs = test1 test2
 
 # build all
-build obj($out/**/*): auto **/*.cpp
-build obj($out/**/*): auto **/*.c
-build app($out/app): auto obj($out/**/*)
+build objects($out/**/*): auto **/*.cpp
+build objects($out/**/*): auto **/*.c
+build application($out/app): auto objects($out/**/*)

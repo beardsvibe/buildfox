@@ -6,8 +6,8 @@ import glob
 def selftest_setup():
 	with open("__selftest_build.fox", "w") as f:
 		f.write("""
-build obj(__selftest_src): auto __selftest_src.cpp
-build app(__selftest_app): auto obj(__selftest_src)
+build objects(__selftest_src): auto __selftest_src.cpp
+build application(__selftest_app): auto objects(__selftest_src)
 """)
 
 	with open("__selftest_src.cpp", "w") as f:

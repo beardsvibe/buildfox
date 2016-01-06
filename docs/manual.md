@@ -39,12 +39,12 @@ You may ask why we need build systems if compiling executables is so easy ? Inde
 So the simplest way to build a simple application with BuildFox is just this :
 
 	# building objects
-	build obj(*): auto *.cpp
+	build objects(*): auto *.cpp
 	
 	# linking executable
-	build app(helloworld): auto obj(*)
+	build application(helloworld): auto objects(*)
 
-First line is compiling object files from .cpp files, and second line is linking final application from object files. ```obj(*)``` is equal to ```*.obj``` on Windows and ```*.o``` on others machines. ```app(helloworld)``` is equal to ```helloworld.exe``` on Windows and ```helloworld``` on others machines. ```auto``` is a name of a rule which will build our output files (object or application) from inputs files (cpp or object) by calling required compiler executables.
+First line is compiling object files from .cpp files, and second line is linking final application from object files. ```objects(*)``` is equal to ```*.obj``` on Windows and ```*.o``` on others machines. ```application(helloworld)``` is equal to ```helloworld.exe``` on Windows and ```helloworld``` on others machines. ```auto``` is a name of a rule which will build our output files (object or application) from inputs files (cpp or object) by calling required compiler executables.
 
 **Please mind that this one is incorrect :**
 
@@ -54,15 +54,15 @@ First line is compiling object files from .cpp files, and second line is linking
 What if we want to compile static library for target "lib" and dynamic library for target "sharedlib" ? Then we use filters :
 
 	# building objects
-	build obj(*): auto *.cpp
+	build objects(*): auto *.cpp
 
 	filter target: lib
 		# linking mylib.lib/.a
-		build lib(mylib): auto obj(*)
+		build library(mylib): auto objects(*)
 
 	filter target: sharedlib
 		# compiling mylib.dll/.so and .lib
-		build shlib(mylib) | lib(mylib): auto obj(*)
+		build shared_library(mylib) | library(mylib): auto objects(*)
 
 Now to set target you just call ```buildfox target=sharedlib```.
 
@@ -76,15 +76,15 @@ BuildFox contains two main parts : execution engine and fox core definitions (th
 
 Usually it's very simple to build console apps :
 
-	build obj(*): auto *.cpp
-	build app(test): auto obj(*)
+	build objects(*): auto *.cpp
+	build application(test): auto objects(*)
 
 If you want to put object files and final executable in other folder, just add it :
 
 	out = build_${variation} # this will form build_debug or build_release
 	
-	build obj($out/*): auto *.cpp
-	build app($out/test): auto obj($out/*)
+	build objects($out/*): auto *.cpp
+	build application($out/test): auto objects($out/*)
 
 In case if you need to specify some compiler flags or defines :
 
@@ -93,33 +93,37 @@ In case if you need to specify some compiler flags or defines :
 	defines = TEST_DEFINE
 	includedirs = some_folder
 	
-	build obj($out/*): auto *.cpp
-	build app($out/test): auto obj($out/*)
+	build objects($out/*): auto *.cpp
+	build application($out/test): auto objects($out/*)
 
 #### Static libs
 
 To build static library we just change target name transform to lib.
 
-	build obj(*): auto *.cpp
-	build lib(test): auto obj(*)
+	build objects(*): auto *.cpp
+	build library(test): auto objects(*)
 
-And then to use this library in application we just add it to inputs
+And then to use this library in application we add it to libs and use all libs as implicit dependency
 
-	build obj(lib/*): auto lib/*.cpp
-	build lib(lib/test): auto obj(lib/*)
+	build objects(lib/*): auto lib/*.cpp
+	build library(lib/test): auto objects(lib/*)
 	
-	build obj(*): auto *.cpp
-	build app(test): auto obj(*) lib(lib/*)
+	build objects(*): auto *.cpp
+	build application(test): auto objects(*) | library(lib/*)
+		libs += test
+		libdirs += lib
 
 #### Shared libs
 
-Compiling shared libs is a bit trickier because of differences between platforms. You need to pass shlib and lib to final library link step. Also to build an app you need to pass library as shlibdep.
+Compiling shared libs is almost the same as static lib, plus you need to add "library" as implicit target because in some cases linking shared library produces static library as well.
 
-	build obj(lib/*): auto lib/*.cpp
-	build shlib(lib/test1) | lib(lib/test1): auto obj(lib/*)
+	build objects(lib/*): auto lib/*.cpp
+	build shared_library(lib/test1) | library(lib/test1): auto objects(lib/*)
 	
-	build obj(*): auto *.cpp
-	build app(app): auto obj(*) shlibdep(lib/*)
+	build objects(*): auto *.cpp
+	build application(app): auto objects(*) | shared_library(lib/*)
+		libs += test1
+		libdirs += lib
 
 If you develop shared libraries for Windows then you also need to mark symbols for export with approach of your choice, one way could be to use [__declspec(dllexport)]( https://msdn.microsoft.com/en-us/library/a90k134d.aspx).
 
@@ -190,6 +194,8 @@ In some cases we need to slightly transform values by appending or prepending so
 	# will print very doge very wow
 	# transformer works by splitting input line by spaces
 	# replacing items with template and joining them back with spaces
+	# this one is useful for something like defines or lib variables
+	# which need to prepend/append some extra strings to each item
 	print $test
 	
 	transformer img: ${param}.png
@@ -198,6 +204,13 @@ In some cases we need to slightly transform values by appending or prepending so
 	# also transformers are used to modify file names based on environment
 	# note you can only use this form in path
 	build img(name): some_rule some_files
+	
+	# and if you want to add prefix just use transformer like this :
+	transformer img2: ${path}prefix_${file}.png
+	build img2(somepath/somename): some_rule some_files
+	
+	# please note that you cannot use transformer inside a path
+	build somepath/img2(somename): some_rule some_files # invalid
 
 #### Build commands
 
@@ -472,11 +485,10 @@ You need to use different file extensions on different platforms, to support thi
 
 Transformer name | Possible Values       | Description
 ---------------- | --------------------- | --------------------------------------------
-app              | .exe or as is         | executable
-obj              | .obj or .o            | object file
-lib              | .lib or .a            | static lib
-shlib            | .dll or .so           | shared lib
-shlibdep         | .lib or .so           | used when you need to link with shared lib
+application      | .exe or as is         | executable
+objects          | .obj or .o            | object file
+library          | .lib or .a            | static lib
+shared_library   | .dll or .so           | shared lib
 
 #### Compiler and linker configuration
 
