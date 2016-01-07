@@ -157,7 +157,7 @@ filter toolset:msc
 	transformer ignore_default_libs: /NODEFAULTLIB:${param}
 
 	# main flags
-	cxxflags =
+	cxxflags = $cxx_exceptions
 	ldflags =
 	libflags =
 	filter variation:debug
