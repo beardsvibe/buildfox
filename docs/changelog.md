@@ -19,6 +19,7 @@
 - Misc : only allow transforms on whole path and not parts of it
 - Misc : auto detection of MSVS version
 - Misc : more detailed error reports
+- Misc : release as v0.2.1 on PyPi because of a mistake
 
 ### v0.1
 

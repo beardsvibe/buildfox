@@ -2,7 +2,7 @@
 from setuptools import setup
 import sys
 
-version = "0.2"
+version = "0.2.1"
 classifiers = [
 	"Development Status :: 3 - Alpha",
 	"Environment :: Console",
