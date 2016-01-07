@@ -2,9 +2,9 @@
 from setuptools import setup
 import sys
 
-version = "0.1.2"
+version = "0.2.1"
 classifiers = [
-	"Development Status :: 2 - Pre-Alpha",
+	"Development Status :: 3 - Alpha",
 	"Environment :: Console",
 	"Intended Audience :: Developers",
 	"Programming Language :: Python",
@@ -34,4 +34,5 @@ setup(
 	zip_safe=True,
 	install_requires=[],
 	tests_require=["unittest2"],
-	entry_points={'console_scripts': ['bf=buildfox:main']})
+	entry_points={'console_scripts': ['bf=buildfox:main']}
+)
