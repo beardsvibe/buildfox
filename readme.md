@@ -1,6 +1,6 @@
 # BuildFox [![Build Status](https://travis-ci.org/beardsvibe/buildfox.svg?branch=master)](https://travis-ci.org/beardsvibe/buildfox) [![Build status](https://ci.appveyor.com/api/projects/status/kj1pa6f94889mxna/branch/master?svg=true)](https://ci.appveyor.com/project/jimon/buildfox/branch/master) [![Coverage Status](https://coveralls.io/repos/beardsvibe/buildfox/badge.svg?branch=master&service=github)](https://coveralls.io/github/beardsvibe/buildfox?branch=master)
 
-Minimalistic ninja generator
+Minimalistic Ninja generator
 
 **This project is a WIP**
 
