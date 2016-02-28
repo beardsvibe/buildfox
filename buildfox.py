@@ -315,7 +315,7 @@ def main(*argv, **kwargs):
 		help = "enables ninja ide generator mode (equal to --no-core --no-env)", default = False, dest = "ninja_ide_gen")
 	argsparser.add_argument("--selftest", action = "store_true",
 		help = "run self test", default = False, dest = "selftest")
-	argsparser.add_argument("--ver,--version", action = "store_true",
+	argsparser.add_argument("--ver", "--version", action = "store_true",
 		help = "shows version", default = False, dest = "show_ver")
 	args = vars(argsparser.parse_args())
 
