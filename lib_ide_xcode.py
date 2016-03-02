@@ -54,6 +54,7 @@ def gen_xcode(all_files, includedirs, prj_location = "build.xcodeproj"):
 	includedirs = ["."] + includedirs
 
 	print(all_files)
+	print(includedirs)
 
 	if not os.path.exists(prj_location):
 		os.makedirs(prj_location)
@@ -62,6 +63,6 @@ def gen_xcode(all_files, includedirs, prj_location = "build.xcodeproj"):
 	prj = mod_pbxproj.XcodeProject(ref, prj_location + "/project.pbxproj")
 	for file in all_files:
 		prj.add_file_if_doesnt_exist(os.path.relpath(file, prj_location + "/.."))
+	for path in includedirs:
+		prj.add_header_search_paths(path)
 	prj.save()
-
-	print("yo there")
