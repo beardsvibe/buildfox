@@ -3,7 +3,7 @@
 import re
 
 MAJOR = 0
-MINOR = 2
+MINOR = 3
 VERSION = "%d.%d" % (MAJOR, MINOR)
 
 # Simple major.minor matcher

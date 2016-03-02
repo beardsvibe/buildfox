@@ -14,6 +14,7 @@ from lib_environment import discover
 from lib_selftest import selftest_setup, selftest_wipe
 from lib_util import cxx_defines, cxx_includedirs
 from lib_ide_vs import gen_vs
+from lib_ide_xcode import gen_xcode
 from lib_ide_make import gen_make
 from lib_ide_cmake import gen_cmake
 from lib_ide_qtcreator import gen_qtcreator
@@ -380,6 +381,10 @@ def main(*argv, **kwargs):
 				args.get("ide_prj"),
 				ide,
 				args.get("ide_env"))
+		elif ide in ["xcode"]:
+			gen_xcode(
+				engine.context.all_files,
+				cxx_includedirs(engine.variables.get("includedirs", "")))
 		elif ide in ["make"]:
 			gen_make(
 				args.get("in"),
@@ -402,7 +407,7 @@ def main(*argv, **kwargs):
 				args.get("in"),
 				args.get("ide_env"))
 		elif ide is not None:
-			raise ValueError("unknown ide '%s', available ide's : vs, vs2012, vs2013, vs2015, make, qtcreator, cmake" % ide)
+			raise ValueError("unknown ide '%s', available ide's : vs, vs2012, vs2013, vs2015, xcode, make, qtcreator, cmake" % ide)
 
 if __name__ == "__main__":
 	#import cProfile, pstats, io
