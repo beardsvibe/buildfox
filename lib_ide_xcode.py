@@ -51,7 +51,7 @@ xcode_reference_prj = r"""
 
 def gen_xcode(all_files, includedirs, prj_location = "build.xcodeproj"):
 	all_files = cxx_findfiles(all_files)
-	includedirs = ["."] + includedirs
+	includedirs = [".", "build/bin_debug"] + includedirs
 
 	print(all_files)
 	print(includedirs)
@@ -61,8 +61,18 @@ def gen_xcode(all_files, includedirs, prj_location = "build.xcodeproj"):
 
 	ref = json.loads(xcode_reference_prj)
 	prj = mod_pbxproj.XcodeProject(ref, prj_location + "/project.pbxproj")
+
+	target = prj.get_build_phases('PBXLegacyTarget')
+	target[0]["buildWorkingDirectory"] = os.path.abspath(prj_location + "/..")
+	print(target)
+
 	for file in all_files:
 		prj.add_file_if_doesnt_exist(os.path.relpath(file, prj_location + "/.."))
-	for path in includedirs:
-		prj.add_header_search_paths(path)
+
+	build_configs = [b for b in prj.objects.values() if b.get('isa') == 'XCBuildConfiguration']
+	for b in build_configs:
+		if b.add_search_paths(includedirs, 'buildSettings', 'PATH', recursive=True):
+			prj.modified = True
+
+	#target.add_search_paths(includedirs, 'buildSettings', 'PATH', recursive=recursive)
 	prj.save()
