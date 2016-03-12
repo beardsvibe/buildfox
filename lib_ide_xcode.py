@@ -4,6 +4,7 @@ import os
 import uuid
 import json
 import mod_pbxproj
+from lib_ide_make import gen_make
 from lib_util import cxx_findfiles
 
 xcode_reference_prj = r"""
@@ -26,10 +27,10 @@ xcode_reference_prj = r"""
                                           "defaultConfigurationIsVisible": "0",
                                           "defaultConfigurationName": "Build",
                                           "isa": "XCConfigurationList"},
-             "EF0AF3411C83A4DC00290920": {"buildArgumentsString": "",
+             "EF0AF3411C83A4DC00290920": {"buildArgumentsString": "$(ACTION)",
                                           "buildConfigurationList": "EF0AF3441C83A4DC00290920",
                                           "buildPhases": [],
-                                          "buildToolPath": "ninja",
+                                          "buildToolPath": "/usr/bin/make",
                                           "buildWorkingDirectory": "/Users/jimon/Documents/xcodeproj_tests/test",
                                           "dependencies": [],
                                           "isa": "PBXLegacyTarget",
@@ -49,13 +50,13 @@ xcode_reference_prj = r"""
  "rootObject": "EF0AF33D1C83A4DC00290920"}
 """
 
-def gen_xcode(all_files, includedirs, prj_location = "build.xcodeproj"):
+def gen_xcode(all_files, includedirs, prj_name, buildfox_name, cmd_env, ninja_gen_mode):
+	gen_make(buildfox_name, cmd_env, ninja_gen_mode)
+
 	all_files = cxx_findfiles(all_files)
 	includedirs = [".", "build/bin_debug"] + includedirs
 
-	print(all_files)
-	print(includedirs)
-
+	prj_location = prj_name + ".xcodeproj"
 	if not os.path.exists(prj_location):
 		os.makedirs(prj_location)
 
@@ -64,15 +65,8 @@ def gen_xcode(all_files, includedirs, prj_location = "build.xcodeproj"):
 
 	target = prj.get_build_phases('PBXLegacyTarget')
 	target[0]["buildWorkingDirectory"] = os.path.abspath(prj_location + "/..")
-	print(target)
 
 	for file in all_files:
 		prj.add_file_if_doesnt_exist(os.path.relpath(file, prj_location + "/.."))
 
-	build_configs = [b for b in prj.objects.values() if b.get('isa') == 'XCBuildConfiguration']
-	for b in build_configs:
-		if b.add_search_paths(includedirs, 'buildSettings', 'PATH', recursive=True):
-			prj.modified = True
-
-	#target.add_search_paths(includedirs, 'buildSettings', 'PATH', recursive=recursive)
 	prj.save()

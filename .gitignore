@@ -1,6 +1,7 @@
 *.ninja
 examples/**/build/
 examples/**/DerivedData/
+Makefile
 !tools/suite/*.ninja
 tools/bf
 tools/.coverage*

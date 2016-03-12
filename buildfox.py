@@ -384,7 +384,11 @@ def main(*argv, **kwargs):
 		elif ide in ["xcode"]:
 			gen_xcode(
 				engine.context.all_files,
-				cxx_includedirs(engine.variables.get("includedirs", "")))
+				cxx_includedirs(engine.variables.get("includedirs", "")),
+				args.get("ide_prj"),
+				args.get("in"),
+				args.get("ide_env"),
+				args.get("ninja_ide_gen"))
 		elif ide in ["make"]:
 			gen_make(
 				args.get("in"),
