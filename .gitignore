@@ -1,4 +1,5 @@
 *.ninja
+examples/**/build/
 !tools/suite/*.ninja
 tools/bf
 tools/.coverage*

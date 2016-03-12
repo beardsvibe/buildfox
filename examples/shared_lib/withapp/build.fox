@@ -5,12 +5,17 @@ includedirs = test1 test2
 build objects($out/test1/*): auto test1/*.cpp | test1/*.h
 	defines += DLL_EXPORT
 build shared_library($out/test1) | library($out/test1): auto objects($out/test1/*)
+	filter system: Darwin
+		ldflags += -install_name @rpath/libtest1.so
 
 build objects($out/test2/*): auto test2/*.cpp | test2/*.h
 	defines += DLL_EXPORT2
 build shared_library($out/test2) | library($out/test2): auto objects($out/test2/*)
+	filter system: Darwin
+		ldflags += -install_name @rpath/libtest2.so
 
 build objects($out/*): auto *.cpp | *.h
 build application($out/app): auto objects($out/*) | shared_library($out/*)
 	libs += test1 test2
 	libdirs += $out
+	ldflags = $ldflags -rpath @executable_path
