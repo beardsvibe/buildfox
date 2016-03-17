@@ -209,6 +209,7 @@ filter toolset: r"gcc|clang"
 		auto r"^(?i).*\.o$": cc r"^(?i).*\.c$"
 		auto r"^(.*\/)?[^.\/]+$": link r"^(?i).*\.o$"
 		auto r"^(?i).*\.so$": link_so r"^(?i).*\.o$"
+			ldflags += -install_name $targets_explicit_name_0
 		auto r"^(?i).*\.a$": lib r"^(?i).*\.(o|a)$"
 		transformer application: ${param}
 		transformer objects: ${param}.o

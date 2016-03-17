@@ -83,7 +83,7 @@ class Engine:
 		else:
 			print(self.text())
 
-	def eval(self, text):
+	def eval(self, text, local_scope = {}):
 		if text == None:
 			return None
 		elif isinstance(text, string_types):
@@ -103,7 +103,10 @@ class Engine:
 					default = "${%s}" % name
 				else:
 					default = "$%s" % name
-				return prefix + self.variables.get(name, default)
+				if name in local_scope:
+					return prefix + local_scope.get(name, default)
+				else:
+					return prefix + self.variables.get(name, default)
 
 			if "$" in text:
 				text = re_var.sub(repl, text)
@@ -114,7 +117,7 @@ class Engine:
 
 			return text
 		else:
-			return [self.eval(str) for str in text]
+			return [self.eval(str, local_scope) for str in text]
 
 	# evaluate and find files
 	def eval_find_files(self, input, output = None):
@@ -224,10 +227,10 @@ class Engine:
 		else:
 			return [self.eval_path_transform(str) for str in value]
 
-	def eval_transform(self, name, values, eval = True):
+	def eval_transform(self, name, values, eval = True, local_scope = {}):
 		transformer = self.transformers.get(name)
 		if transformer is None:
-			return self.eval(values) if eval else values
+			return self.eval(values, local_scope) if eval else values
 
 		# transform one value with transformer template
 		def transform_one(value):
@@ -241,16 +244,15 @@ class Engine:
 			}
 			value = re_subst.sub(lambda mathobj: value_split.get(mathobj.group(1)), transformer)
 			# TODO not sure what effects eval = False give here
-			return self.eval(value) if eval else value
+			return self.eval(value, local_scope) if eval else value
 
 		transformed = [transform_one(v) for v in re_non_escaped_space.split(values)]
 		return " ".join(transformed)
 
-	def write_assigns(self, assigns):
-		local_scope = {}
+	def write_assigns(self, assigns, local_scope = {}):
 		for assign in assigns:
 			name = self.eval(assign[0])
-			value = self.eval_transform(name, assign[1])
+			value = self.eval_transform(name, assign[1], local_scope = local_scope)
 			op = assign[2]
 
 			if name in local_scope:
@@ -331,6 +333,20 @@ class Engine:
 				" ".join(list(self.rules.keys()) + ["auto", "phony"])
 			))
 
+		# add information about targets
+		local_scope = {}
+		def add_target_info(name, targets):
+			for index, file in enumerate(targets):
+				split = os.path.split(file)
+				local_scope["%s_path_%i" % (name, index)] = split[0]
+				local_scope["%s_name_%i" % (name, index)] = split[1]
+		add_target_info("inputs_explicit", inputs_explicit)
+		add_target_info("inputs_implicit", inputs_implicit)
+		add_target_info("inputs_order", inputs_order)
+		add_target_info("targets_explicit", targets_explicit)
+		add_target_info("targets_implicit", targets_implicit)
+		print(local_scope)
+
 		# you probably want to match some files
 		def warn_no_files(type):
 			print("Warning, no %s input files matched for '%s' (%s:%i)" % (
@@ -372,7 +388,7 @@ class Engine:
 					" || " + " ".join(self.to_esc(inputs_order)) if inputs_order else "",
 				))
 
-				self.write_assigns(assigns)
+				self.write_assigns(assigns, local_scope)
 
 		else:
 			self.output.append("build %s: %s%s%s%s" % (
@@ -383,7 +399,7 @@ class Engine:
 				" || " + " ".join(self.to_esc(inputs_order)) if inputs_order else "",
 			))
 
-			self.write_assigns(assigns)
+			self.write_assigns(assigns, local_scope)
 
 		if targets_implicit: # TODO remove this when https://github.com/martine/ninja/pull/989 is merged
 			self.output.append("build %s: phony %s" % (
