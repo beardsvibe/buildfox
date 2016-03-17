@@ -345,7 +345,6 @@ class Engine:
 		add_target_info("inputs_order", inputs_order)
 		add_target_info("targets_explicit", targets_explicit)
 		add_target_info("targets_implicit", targets_implicit)
-		print(local_scope)
 
 		# you probably want to match some files
 		def warn_no_files(type):
