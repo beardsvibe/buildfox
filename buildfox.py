@@ -209,7 +209,15 @@ filter toolset: r"gcc|clang"
 		auto r"^(?i).*\.o$": cxx r"^(?i).*\.(cpp|cxx|cc|c\+\+)$"
 		auto r"^(?i).*\.o$": cc r"^(?i).*\.c$"
 		auto r"^(.*\/)?[^.\/]+$": link r"^(?i).*\.o$"
+			# on Darwin systems we do a trick with dynamic libs
+			# we ask loader to look for so files next to executable
+			# so executables can be loaded from any cwd
+			# it's similar to how it works on Windows by default
+			filter system: Darwin
+				ldflags += -rpath @executable_path
 		auto r"^(?i).*\.so$": link_so r"^(?i).*\.o$"
+			filter system: Darwin
+				ldflags += -install_name @rpath/$targets_explicit_name_0
 		auto r"^(?i).*\.a$": lib r"^(?i).*\.(o|a)$"
 		transformer application: ${param}
 		transformer objects: ${param}.o
@@ -289,7 +297,7 @@ filter toolset: r"gcc|clang"
 		# TODO: We shouldn't have it enabled for every object file.
 		# But we need it to build object files of the shared libraries.
 		cxxflags = -fPIC
-	ldflags = 
+	ldflags =
 	filter variation:debug
 		cxxflags += $cxx_symbols
 		ldflags += $cxx_symbols
