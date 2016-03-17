@@ -591,3 +591,13 @@ Name                      | Possible Values       | Description
 buildfox_required_version | 0.1, etc              | sets required version of BuildFox from fox file
 excluded_dirs             | .git .svn etc         | space separated list of ignored folders for recursive glob
 rel_path                  | path that ends with / | relative path from cwd to location of current fox file, updated at runtime
+targets_explicit_name_X   | libtest1.so           | filename of explicit target, where X is number from 0 to N, only available in build and auto local variables
+targets_implicit_name_X   | libtest1.a            | same as targets_explicit_name_X
+inputs_explicit_name_X    | test.cpp              | same as targets_explicit_name_X
+inputs_implicit_name_X    | test.cpp              | same as targets_explicit_name_X
+inputs_order_name_X       | test.cpp              | same as targets_explicit_name_X
+targets_explicit_path_X   | build/debug           | path of explicit target, where X is number from 0 to N, only available in build and auto local variables
+targets_implicit_path_X   | src/folder            | same as targets_explicit_name_X
+inputs_explicit_path_X    | src/folder            | same as targets_explicit_name_X
+inputs_implicit_path_X    | src/folder            | same as targets_explicit_name_X
+inputs_order_path_X       | src/folder            | same as targets_explicit_name_X
