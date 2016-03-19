@@ -3,7 +3,6 @@
 import os
 import uuid
 import json
-import mod_pbxproj
 from lib_ide_make import gen_make
 from lib_util import cxx_findfiles
 
@@ -61,6 +60,7 @@ def gen_xcode(all_files, includedirs, prj_name, buildfox_name, cmd_env, ninja_ge
 		os.makedirs(prj_location)
 
 	ref = json.loads(xcode_reference_prj)
+	import mod_pbxproj
 	prj = mod_pbxproj.XcodeProject(ref, prj_location + "/project.pbxproj")
 
 	target = prj.get_build_phases('PBXLegacyTarget')
