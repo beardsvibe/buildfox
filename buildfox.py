@@ -210,7 +210,7 @@ filter toolset: r"gcc|clang"
 		auto r"^(?i).*\.o$": cc r"^(?i).*\.c$"
 		auto r"^(.*\/)?[^.\/]+$": link r"^(?i).*\.o$"
 			# on Darwin systems we do a trick with dynamic libs
-			# we ask loader to look for so files next to executable
+			# we ask loader to look for .so files next to executable
 			# so executables can be loaded from any cwd
 			# it's similar to how it works on Windows by default
 			filter system: Darwin
