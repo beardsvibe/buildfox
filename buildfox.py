@@ -305,8 +305,50 @@ filter toolset: r"gcc|clang"
 # main app -----------------------------------------------------------
 
 def main(*argv, **kwargs):
+	# find out if user wants help about flags or something and slice all arguments after help
+	arg_help = [sys.argv.index(v) for v in ["-h", "--help"] if v in sys.argv]
+	arg_help = sys.argv[min(arg_help) + 1:] if arg_help else None
+	if arg_help:
+		lines = fox_core.split("\n")
+		for arg in arg_help:
+			# find stuff
+			results = [index for index in range(0, len(lines)) if arg in lines[index]]
+			# look behind/ahead
+			results = [set([item for item in range(index - 1, index + 2) if item >= 0 and item < len(lines)]) for index in results]
+			# merge context groups
+			# so if we have [(0,1,2), (1,2,3)] we will have [(0,1,2,3)]
+			merged_results = []
+			while results:
+				head = results[0]
+				tail = results[1:]
+				last_len = -1
+				while len(head) > last_len:
+					last_len = len(head)
+					new_tail = []
+					for rest in tail:
+						if head.intersection(rest):
+							head |= rest
+						else:
+							new_tail.append(rest)
+					tail = new_tail
+				merged_results.append(head)
+				results = tail
+			results = merged_results
+			# merge strings
+			results = "\n...\n".join(["\n".join([lines[item] for item in sorted(group)]) for group in results])
+			# print results
+			if results:
+				print("results for %s:" % arg)
+				print("...")
+				print(results)
+				print("...")
+			else:
+				print("no results for %s" % arg)
+		exit(0)
+
+	# parse arguments normally
 	title = "buildfox ninja generator %s" % VERSION
-	argsparser = argparse.ArgumentParser(description = title)
+	argsparser = argparse.ArgumentParser(description = title, add_help = False)
 	argsparser.add_argument("-i", "--in", help = "input file", default = "build.fox")
 	argsparser.add_argument("-o", "--out", help = "output file", default = "build.ninja")
 	argsparser.add_argument("-w", "--workdir", help = "working directory")
@@ -323,8 +365,13 @@ def main(*argv, **kwargs):
 		help = "enables ninja ide generator mode (equal to --no-core --no-env)", default = False, dest = "ninja_ide_gen")
 	argsparser.add_argument("--selftest", action = "store_true",
 		help = "run self test", default = False, dest = "selftest")
-	argsparser.add_argument("--ver", "--version", action = "version", version = title)
+	argsparser.add_argument("-v", "--ver", "--version", action = "version", version = title)
+	argsparser.add_argument("-h", "--help", metavar = "REQUEST", type = str, nargs = "*",
+		default = argparse.SUPPRESS, help = "look for request or show this help message and exit")
 	args = vars(argsparser.parse_args())
+	if "help" in args:
+		argsparser.print_help()
+		exit(0)
 
 	if args.get("ninja_ide_gen"):
 		args["core"] = False
