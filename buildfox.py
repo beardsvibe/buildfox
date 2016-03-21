@@ -348,7 +348,7 @@ def main(*argv, **kwargs):
 
 	# parse arguments normally
 	title = "buildfox ninja generator %s" % VERSION
-	argsparser = argparse.ArgumentParser(description = title)
+	argsparser = argparse.ArgumentParser(description = title, add_help = False)
 	argsparser.add_argument("-i", "--in", help = "input file", default = "build.fox")
 	argsparser.add_argument("-o", "--out", help = "output file", default = "build.ninja")
 	argsparser.add_argument("-w", "--workdir", help = "working directory")
@@ -366,7 +366,12 @@ def main(*argv, **kwargs):
 	argsparser.add_argument("--selftest", action = "store_true",
 		help = "run self test", default = False, dest = "selftest")
 	argsparser.add_argument("-v", "--ver", "--version", action = "version", version = title)
+	argsparser.add_argument("-h", "--help", metavar = "REQUEST", type = str, nargs = "*",
+		default = argparse.SUPPRESS, help = "look for request or show this help message and exit")
 	args = vars(argsparser.parse_args())
+	if "help" in args:
+		argsparser.print_help()
+		exit(0)
 
 	if args.get("ninja_ide_gen"):
 		args["core"] = False
