@@ -30,7 +30,7 @@ xcode_reference_prj = r"""
                                           "buildConfigurationList": "EF0AF3441C83A4DC00290920",
                                           "buildPhases": [],
                                           "buildToolPath": "/usr/bin/make",
-                                          "buildWorkingDirectory": "/Users/jimon/Documents/xcodeproj_tests/test",
+                                          "buildWorkingDirectory": "...",
                                           "dependencies": [],
                                           "isa": "PBXLegacyTarget",
                                           "name": "test",
@@ -60,7 +60,7 @@ def gen_xcode(all_files, includedirs, prj_name, buildfox_name, cmd_env, ninja_ge
 		os.makedirs(prj_location)
 
 	ref = json.loads(xcode_reference_prj)
-	import mod_pbxproj
+	import mod_pbxproj # TODO would be nice to remove external dependency before release, because mod_pbxproj doesn't work with python3
 	prj = mod_pbxproj.XcodeProject(ref, prj_location + "/project.pbxproj")
 
 	target = prj.get_build_phases('PBXLegacyTarget')

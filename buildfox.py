@@ -355,7 +355,7 @@ def main(*argv, **kwargs):
 	argsparser.add_argument("-w", "--workdir", help = "working directory")
 	argsparser.add_argument("variables", metavar = "name=value", type = str, nargs = "*", help = "variables with values to setup", default = [])
 	#argsparser.add_argument("-v", "--verbose", action = "store_true", help = "verbose output") # TODO
-	argsparser.add_argument("--ide", help = "generate ide solution (vs, vs2012, vs2013, vs2015, make, qtcreator, cmake)", default = None, dest = "ide")
+	argsparser.add_argument("--ide", help = "generate ide solution (vs, vs2012, vs2013, vs2015, xcode, make, qtcreator, cmake)", default = None, dest = "ide")
 	argsparser.add_argument("--ide-prj", help = "ide project prefix", default = "build")
 	argsparser.add_argument("--ide-env", help = "run provided command to set required environment before calling ninja from the ide, " +
 		"use set NAME=VALUE form if you need to modify environment so it will work with all IDE's", default = None)
