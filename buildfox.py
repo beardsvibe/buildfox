@@ -14,6 +14,7 @@ from lib_environment import discover
 from lib_selftest import selftest_setup, selftest_wipe
 from lib_util import cxx_defines, cxx_includedirs
 from lib_ide_vs import gen_vs
+from lib_ide_xcode import gen_xcode
 from lib_ide_make import gen_make
 from lib_ide_cmake import gen_cmake
 from lib_ide_qtcreator import gen_qtcreator
@@ -209,7 +210,7 @@ filter toolset: r"gcc|clang"
 		auto r"^(?i).*\.o$": cc r"^(?i).*\.c$"
 		auto r"^(.*\/)?[^.\/]+$": link r"^(?i).*\.o$"
 			# on Darwin systems we do a trick with dynamic libs
-			# we ask loader to look for so files next to executable
+			# we ask loader to look for .so files next to executable
 			# so executables can be loaded from any cwd
 			# it's similar to how it works on Windows by default
 			filter system: Darwin
@@ -354,7 +355,7 @@ def main(*argv, **kwargs):
 	argsparser.add_argument("-w", "--workdir", help = "working directory")
 	argsparser.add_argument("variables", metavar = "name=value", type = str, nargs = "*", help = "variables with values to setup", default = [])
 	#argsparser.add_argument("-v", "--verbose", action = "store_true", help = "verbose output") # TODO
-	argsparser.add_argument("--ide", help = "generate ide solution (vs, vs2012, vs2013, vs2015, make, qtcreator, cmake)", default = None, dest = "ide")
+	argsparser.add_argument("--ide", help = "generate ide solution (vs, vs2012, vs2013, vs2015, xcode, make, qtcreator, cmake)", default = None, dest = "ide")
 	argsparser.add_argument("--ide-prj", help = "ide project prefix", default = "build")
 	argsparser.add_argument("--ide-env", help = "run provided command to set required environment before calling ninja from the ide, " +
 		"use set NAME=VALUE form if you need to modify environment so it will work with all IDE's", default = None)
@@ -431,6 +432,14 @@ def main(*argv, **kwargs):
 				args.get("ide_prj"),
 				ide,
 				args.get("ide_env"))
+		elif ide in ["xcode"]:
+			gen_xcode(
+				engine.context.all_files,
+				cxx_includedirs(engine.variables.get("includedirs", "")),
+				args.get("ide_prj"),
+				args.get("in"),
+				args.get("ide_env"),
+				args.get("ninja_ide_gen"))
 		elif ide in ["make"]:
 			gen_make(
 				args.get("in"),
@@ -453,7 +462,7 @@ def main(*argv, **kwargs):
 				args.get("in"),
 				args.get("ide_env"))
 		elif ide is not None:
-			raise ValueError("unknown ide '%s', available ide's : vs, vs2012, vs2013, vs2015, make, qtcreator, cmake" % ide)
+			raise ValueError("unknown ide '%s', available ide's : vs, vs2012, vs2013, vs2015, xcode, make, qtcreator, cmake" % ide)
 
 if __name__ == "__main__":
 	#import cProfile, pstats, io

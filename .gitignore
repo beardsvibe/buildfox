@@ -1,4 +1,7 @@
 *.ninja
+examples/**/build/
+examples/**/DerivedData/
+Makefile
 !tools/suite/*.ninja
 tools/bf
 tools/.coverage*
@@ -19,3 +22,4 @@ __pycache__/
 *.so
 *.a
 *.coverage
+*.xcodeproj
