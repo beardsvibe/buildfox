@@ -23,3 +23,7 @@ __pycache__/
 *.a
 *.coverage
 *.xcodeproj
+build/
+buildfox.egg-info/
+buildfox/
+dist/
