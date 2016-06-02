@@ -179,14 +179,14 @@ filter toolset:gcc
 
 filter toolset: r"gcc|clang"
 	rule cc
-		command = $cc -c $in -o $out -MMD $cxxflags $defines $includedirs
+		command = $cc -c $in -o $out -MMD -MF $out.d $cxxflags $defines $includedirs
 		description = cc $in
 		depfile = $out.d
 		deps = gcc
 		expand = true
 
 	rule cxx
-		command = $cxx -o $out -MMD $cxxflags $defines $includedirs -c $in
+		command = $cxx -o $out -MMD -MF $out.d $cxxflags $defines $includedirs -c $in
 		description = cxx $in
 		depfile = $out.d
 		deps = gcc
