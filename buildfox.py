@@ -313,6 +313,19 @@ filter toolset: r"gcc|clang"
 
 # main app -----------------------------------------------------------
 
+def run_command(command):
+	process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+	while True:
+		output = process.stdout.readline()
+		if output == '' and process.poll() is not None:
+			break
+		if output:
+			print(output.strip())
+
+	exit_code = process.poll()
+	return exit_code
+
 def main(*argv, **kwargs):
 	# find out if user wants help about flags or something and slice all arguments after help
 	arg_help = [sys.argv.index(v) for v in ["-h", "--help"] if v in sys.argv]
@@ -373,6 +386,9 @@ def main(*argv, **kwargs):
 		help = "disable environment discovery", default = True, dest = "env")
 	argsparser.add_argument("-n", "--ninja-ide-gen", action = "store_true",
 		help = "enables ninja ide generator mode (equal to --no-core --no-env)", default = False, dest = "ninja_ide_gen")
+	# It won't be checked for real. Ninja will be run only if no arguments were passed.
+	argsparser.add_argument("--just-generate", action = "store_true",
+		help = "skips automatic ninja run", default = False, dest = "just_generate")
 	argsparser.add_argument("--selftest", action = "store_true",
 		help = "run self test", default = False, dest = "selftest")
 	argsparser.add_argument("-v", "--ver", "--version", action = "version", version = title)
@@ -471,6 +487,8 @@ def main(*argv, **kwargs):
 				args.get("ide_env"))
 		elif ide is not None:
 			raise ValueError("unknown ide '%s', available ide's : vs, vs2012, vs2013, vs2015, xcode, make, qtcreator, cmake" % ide)
+	if len(sys.argv) == 1:
+		sys.exit(run_command("ninja"))
 
 if __name__ == "__main__":
 	#import cProfile, pstats, io
