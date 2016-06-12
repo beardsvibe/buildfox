@@ -40,7 +40,7 @@ filter toolset:msc
 	lib = lib
 
 	rule cc
-		command = $cc $cxxflags $defines $includedirs $disable_warnings /nologo /showIncludes -c $in /Fo$out
+		command = $cc $ccflags $defines $includedirs $disable_warnings /nologo /showIncludes -c $in /Fo$out
 		description = cc $in
 		deps = msvc
 		expand = true
@@ -125,6 +125,9 @@ filter toolset:msc
 	cxx_11 =
 	cxx_14 =
 
+	cc_99 =
+	cc_11 =
+
 	# linking
 	cxx_runtime_static_debug = /MTd
 	cxx_runtime_dynamic_debug = /MDd
@@ -158,6 +161,7 @@ filter toolset:msc
 	transformer ignore_default_libs: /NODEFAULTLIB:${param}
 
 	# main flags
+	ccflags =
 	cxxflags = $cxx_exceptions
 	ldflags =
 	libflags =
@@ -179,7 +183,7 @@ filter toolset:gcc
 
 filter toolset: r"gcc|clang"
 	rule cc
-		command = $cc -c $in -o $out -MMD -MF $out.d $cxxflags $defines $includedirs
+		command = $cc -c $in -o $out -MMD -MF $out.d $ccflags $defines $includedirs
 		description = cc $in
 		depfile = $out.d
 		deps = gcc
@@ -266,6 +270,9 @@ filter toolset: r"gcc|clang"
 	cxx_11 = -std=c++11
 	cxx_14 = -std=c++14
 
+	cc_99 = -std=c99
+	cc_11 = -std=c11
+
 	# miscellaneous
 	cxx_fatal_warnings = -Werror
 	cxx_extra_warnings = -Wall -Wextra
@@ -291,6 +298,7 @@ filter toolset: r"gcc|clang"
 		transformer frameworks:
 
 	# main flags
+	ccflags =
 	cxxflags =
 	filter system: r"^(?i)(?!windows).*$"
 		# don't enable this with gcc/clang on Windows
