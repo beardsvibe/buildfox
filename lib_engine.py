@@ -201,6 +201,13 @@ class Engine:
 			return regex_or_value == value
 
 	def eval_assign_op(self, value, prev_value, op):
+		if (op == "+=" or op == "-=") and prev_value == None:
+			raise ValueError(("Variable was not declared, but is assigned. Check this rule '%s' (%s:%i)") % (
+				self.current_line,
+				self.filename,
+				self.current_line_i,
+			))
+
 		if op == "+=":
 			return prev_value + value
 		elif op == "-=":
@@ -256,9 +263,10 @@ class Engine:
 			op = assign[2]
 
 			if name in local_scope:
-				value = self.eval_assign_op(value, local_scope.get(name), op)
+				prev_value = local_scope.get(name)
 			else:
-				value = self.eval_assign_op(value, self.variables.get(name, ""), op)
+				prev_value = self.variables.get(name)
+			value = self.eval_assign_op(value, prev_value, op)
 
 			self.output.append("  %s = %s" % (name, self.to_esc(value, simple = True)))
 			local_scope[name] = value
