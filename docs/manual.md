@@ -491,7 +491,8 @@ To set compiler or linker flags you need to use configuration variables. This va
 
 Variable                        | Description
 ------------------------------- | ----------------
-cxxflags                        | compiler flags
+ccflags                         | C compiler flags
+cxxflags                        | C++ compiler flags
 ldflags                         | linker flags
 libflags                        | static lib archiver flags
 
@@ -517,6 +518,8 @@ More information about compiler flags is available on [msc page](https://msdn.mi
 
 Flag                            | Possible Values                         | Description
 ------------------------------- | --------------------------------------- | ----------------
+cc_99                           | empty or -std=c99                       | gcc/clang only
+cc_11                           | empty or -std=c11                       | gcc/clang only
 cxx_omit_frame_pointer          | /Oy or -fomit-frame-pointer             |
 cxx_disable_optimizations       | /Od or -O0                              |
 cxx_full_optimizations          | /Ox or -O3                              |
