@@ -386,6 +386,9 @@ def main(*argv, **kwargs):
 		help = "disable environment discovery", default = True, dest = "env")
 	argsparser.add_argument("-n", "--ninja-ide-gen", action = "store_true",
 		help = "enables ninja ide generator mode (equal to --no-core --no-env)", default = False, dest = "ninja_ide_gen")
+	# It won't be checked for real. Ninja will be run only if no arguments were passed.
+	argsparser.add_argument("--just-generate", action = "store_true",
+		help = "skips automatic ninja run", default = False, dest = "just_generate")
 	argsparser.add_argument("--selftest", action = "store_true",
 		help = "run self test", default = False, dest = "selftest")
 	argsparser.add_argument("-v", "--ver", "--version", action = "version", version = title)
