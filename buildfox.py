@@ -52,13 +52,13 @@ filter toolset:msc
 		expand = true
 
 	rule link
-		command = $cxx /nologo @$out.rsp /link $ldflags $libdirs $ignore_default_libs /out:$out
+		command = $cxx $ldflags_pre /nologo @$out.rsp /link $ldflags $libdirs $ignore_default_libs /out:$out
 		description = link $out
 		rspfile = $out.rsp
 		rspfile_content = $in $libs
 
 	rule link_so
-		command = $cxx /nologo @$out.rsp /link /DLL $ldflags $libdirs $ignore_default_libs /out:$out
+		command = $cxx $ldflags_pre /nologo @$out.rsp /link /DLL $ldflags $libdirs $ignore_default_libs /out:$out
 		description = link $out
 		rspfile = $out.rsp
 		rspfile_content = $in $libs
@@ -164,6 +164,7 @@ filter toolset:msc
 	ccflags =
 	cxxflags = $cxx_exceptions
 	ldflags =
+	ldflags_pre =
 	libflags =
 	filter variation:debug
 		cxxflags += $cxx_disable_optimizations $cxx_symbols
