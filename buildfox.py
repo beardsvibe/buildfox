@@ -475,7 +475,7 @@ def main(*argv, **kwargs):
 		elif ide is not None:
 			raise ValueError("unknown ide '%s', available ide's : vs, vs2012, vs2013, vs2015, xcode, make, qtcreator, cmake" % ide)
 	if len(sys.argv) == 1:
-		sys.exit(subprocess.call("ninja"))
+		sys.exit(subprocess.call("ninja" + (" -f " + args["out"] if len(args["out"]) else "")))
 
 if __name__ == "__main__":
 	#import cProfile, pstats, io
