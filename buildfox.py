@@ -313,19 +313,6 @@ filter toolset: r"gcc|clang"
 
 # main app -----------------------------------------------------------
 
-def run_command(command):
-	process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-
-	while True:
-		output = process.stdout.readline()
-		if output == '' and process.poll() is not None:
-			break
-		if output:
-			print(output.strip())
-
-	exit_code = process.poll()
-	return exit_code
-
 def main(*argv, **kwargs):
 	# find out if user wants help about flags or something and slice all arguments after help
 	arg_help = [sys.argv.index(v) for v in ["-h", "--help"] if v in sys.argv]
@@ -488,7 +475,7 @@ def main(*argv, **kwargs):
 		elif ide is not None:
 			raise ValueError("unknown ide '%s', available ide's : vs, vs2012, vs2013, vs2015, xcode, make, qtcreator, cmake" % ide)
 	if len(sys.argv) == 1:
-		sys.exit(run_command("ninja"))
+		sys.exit(subprocess.call("ninja"))
 
 if __name__ == "__main__":
 	#import cProfile, pstats, io
