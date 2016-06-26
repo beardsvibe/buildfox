@@ -21,9 +21,10 @@ clean:
 		else:
 			all = "all: configure compile\n"
 
-		bf_cmd = os.path.abspath(sys.argv[0]) + " --just-generate"
-		if bf_cmd.endswith(".py"):
-			bf_cmd = sys.executable + " " + bf_cmd
+		bf_exec = os.path.abspath(sys.argv[0])
+		if bf_exec.endswith(".py"):
+			bf_exec = sys.executable + " " + bf_exec
+		bf_cmd = bf_exec + " --just-generate"
 		if buildfox_name != "build.fox":
 			bf_cmd += " -i " + buildfox_name
 		all += "configure:\n"
